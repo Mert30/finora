@@ -1,8 +1,7 @@
+import 'package:finora_app/features/welcome/presentation/pages/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
-import 'features/auth/auth_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Finora',
       debugShowCheckedModeBanner: false,
-      home: const AuthPage(),
+      home: const WelcomePage(),
     );
   }
 }
