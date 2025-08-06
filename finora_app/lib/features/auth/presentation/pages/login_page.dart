@@ -1,3 +1,4 @@
+import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
 import 'package:finora_app/features/password_reset/presentation/pages/password_reset__page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -32,7 +33,10 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (userCredential.user != null) {
-        // Yönlendirme veya state update işlemi
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
