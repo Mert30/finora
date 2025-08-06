@@ -7,20 +7,32 @@ class DescriptionInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      maxLines: 4,
-      decoration: InputDecoration(
-        labelText: 'Açıklama (opsiyonel)',
-        filled: true,
-        fillColor: Colors.deepPurple.shade50,
-        prefixIcon: Icon(Icons.note, color: Colors.deepPurple.shade400),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide.none,
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.deepPurple.shade100,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: TextFormField(
+          controller: controller,
+          maxLines: 5,
+          decoration: InputDecoration(
+            labelText: 'Açıklama (opsiyonel)',
+            labelStyle: TextStyle(
+              color: Colors.deepPurple.shade300,
+              fontWeight: FontWeight.w500,
+            ),
+            prefixIcon: Icon(
+              Icons.edit_note_rounded,
+              color: Colors.deepPurple.shade400,
+              size: 26,
+            ),
+            border: InputBorder.none,
+          ),
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
         ),
       ),
-      style: const TextStyle(fontWeight: FontWeight.w600),
     );
   }
 }

@@ -31,8 +31,6 @@ class DashboardPage extends StatelessWidget {
             const SizedBox(height: 16),
             _buildSummaryRow(),
             const SizedBox(height: 16),
-            _buildQuickActions(),
-            const SizedBox(height: 16),
             _buildRecentTransactions(),
           ],
         ),
@@ -115,17 +113,6 @@ class DashboardPage extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildActionButton(Icons.add, 'Gelir Ekle'),
-        _buildActionButton(Icons.remove, 'Gider Ekle'),
-        _buildActionButton(Icons.bar_chart, 'Grafikler'),
-      ],
     );
   }
 

@@ -12,12 +12,20 @@ class AmountInputField extends StatelessWidget {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         labelText: 'Tutar',
+        labelStyle: TextStyle(
+          color: Colors.deepPurple.shade300,
+          fontWeight: FontWeight.bold,
+        ),
         filled: true,
         fillColor: Colors.deepPurple.shade50,
         prefixIcon: Icon(Icons.attach_money, color: Colors.deepPurple.shade400),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
         ),
       ),
       validator: (val) {
