@@ -1,9 +1,7 @@
 import 'package:finora_app/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:finora_app/features/transactions/presentation/pages/history_page.dart';
 import 'package:flutter/material.dart';
-//import '../../../dashboard/presentation/pages/dashboard_page.dart';
 import '../../../transactions/presentation/pages/add_transaction_page.dart';
-//import '../../../history/presentation/pages/history_page.dart';
-//import '../../../analytics/presentation/pages/analytics_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,7 +16,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = const [
     DashboardPage(),
     AddTransactionPage(),
-    //HistoryPage(),
+    HistoryPage(transactions: []),
     //AnalyticsPage(),
   ];
 

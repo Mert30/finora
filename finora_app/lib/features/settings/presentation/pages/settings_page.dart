@@ -1,4 +1,5 @@
 import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
+import 'package:finora_app/features/password_reset/presentation/pages/password_reset__page.dart';
 import 'package:flutter/material.dart';
 import '../widgets/settings_tile.dart';
 import '../widgets/section_header.dart';
@@ -31,10 +32,17 @@ class SettingsPage extends StatelessWidget {
             title: 'Profil Bilgilerim',
             onTap: null, // Profil sayfasına yönlendirme yapılabilir
           ),
-          const SettingsTile(
+          SettingsTile(
             icon: Icons.lock_outline,
             title: 'Şifre Değiştir',
-            onTap: null,
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PasswordResetPage(),
+                ),
+              );
+            },
           ),
 
           const SectionHeader(title: 'Uygulama'),

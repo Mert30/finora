@@ -1,3 +1,4 @@
+import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/email_input_field.dart';
@@ -70,10 +71,26 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.lock_reset_rounded,
-                  size: 72,
-                  color: Colors.blue.shade700,
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SettingsPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 60),
+                    Icon(
+                      Icons.lock_reset_rounded,
+                      size: 72,
+                      color: Colors.blue.shade700,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 Text(
