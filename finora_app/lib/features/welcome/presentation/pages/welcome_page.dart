@@ -1,5 +1,4 @@
 import 'package:finora_app/features/auth/presentation/pages/auth_page.dart';
-import 'package:finora_app/features/welcome/presentation/widgets/welcome_button.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
