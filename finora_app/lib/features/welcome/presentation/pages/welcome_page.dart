@@ -82,52 +82,51 @@ class _WelcomePageState extends State<WelcomePage>
             _buildFloatingCircles(),
             
             SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 60),
-                    
-                    // Logo and Brand Section
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: _buildLogoSection(),
-                      ),
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Logo and Brand Section
+                        FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: SlideTransition(
+                            position: _slideAnimation,
+                            child: _buildLogoSection(),
+                          ),
+                        ),
+                        
+                        // Feature Cards
+                        FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: _buildFeatureCards(),
+                        ),
+                        
+                        // Animation - responsive height
+                        FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: Lottie.asset(
+                            'lib/features/welcome/assets/animations/analysis.json',
+                            width: size.width * 0.6,
+                            height: size.height > 700 ? 200 : 150,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                        
+                        // Action Button
+                        FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: _buildGetStartedButton(),
+                        ),
+                      ],
                     ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    // Feature Cards
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: _buildFeatureCards(),
-                    ),
-                    
-                    const Spacer(),
-                    
-                    // Animation
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Lottie.asset(
-                        'lib/features/welcome/assets/animations/analysis.json',
-                        width: size.width * 0.6,
-                        height: 200,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    // Action Button
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: _buildGetStartedButton(),
-                    ),
-                    
-                    const SizedBox(height: 40),
-                  ],
+                  ),
                 ),
               ),
             ),
