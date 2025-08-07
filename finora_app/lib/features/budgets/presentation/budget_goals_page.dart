@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/providers/theme_provider.dart';
-import '../../../../core/theme/app_theme.dart';
 
 class BudgetGoal {
   final String id;
@@ -114,27 +111,24 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.isDarkMode;
-
     return Scaffold(
-      backgroundColor: AppTheme.getBackground(isDark),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: CustomScrollView(
             slivers: [
               // Custom App Bar
-              _buildCustomAppBar(isDark),
+              _buildCustomAppBar(),
 
               // Summary Section
-              SliverToBoxAdapter(child: _buildSummarySection(isDark)),
+              SliverToBoxAdapter(child: _buildSummarySection()),
 
               // Goals List
-              _buildGoalsList(isDark),
+              _buildGoalsList(),
 
               // Add Goal Button
-              SliverToBoxAdapter(child: _buildAddGoalButton(isDark)),
+              SliverToBoxAdapter(child: _buildAddGoalButton()),
             ],
           ),
         ),
@@ -142,21 +136,19 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
     );
   }
 
-  Widget _buildCustomAppBar(bool isDark) {
+  Widget _buildCustomAppBar() {
     return SliverAppBar(
       expandedHeight: 100,
       floating: false,
       pinned: true,
-      backgroundColor: AppTheme.getBackground(isDark),
+      backgroundColor: const Color(0xFFF8FAFC),
       elevation: 0,
       automaticallyImplyLeading: false,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: isDark
-                  ? [AppTheme.darkBackground, const Color(0xFF1E293B)]
-                  : [AppTheme.lightBackground, const Color(0xFFE2E8F0)],
+              colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -172,7 +164,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                   style: GoogleFonts.inter(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.getTextPrimary(isDark),
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -181,7 +173,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.getTextSecondary(isDark),
+                    color: const Color(0xFF6B7280),
                   ),
                 ),
               ],
@@ -192,7 +184,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
     );
   }
 
-  Widget _buildSummarySection(bool isDark) {
+  Widget _buildSummarySection() {
     final totalTargetAmount = _goals.fold(
       0.0,
       (sum, goal) => sum + goal.targetAmount,
@@ -212,11 +204,11 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppTheme.getSurface(isDark),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -246,7 +238,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                           Text(
                             'Toplam İlerleme',
                             style: GoogleFonts.inter(
-                              color: AppTheme.getTextSecondary(isDark),
+                              color: const Color(0xFF6B7280),
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
@@ -255,7 +247,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                           Text(
                             '₺${totalCurrentAmount.toStringAsFixed(0)} / ₺${totalTargetAmount.toStringAsFixed(0)}',
                             style: GoogleFonts.inter(
-                              color: AppTheme.getTextPrimary(isDark),
+                              color: const Color(0xFF1F2937),
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
@@ -276,9 +268,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                 const SizedBox(height: 20),
                 LinearProgressIndicator(
                   value: totalProgress,
-                  backgroundColor: isDark
-                      ? const Color(0xFF374151)
-                      : const Color(0xFFE2E8F0),
+                  backgroundColor: const Color(0xFFE2E8F0),
                   valueColor: const AlwaysStoppedAnimation<Color>(
                     Color(0xFF3B82F6),
                   ),
@@ -300,7 +290,6 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                   value: '$completedGoals/${_goals.length}',
                   icon: Icons.check_circle_outline,
                   color: const Color(0xFF10B981),
-                  isDark: isDark,
                 ),
               ),
               const SizedBox(width: 16),
@@ -311,7 +300,6 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                       '${(_goals.fold(0.0, (sum, goal) => sum + goal.progress) / _goals.length * 100).toStringAsFixed(0)}%',
                   icon: Icons.insights_outlined,
                   color: const Color(0xFF8B5CF6),
-                  isDark: isDark,
                 ),
               ),
             ],
@@ -326,16 +314,15 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
     required String value,
     required IconData icon,
     required Color color,
-    required bool isDark,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.getSurface(isDark),
+        color: const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -369,7 +356,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
           Text(
             title,
             style: GoogleFonts.inter(
-              color: AppTheme.getTextSecondary(isDark),
+              color: const Color(0xFF6B7280),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -379,29 +366,29 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
     );
   }
 
-  Widget _buildGoalsList(bool isDark) {
+  Widget _buildGoalsList() {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: _buildGoalCard(_goals[index], isDark),
+            child: _buildGoalCard(_goals[index]),
           );
         }, childCount: _goals.length),
       ),
     );
   }
 
-  Widget _buildGoalCard(BudgetGoal goal, bool isDark) {
+  Widget _buildGoalCard(BudgetGoal goal) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.getSurface(isDark),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -428,7 +415,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                     Text(
                       goal.title,
                       style: GoogleFonts.inter(
-                        color: AppTheme.getTextPrimary(isDark),
+                        color: const Color(0xFF1F2937),
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
@@ -437,7 +424,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                     Text(
                       goal.category,
                       style: GoogleFonts.inter(
-                        color: AppTheme.getTextSecondary(isDark),
+                        color: const Color(0xFF6B7280),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -483,7 +470,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
           Text(
             goal.description,
             style: GoogleFonts.inter(
-              color: AppTheme.getTextSecondary(isDark),
+              color: const Color(0xFF6B7280),
               fontSize: 14,
               fontWeight: FontWeight.w400,
             ),
@@ -511,7 +498,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                         Text(
                           '₺${goal.targetAmount.toStringAsFixed(0)}',
                           style: GoogleFonts.inter(
-                            color: AppTheme.getTextSecondary(isDark),
+                            color: const Color(0xFF6B7280),
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -521,9 +508,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                     const SizedBox(height: 8),
                     LinearProgressIndicator(
                       value: goal.progress > 1.0 ? 1.0 : goal.progress,
-                      backgroundColor: isDark
-                          ? const Color(0xFF374151)
-                          : const Color(0xFFE2E8F0),
+                      backgroundColor: const Color(0xFFE2E8F0),
                       valueColor: AlwaysStoppedAnimation<Color>(goal.color),
                       borderRadius: BorderRadius.circular(4),
                       minHeight: 6,
@@ -550,7 +535,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                         : 'Süre doldu',
                     style: GoogleFonts.inter(
                       color: goal.daysLeft > 0
-                          ? AppTheme.getTextSecondary(isDark)
+                          ? const Color(0xFF6B7280)
                           : const Color(0xFFEF4444),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -565,7 +550,7 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
     );
   }
 
-  Widget _buildAddGoalButton(bool isDark) {
+  Widget _buildAddGoalButton() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Container(

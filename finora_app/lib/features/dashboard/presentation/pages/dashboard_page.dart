@@ -129,7 +129,7 @@ class _DashboardPageState extends State<DashboardPage>
                         Text(
                           'Merhaba, Hoş Geldiniz!',
                           style: GoogleFonts.inter(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF64748B),
                           ),

@@ -1,8 +1,9 @@
+import 'package:finora_app/features/budgets/presentation/budget_goals_page.dart';
+import 'package:finora_app/features/categories/presentation/category_management_page.dart';
 import 'package:finora_app/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:finora_app/features/transactions/presentation/pages/history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../transactions/presentation/pages/add_transaction_page.dart';
 
 // Premium Analytics sayfası
@@ -48,42 +49,21 @@ class _AnalyticsPageState extends State<AnalyticsPage>
           opacity: _fadeAnimation,
           child: CustomScrollView(
             slivers: [
-              // App Bar
-              _buildAppBar(),
+              // Custom App Bar
+              _buildCustomAppBar(),
 
-              // Content
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
+              // Period Selector
+              SliverToBoxAdapter(child: _buildPeriodSelector()),
 
-                    // Period Selector
-                    _buildPeriodSelector(),
+              // Overview Cards
+              SliverToBoxAdapter(child: _buildOverviewCards()),
 
-                    const SizedBox(height: 24),
+              // Charts and Analysis
+              SliverToBoxAdapter(child: _buildSpendingChart()),
 
-                    // Overview Cards
-                    _buildOverviewCards(),
+              SliverToBoxAdapter(child: _buildCategoryBreakdown()),
 
-                    const SizedBox(height: 24),
-
-                    // Spending Chart
-                    _buildSpendingChart(),
-
-                    const SizedBox(height: 24),
-
-                    // Category Breakdown
-                    _buildCategoryBreakdown(),
-
-                    const SizedBox(height: 24),
-
-                    // Monthly Comparison
-                    _buildMonthlyComparison(),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
+              SliverToBoxAdapter(child: _buildMonthlyComparison()),
             ],
           ),
         ),
@@ -91,9 +71,9 @@ class _AnalyticsPageState extends State<AnalyticsPage>
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildCustomAppBar() {
     return SliverAppBar(
-      expandedHeight: 80,
+      expandedHeight: 100,
       floating: false,
       pinned: true,
       backgroundColor: const Color(0xFFF8FAFC),
@@ -115,7 +95,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Finansal Analiz 📊',
+                  'Analiz 📊',
                   style: GoogleFonts.inter(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
@@ -124,7 +104,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Harcama alışkanlıklarınızı inceleyin',
+                  'Detaylı finansal analizinizi görüntüleyin',
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -142,78 +122,78 @@ class _AnalyticsPageState extends State<AnalyticsPage>
   Widget _buildPeriodSelector() {
     final periods = ['Bu Hafta', 'Bu Ay', 'Son 3 Ay', 'Bu Yıl'];
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: periods.map((period) {
-          final isSelected = period == selectedPeriod;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  selectedPeriod = period;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFF3B82F6)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  period,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    color: isSelected ? Colors.white : const Color(0xFF64748B),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: periods.map((period) {
+            final isSelected = period == selectedPeriod;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => selectedPeriod = period),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFF3B82F6)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    period,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
 
   Widget _buildOverviewCards() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Row(
         children: [
           Expanded(
             child: _buildOverviewCard(
-              title: 'Toplam Gelir',
-              amount: '₺7,200',
-              change: '+8.2%',
-              icon: FontAwesomeIcons.arrowTrendUp,
-              color: const Color(0xFF10B981),
+              'Toplam Gelir',
+              '₺12,450',
+              '+8.2%',
+              const Color(0xFF10B981),
+              Icons.trending_up,
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: _buildOverviewCard(
-              title: 'Toplam Gider',
-              amount: '₺4,850',
-              change: '-3.1%',
-              icon: FontAwesomeIcons.arrowTrendDown,
-              color: const Color(0xFFEF4444),
+              'Toplam Gider',
+              '₺8,320',
+              '+2.1%',
+              const Color(0xFFEF4444),
+              Icons.trending_down,
             ),
           ),
         ],
@@ -221,18 +201,18 @@ class _AnalyticsPageState extends State<AnalyticsPage>
     );
   }
 
-  Widget _buildOverviewCard({
-    required String title,
-    required String amount,
-    required String change,
-    required IconData icon,
-    required Color color,
-  }) {
+  Widget _buildOverviewCard(
+    String title,
+    String amount,
+    String change,
+    Color color,
+    IconData icon,
+  ) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -250,13 +230,13 @@ class _AnalyticsPageState extends State<AnalyticsPage>
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: FaIcon(icon, color: color, size: 16),
+                child: Icon(icon, color: color, size: 16),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -265,14 +245,14 @@ class _AnalyticsPageState extends State<AnalyticsPage>
                   change,
                   style: GoogleFonts.inter(
                     color: color,
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
             title,
             style: GoogleFonts.inter(
@@ -286,7 +266,7 @@ class _AnalyticsPageState extends State<AnalyticsPage>
             amount,
             style: GoogleFonts.inter(
               color: const Color(0xFF1E293B),
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -296,233 +276,266 @@ class _AnalyticsPageState extends State<AnalyticsPage>
   }
 
   Widget _buildSpendingChart() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Haftalık Harcama Trendi',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF1E293B),
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            height: 200,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.end,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Haftalık Harcama Trendi',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF1E293B),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Basit chart
+            Row(
               children: [
-                _buildChartBar('Pzt', 0.6, const Color(0xFF3B82F6)),
-                _buildChartBar('Sal', 0.8, const Color(0xFF8B5CF6)),
-                _buildChartBar('Çar', 0.4, const Color(0xFF10B981)),
-                _buildChartBar('Per', 0.9, const Color(0xFFF59E0B)),
-                _buildChartBar('Cum', 0.7, const Color(0xFFEF4444)),
-                _buildChartBar('Cmt', 0.3, const Color(0xFF06B6D4)),
-                _buildChartBar('Paz', 0.5, const Color(0xFFEC4899)),
+                _buildChartBar('Pzt', 0.7, const Color(0xFF3B82F6)),
+                const SizedBox(width: 12),
+                _buildChartBar('Sal', 0.4, const Color(0xFF8B5CF6)),
+                const SizedBox(width: 12),
+                _buildChartBar('Çar', 0.9, const Color(0xFFEF4444)),
+                const SizedBox(width: 12),
+                _buildChartBar('Per', 0.6, const Color(0xFF10B981)),
+                const SizedBox(width: 12),
+                _buildChartBar('Cum', 0.8, const Color(0xFFF59E0B)),
+                const SizedBox(width: 12),
+                _buildChartBar('Cmt', 0.3, const Color(0xFFEC4899)),
+                const SizedBox(width: 12),
+                _buildChartBar('Paz', 0.5, const Color(0xFF06B6D4)),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildChartBar(String day, double percentage, Color color) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          width: 32,
-          height: 150 * percentage,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: [color, color.withOpacity(0.7)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          day,
-          style: GoogleFonts.inter(
-            color: const Color(0xFF64748B),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryBreakdown() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  Widget _buildChartBar(String day, double height, Color color) {
+    return Expanded(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Kategori Dağılımı',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF1E293B),
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 20),
-          _buildCategoryItem(
-            'Yemek & İçecek',
-            '₺1,240',
-            0.35,
-            const Color(0xFFEF4444),
-          ),
-          const SizedBox(height: 12),
-          _buildCategoryItem('Ulaşım', '₺850', 0.25, const Color(0xFF3B82F6)),
-          const SizedBox(height: 12),
-          _buildCategoryItem(
-            'Alışveriş',
-            '₺650',
-            0.20,
-            const Color(0xFF10B981),
-          ),
-          const SizedBox(height: 12),
-          _buildCategoryItem('Eğlence', '₺420', 0.15, const Color(0xFF8B5CF6)),
-          const SizedBox(height: 12),
-          _buildCategoryItem('Diğer', '₺180', 0.05, const Color(0xFF64748B)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryItem(
-    String category,
-    String amount,
-    double percentage,
-    Color color,
-  ) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
+          Container(
+            height: 100,
+            alignment: Alignment.bottomCenter,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 800),
+              width: double.infinity,
+              height: height * 80,
               decoration: BoxDecoration(
                 color: color,
                 borderRadius: BorderRadius.circular(6),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                category,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF1E293B),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            day,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF64748B),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
-            Text(
-              amount,
-              style: GoogleFonts.inter(
-                color: const Color(0xFF1E293B),
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryBreakdown() {
+    final categories = [
+      {
+        'name': 'Yemek & İçecek',
+        'amount': '₺1,240',
+        'percentage': 35,
+        'color': const Color(0xFFEF4444),
+      },
+      {
+        'name': 'Ulaşım',
+        'amount': '₺680',
+        'percentage': 20,
+        'color': const Color(0xFF3B82F6),
+      },
+      {
+        'name': 'Alışveriş',
+        'amount': '₺520',
+        'percentage': 15,
+        'color': const Color(0xFF8B5CF6),
+      },
+      {
+        'name': 'Eğlence',
+        'amount': '₺450',
+        'percentage': 13,
+        'color': const Color(0xFFEC4899),
+      },
+      {
+        'name': 'Diğer',
+        'amount': '₺590',
+        'percentage': 17,
+        'color': const Color(0xFF64748B),
+      },
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        LinearProgressIndicator(
-          value: percentage,
-          backgroundColor: const Color(0xFFE2E8F0),
-          valueColor: AlwaysStoppedAnimation<Color>(color),
-          borderRadius: BorderRadius.circular(4),
-          minHeight: 6,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Kategori Dağılımı',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF1E293B),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ...categories
+                .map(
+                  (category) => _buildCategoryItem(
+                    category['name'] as String,
+                    category['amount'] as String,
+                    category['percentage'] as int,
+                    category['color'] as Color,
+                  ),
+                )
+                .toList(),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryItem(
+    String name,
+    String amount,
+    int percentage,
+    Color color,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF1E293B),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Text(
+            '$percentage%',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF64748B),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            amount,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF1E293B),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildMonthlyComparison() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Aylık Karşılaştırma',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF1E293B),
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(height: 20),
-          _buildComparisonItem(
-            'Bu Ay',
-            '₺4,850',
-            '+12%',
-            const Color(0xFF10B981),
-          ),
-          const SizedBox(height: 16),
-          _buildComparisonItem(
-            'Geçen Ay',
-            '₺4,320',
-            '-5%',
-            const Color(0xFFEF4444),
-          ),
-          const SizedBox(height: 16),
-          _buildComparisonItem(
-            '2 Ay Önce',
-            '₺4,580',
-            '+8%',
-            const Color(0xFF10B981),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Aylık Karşılaştırma',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF1E293B),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildComparisonItem(
+              'Bu Ay',
+              '₺4,850',
+              '+12%',
+              const Color(0xFF10B981),
+            ),
+            const SizedBox(height: 16),
+            _buildComparisonItem(
+              'Geçen Ay',
+              '₺4,320',
+              '-5%',
+              const Color(0xFFEF4444),
+            ),
+            const SizedBox(height: 16),
+            _buildComparisonItem(
+              '2 Ay Önce',
+              '₺4,580',
+              '+8%',
+              const Color(0xFF10B981),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -588,7 +601,8 @@ class _MainScreenState extends State<MainScreen> {
     DashboardPage(),
     AddTransactionPage(),
     HistoryPage(transactions: []),
-    AnalyticsPage(),
+    BudgetGoalsPage(),
+    CategoryManagementPage(),
   ];
 
   @override
@@ -628,9 +642,14 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Geçmiş',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.analytics_outlined),
-            activeIcon: Icon(Icons.analytics),
-            label: 'Analiz',
+            icon: Icon(Icons.flag_outlined),
+            activeIcon: Icon(Icons.flag),
+            label: 'Hedefler',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.category_outlined),
+            activeIcon: Icon(Icons.category),
+            label: 'Kategoriler',
           ),
         ],
       ),

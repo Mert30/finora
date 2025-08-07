@@ -1,5 +1,8 @@
+import 'package:finora_app/features/feedback/presentation/feedback_page.dart';
+import 'package:finora_app/features/help/presentation/help_center_page.dart';
 import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
 import 'package:finora_app/features/password_reset/presentation/pages/password_reset__page.dart';
+import 'package:finora_app/features/welcome/presentation/pages/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,7 +21,6 @@ class _SettingsPageState extends State<SettingsPage>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  bool _isDarkMode = false;
   bool _notificationsEnabled = true;
   bool _biometricEnabled = false;
 
@@ -79,7 +81,7 @@ class _SettingsPageState extends State<SettingsPage>
                       // Profile Card
                       _buildProfileCard(user),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 30),
 
                       // Settings Sections
                       _buildSettingsSection('Hesap & Güvenlik', [
@@ -119,17 +121,6 @@ class _SettingsPageState extends State<SettingsPage>
 
                       _buildSettingsSection('Uygulama', [
                         _buildToggleSettingsTile(
-                          icon: Icons.dark_mode_outlined,
-                          title: 'Karanlık Tema',
-                          subtitle: 'Koyu renk temasını aktifleştirin',
-                          value: _isDarkMode,
-                          onChanged: (value) {
-                            setState(() {
-                              _isDarkMode = value;
-                            });
-                          },
-                        ),
-                        _buildToggleSettingsTile(
                           icon: Icons.notifications_outlined,
                           title: 'Bildirimler',
                           subtitle: 'Push bildirimleri alın',
@@ -161,13 +152,27 @@ class _SettingsPageState extends State<SettingsPage>
                           icon: Icons.help_outline,
                           title: 'Yardım Merkezi',
                           subtitle: 'SSS ve yardım dökümanları',
-                          onTap: () => _showComingSoon(context),
+                          onTap: () => {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const HelpCenterPage(),
+                              ),
+                            ),
+                          },
                         ),
                         _buildSettingsTile(
                           icon: Icons.feedback_outlined,
                           title: 'Geri Bildirim',
                           subtitle: 'Önerilerinizi paylaşın',
-                          onTap: () => _showComingSoon(context),
+                          onTap: () => {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const FeedbackPage(),
+                              ),
+                            ),
+                          },
                         ),
                         _buildSettingsTile(
                           icon: Icons.star_outline,
@@ -185,7 +190,15 @@ class _SettingsPageState extends State<SettingsPage>
                           title: 'Çıkış Yap',
                           subtitle: 'Hesabınızdan güvenli şekilde çıkın',
                           isDestructive: true,
-                          onTap: () => _showLogoutDialog(context),
+                          onTap: () => {
+                            _showLogoutDialog(context),
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const WelcomePage(),
+                              ),
+                            ),
+                          },
                         ),
                       ]),
 
@@ -208,7 +221,7 @@ class _SettingsPageState extends State<SettingsPage>
 
   Widget _buildCustomAppBar() {
     return SliverAppBar(
-      expandedHeight: 80,
+      expandedHeight: 91,
       floating: false,
       pinned: true,
       backgroundColor: const Color(0xFFF8FAFC),
@@ -256,18 +269,18 @@ class _SettingsPageState extends State<SettingsPage>
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  'Ayarlar ⚙️',
+                  'Ayarlar',
                   style: GoogleFonts.inter(
-                    fontSize: 28,
+                    fontSize: 26,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1E293B),
                   ),
                 ),
-                const SizedBox(height: 4),
+
                 Text(
                   'Kişiselleştirin ve özelleştirin',
                   style: GoogleFonts.inter(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF64748B),
                   ),

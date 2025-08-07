@@ -190,7 +190,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           _buildCustomTextField(
             controller: _emailController,
             label: 'E-posta',
-            hint: 'ornek@email.com',
+            hint: 'ornek@gmail.com',
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
           ),
