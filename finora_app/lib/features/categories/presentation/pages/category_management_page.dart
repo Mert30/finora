@@ -245,17 +245,17 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     );
   }
 
-  Widget _buildCategoryToggle(bool isDark) {
+  Widget _buildCategoryToggle() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: AppTheme.getSurface(isDark),
+          color: AppTheme.getSurface(),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -274,7 +274,6 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
                     _showIncomeCategories = true;
                   });
                 },
-                isDark,
               ),
             ),
             Expanded(
@@ -288,7 +287,6 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
                     _showIncomeCategories = false;
                   });
                 },
-                isDark,
               ),
             ),
           ],
@@ -303,7 +301,6 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     Color color, 
     bool isSelected, 
     VoidCallback onTap,
-    bool isDark,
   ) {
     return GestureDetector(
       onTap: onTap,
@@ -337,11 +334,10 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     );
   }
 
-  Widget _buildSummarySection(bool isDark) {
+  Widget _buildSummarySection() {
     final categories = _currentCategories;
     final totalTransactions = categories.fold(0, (sum, cat) => sum + cat.transactionCount);
     final totalAmount = categories.fold(0.0, (sum, cat) => sum + cat.totalAmount);
-    final averagePerCategory = categories.isNotEmpty ? totalAmount / categories.length : 0.0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -353,7 +349,6 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
               value: totalTransactions.toString(),
               icon: Icons.receipt_long_outlined,
               color: const Color(0xFF3B82F6),
-              isDark: isDark,
             ),
           ),
           const SizedBox(width: 16),
@@ -365,7 +360,6 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
               color: _showIncomeCategories 
                   ? const Color(0xFF10B981) 
                   : const Color(0xFFEF4444),
-              isDark: isDark,
             ),
           ),
         ],
@@ -378,16 +372,15 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     required String value,
     required IconData icon,
     required Color color,
-    required bool isDark,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.getSurface(isDark),
+        color: AppTheme.getSurface(),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -425,7 +418,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
           Text(
             title,
             style: GoogleFonts.inter(
-              color: AppTheme.getTextSecondary(isDark),
+              color: AppTheme.getTextSecondary(),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -435,7 +428,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     );
   }
 
-  Widget _buildCategoriesList(bool isDark) {
+  Widget _buildCategoriesList() {
     final categories = _currentCategories;
     
     return SliverPadding(
@@ -450,20 +443,20 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
                   Text(
                     '${categories.length} kategori bulundu',
                     style: GoogleFonts.inter(
-                      color: AppTheme.getTextSecondary(isDark),
+                      color: AppTheme.getTextSecondary(),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildCategoryCard(categories[index], isDark),
+                  _buildCategoryCard(categories[index]),
                 ],
               );
             }
             
             return Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: _buildCategoryCard(categories[index], isDark),
+              child: _buildCategoryCard(categories[index]),
             );
           },
           childCount: categories.length,
@@ -472,15 +465,15 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     );
   }
 
-  Widget _buildCategoryCard(CategoryModel category, bool isDark) {
+  Widget _buildCategoryCard(CategoryModel category) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.getSurface(isDark),
+        color: AppTheme.getSurface(),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -508,7 +501,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
                 Text(
                   category.name,
                   style: GoogleFonts.inter(
-                    color: AppTheme.getTextPrimary(isDark),
+                    color: AppTheme.getTextPrimary(),
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
@@ -519,7 +512,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
                     Text(
                       '${category.transactionCount} işlem',
                       style: GoogleFonts.inter(
-                        color: AppTheme.getTextSecondary(isDark),
+                        color: AppTheme.getTextSecondary(),
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                       ),
@@ -539,21 +532,21 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
             ),
           ),
           PopupMenuButton<String>(
-            color: AppTheme.getSurface(isDark),
+            color: AppTheme.getSurface(),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
             icon: Icon(
               Icons.more_vert,
-              color: AppTheme.getTextSecondary(isDark),
+              color: AppTheme.getTextSecondary(),
             ),
             onSelected: (value) {
               switch (value) {
                 case 'edit':
-                  _showEditCategoryDialog(category, isDark);
+                  _showEditCategoryDialog(category);
                   break;
                 case 'delete':
-                  _showDeleteCategoryDialog(category, isDark);
+                  _showDeleteCategoryDialog(category);
                   break;
               }
             },
@@ -564,14 +557,14 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
                   children: [
                     Icon(
                       Icons.edit_outlined,
-                      color: AppTheme.getTextSecondary(isDark),
+                      color: AppTheme.getTextSecondary(),
                       size: 18,
                     ),
                     const SizedBox(width: 12),
                     Text(
                       'Düzenle',
                       style: GoogleFonts.inter(
-                        color: AppTheme.getTextPrimary(isDark),
+                        color: AppTheme.getTextPrimary(),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -607,7 +600,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     );
   }
 
-  Widget _buildAddCategoryButton(bool isDark) {
+  Widget _buildAddCategoryButton() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Container(
@@ -634,7 +627,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(28),
-            onTap: () => _showAddCategoryDialog(isDark),
+            onTap: () => _showAddCategoryDialog(),
             child: Center(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -663,7 +656,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     );
   }
 
-  void _showAddCategoryDialog(bool isDark) {
+  void _showAddCategoryDialog() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -681,7 +674,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     );
   }
 
-  void _showEditCategoryDialog(CategoryModel category, bool isDark) {
+  void _showEditCategoryDialog(CategoryModel category) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -699,18 +692,18 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     );
   }
 
-  void _showDeleteCategoryDialog(CategoryModel category, bool isDark) {
+  void _showDeleteCategoryDialog(CategoryModel category) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.getSurface(isDark),
+        backgroundColor: AppTheme.getSurface(),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
         title: Text(
           'Kategori Sil',
           style: GoogleFonts.inter(
-            color: AppTheme.getTextPrimary(isDark),
+            color: AppTheme.getTextPrimary(),
             fontSize: 20,
             fontWeight: FontWeight.w700,
           ),
@@ -718,7 +711,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
         content: Text(
           '${category.name} kategorisini silmek istediğinizden emin misiniz?\n\nBu kategoriyle ilgili ${category.transactionCount} işlem etkilenecektir.',
           style: GoogleFonts.inter(
-            color: AppTheme.getTextSecondary(isDark),
+            color: AppTheme.getTextSecondary(),
             fontSize: 16,
             fontWeight: FontWeight.w400,
           ),
@@ -729,7 +722,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
             child: Text(
               'İptal',
               style: GoogleFonts.inter(
-                color: AppTheme.getTextSecondary(isDark),
+                color: AppTheme.getTextSecondary(),
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
