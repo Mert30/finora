@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class CategoryModel {
@@ -165,58 +163,53 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.isDarkMode;
-    
     return Scaffold(
-      backgroundColor: AppTheme.getBackground(isDark),
+      backgroundColor: AppTheme.getBackground(),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: CustomScrollView(
-            slivers: [
-              // Custom App Bar
-              _buildCustomAppBar(isDark),
-              
-              // Category Type Toggle
-              SliverToBoxAdapter(
-                child: _buildCategoryToggle(isDark),
-              ),
-              
-              // Summary Cards
-              SliverToBoxAdapter(
-                child: _buildSummarySection(isDark),
-              ),
-              
-              // Categories List
-              _buildCategoriesList(isDark),
-              
-              // Add Category Button
-              SliverToBoxAdapter(
-                child: _buildAddCategoryButton(isDark),
-              ),
-            ],
+                          slivers: [
+                // Custom App Bar
+                _buildCustomAppBar(),
+                
+                // Category Type Toggle
+                SliverToBoxAdapter(
+                  child: _buildCategoryToggle(),
+                ),
+                
+                // Summary Cards
+                SliverToBoxAdapter(
+                  child: _buildSummarySection(),
+                ),
+                
+                // Categories List
+                _buildCategoriesList(),
+                
+                // Add Category Button
+                SliverToBoxAdapter(
+                  child: _buildAddCategoryButton(),
+                ),
+              ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCustomAppBar(bool isDark) {
+  Widget _buildCustomAppBar() {
     return SliverAppBar(
       expandedHeight: 100,
       floating: false,
       pinned: true,
-      backgroundColor: AppTheme.getBackground(isDark),
+      backgroundColor: AppTheme.getBackground(),
       elevation: 0,
       automaticallyImplyLeading: false,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: isDark 
-                  ? [AppTheme.darkBackground, const Color(0xFF1E293B)]
-                  : [AppTheme.lightBackground, const Color(0xFFE2E8F0)],
+              colors: [AppTheme.lightBackground, Color(0xFFE2E8F0)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -232,7 +225,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
                   style: GoogleFonts.inter(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.getTextPrimary(isDark),
+                    color: AppTheme.getTextPrimary(),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -241,7 +234,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.getTextSecondary(isDark),
+                    color: AppTheme.getTextSecondary(),
                   ),
                 ),
               ],
