@@ -834,10 +834,30 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
 
   Widget _buildTechStackSection() {
     final technologies = [
-      {'name': 'Flutter', 'icon': '📱', 'color': const Color(0xFF02569B)},
-      {'name': 'Dart', 'icon': '🎯', 'color': const Color(0xFF0175C2)},
-      {'name': 'Firebase', 'icon': '🔥', 'color': const Color(0xFFFFCA28)},
-      {'name': 'SQLite', 'icon': '🗄️', 'color': const Color(0xFF003B57)},
+      {
+        'name': 'Flutter',
+        'logo': 'assets/images/tech_logos/flutter_logo.png',
+        'color': const Color(0xFF02569B),
+        'description': 'UI Framework'
+      },
+      {
+        'name': 'Dart',
+        'logo': 'assets/images/tech_logos/dart_logo.png',
+        'color': const Color(0xFF0175C2),
+        'description': 'Programming Language'
+      },
+      {
+        'name': 'Firebase',
+        'logo': 'assets/images/tech_logos/firebase_logo.png',
+        'color': const Color(0xFFFFCA28),
+        'description': 'Backend Services'
+      },
+      {
+        'name': 'Android',
+        'logo': 'assets/images/tech_logos/android_logo.png',
+        'color': const Color(0xFF3DDC84),
+        'description': 'Mobile Platform'
+      },
     ];
 
     return Container(
@@ -880,51 +900,116 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
             ],
           ),
           const SizedBox(height: 20),
+          // Top Row - Flutter & Dart
           Row(
-            children: technologies.map((tech) {
-              final index = technologies.indexOf(tech);
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    right: index < technologies.length - 1 ? 12 : 0,
-                  ),
-                  child: _buildTechCard(
-                    tech['name'] as String,
-                    tech['icon'] as String,
-                    tech['color'] as Color,
-                  ),
+            children: [
+              Expanded(
+                child: _buildTechCard(
+                  technologies[0]['name'] as String,
+                  technologies[0]['logo'] as String,
+                  technologies[0]['description'] as String,
+                  technologies[0]['color'] as Color,
                 ),
-              );
-            }).toList(),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTechCard(
+                  technologies[1]['name'] as String,
+                  technologies[1]['logo'] as String,
+                  technologies[1]['description'] as String,
+                  technologies[1]['color'] as Color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Bottom Row - Firebase & Android
+          Row(
+            children: [
+              Expanded(
+                child: _buildTechCard(
+                  technologies[2]['name'] as String,
+                  technologies[2]['logo'] as String,
+                  technologies[2]['description'] as String,
+                  technologies[2]['color'] as Color,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTechCard(
+                  technologies[3]['name'] as String,
+                  technologies[3]['logo'] as String,
+                  technologies[3]['description'] as String,
+                  technologies[3]['color'] as Color,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTechCard(String name, String icon, Color color) {
+  Widget _buildTechCard(String name, String logoPath, String description, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: color.withOpacity(0.2),
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Text(
-            icon,
-            style: const TextStyle(fontSize: 24),
+          // Logo Container
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Image.asset(
+              logoPath,
+              width: 32,
+              height: 32,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback icon if image not found
+                return Icon(
+                  Icons.code_outlined,
+                  color: color,
+                  size: 32,
+                );
+              },
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+          // Technology Name
           Text(
             name,
             style: GoogleFonts.inter(
               color: const Color(0xFF1F2937),
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          // Description
+          Text(
+            description,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
               fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
           ),
@@ -941,6 +1026,13 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
           colors: [Color(0xFF374151), Color(0xFF111827)],
         ),
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -976,69 +1068,94 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
           Row(
             children: [
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      const Text('📱', style: TextStyle(fontSize: 24)),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Google Play',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Yakında',
-                        style: GoogleFonts.inter(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _buildStoreCard(
+                  'Google Play',
+                  'assets/images/tech_logos/android_logo.png',
+                  'Yakında',
+                  const Color(0xFF3DDC84),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      const Text('🍎', style: TextStyle(fontSize: 24)),
-                      const SizedBox(height: 8),
-                      Text(
-                        'App Store',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Yakında',
-                        style: GoogleFonts.inter(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _buildStoreCard(
+                  'App Store',
+                  'assets/images/tech_logos/ios_logo.png',
+                  'Yakında',
+                  const Color(0xFF007AFF),
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStoreCard(String storeName, String logoPath, String status, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Store Logo
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Image.asset(
+              logoPath,
+              width: 32,
+              height: 32,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback icon based on store
+                return Icon(
+                  storeName.contains('Google')
+                      ? Icons.android_outlined
+                      : Icons.apple_outlined,
+                  color: Colors.white,
+                  size: 32,
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Store Name
+          Text(
+            storeName,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          // Status
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: color.withOpacity(0.3),
+              ),
+            ),
+            child: Text(
+              status,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),
