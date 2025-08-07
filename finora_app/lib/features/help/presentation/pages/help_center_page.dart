@@ -208,7 +208,7 @@ class _HelpCenterPageState extends State<HelpCenterPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.getBackground(),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -246,7 +246,7 @@ class _HelpCenterPageState extends State<HelpCenterPage>
       expandedHeight: 100,
       floating: false,
       pinned: true,
-      backgroundColor: AppTheme.getBackground(),
+                  backgroundColor: const Color(0xFFF8FAFC),
       elevation: 0,
       automaticallyImplyLeading: false,
       flexibleSpace: FlexibleSpaceBar(
