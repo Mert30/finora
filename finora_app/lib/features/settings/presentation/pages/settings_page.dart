@@ -1,7 +1,11 @@
 import 'package:finora_app/features/feedback/presentation/feedback_page.dart';
 import 'package:finora_app/features/help/presentation/help_center_page.dart';
-import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
+import 'package:finora_app/features/legal/presentation/privacy_policy_page.dart';
+import 'package:finora_app/features/legal/presentation/terms_of_use_page.dart';
 import 'package:finora_app/features/password_reset/presentation/pages/password_reset__page.dart';
+import 'package:finora_app/features/profile/presentation/profile_page.dart';
+import 'package:finora_app/features/settings/presentation/pages/currency_settings_page.dart';
+import 'package:finora_app/features/settings/presentation/pages/language_settings_page.dart';
 import 'package:finora_app/features/welcome/presentation/pages/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -89,7 +93,14 @@ class _SettingsPageState extends State<SettingsPage>
                           icon: Icons.person_outline,
                           title: 'Profil Bilgileri',
                           subtitle: 'Kişisel bilgilerinizi düzenleyin',
-                          onTap: () => _showComingSoon(context),
+                          onTap: () => {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ProfilePage(),
+                              ),
+                            ),
+                          },
                         ),
                         _buildSettingsTile(
                           icon: Icons.security_outlined,
@@ -135,13 +146,29 @@ class _SettingsPageState extends State<SettingsPage>
                           icon: Icons.language_outlined,
                           title: 'Dil',
                           subtitle: 'Türkçe',
-                          onTap: () => _showComingSoon(context),
+                          onTap: () => {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const LanguageSettingsPage(),
+                              ),
+                            ),
+                          },
                         ),
                         _buildSettingsTile(
                           icon: Icons.currency_exchange_outlined,
                           title: 'Para Birimi',
                           subtitle: 'TL (Türk Lirası)',
-                          onTap: () => _showComingSoon(context),
+                          onTap: () => {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const CurrencySettingsPage(),
+                              ),
+                            ),
+                          },
                         ),
                       ]),
 
@@ -184,6 +211,34 @@ class _SettingsPageState extends State<SettingsPage>
 
                       const SizedBox(height: 24),
 
+                      _buildSettingsSection('Yasal', [
+                        _buildSettingsTile(
+                          icon: Icons.description_outlined,
+                          title: 'Kullanım Koşulları',
+                          subtitle: 'Şartlar ve koşullar',
+                          onTap: () => Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PrivacyPolicyPage(),
+                            ),
+                          ),
+                        ),
+
+                        _buildSettingsTile(
+                          icon: Icons.privacy_tip_outlined,
+                          title: 'Gizlilik Politikası',
+                          subtitle: 'Veri kullanımı ve gizlilik',
+                          onTap: () => Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TermsOfUsePage(),
+                            ),
+                          ),
+                        ),
+                      ]),
+
+                      const SizedBox(height: 24),
+
                       _buildSettingsSection('Hesap', [
                         _buildSettingsTile(
                           icon: Icons.logout_outlined,
@@ -221,7 +276,7 @@ class _SettingsPageState extends State<SettingsPage>
 
   Widget _buildCustomAppBar() {
     return SliverAppBar(
-      expandedHeight: 91,
+      expandedHeight: 90,
       floating: false,
       pinned: true,
       backgroundColor: const Color(0xFFF8FAFC),
@@ -248,7 +303,7 @@ class _SettingsPageState extends State<SettingsPage>
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const MainScreen()),
+              MaterialPageRoute(builder: (context) => const SettingsPage()),
             );
           },
         ),
@@ -369,18 +424,6 @@ class _SettingsPageState extends State<SettingsPage>
                   ),
                 ),
               ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.edit_outlined,
-              color: Colors.white,
-              size: 20,
             ),
           ),
         ],
