@@ -177,7 +177,31 @@ class _HelpCenterPageState extends State<HelpCenterPage>
       pinned: true,
       backgroundColor: const Color(0xFFF8FAFC),
       elevation: 0,
-      automaticallyImplyLeading: false,
+      automaticallyImplyLeading: true,
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Color(0xFF1F2937),
+              size: 20,
+            ),
+          ),
+        ),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(
