@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../../../core/theme/app_theme.dart';
+
 
 class HelpItem {
   final String title;
   final String description;
-  final IconData icon;
-  final Color color;
   final String category;
-  final List<String> content;
+  final IconData icon;
 
   HelpItem({
     required this.title,
     required this.description,
-    required this.icon,
-    required this.color,
     required this.category,
-    required this.content,
+    required this.icon,
   });
 }
 
@@ -30,179 +26,110 @@ class HelpCenterPage extends StatefulWidget {
 
 class _HelpCenterPageState extends State<HelpCenterPage>
     with TickerProviderStateMixin {
-  late AnimationController _fadeController;
+  late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
-  String _selectedCategory = 'Tümü';
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  String _selectedCategory = 'Tümü';
 
   final List<String> _categories = [
     'Tümü',
-    'Hesap Yönetimi',
+    'Hesap',
     'İşlemler',
     'Güvenlik',
-    'Özellikler',
     'Teknik',
+    'Faturalar',
   ];
 
   final List<HelpItem> _helpItems = [
     HelpItem(
-      title: 'Hesap nasıl oluşturabilirim?',
-      description: 'Yeni hesap açma süreci hakkında bilgi',
+      title: 'Hesabımı nasıl oluştururum?',
+      description: 'Yeni hesap oluşturmak için ana sayfadaki "Kayıt Ol" butonuna tıklayın. E-posta adresinizi, güçlü bir şifre belirleyin ve telefon numaranızı doğrulayın.',
+      category: 'Hesap',
       icon: Icons.person_add_outlined,
-      color: const Color(0xFF3B82F6),
-      category: 'Hesap Yönetimi',
-      content: [
-        '1. Ana sayfada "Kayıt Ol" butonuna tıklayın',
-        '2. E-posta adresinizi ve güçlü bir şifre girin',
-        '3. Hesap bilgilerinizi doğrulayın',
-        '4. E-posta adresinize gelen doğrulama linkine tıklayın',
-        '5. Hesabınız aktifleştirildi! Giriş yapabilirsiniz.',
-      ],
     ),
     HelpItem(
-      title: 'Şifremi unuttum, nasıl sıfırlayabilirim?',
-      description: 'Şifre sıfırlama adımları',
-      icon: Icons.lock_reset,
-      color: const Color(0xFFEF4444),
-      category: 'Güvenlik',
-      content: [
-        '1. Giriş sayfasında "Şifremi Unuttum" linkine tıklayın',
-        '2. E-posta adresinizi girin',
-        '3. E-postanıza gelen şifre sıfırlama linkine tıklayın',
-        '4. Yeni şifrenizi belirleyin',
-        '5. Şifreniz başarıyla güncellendi!',
-      ],
+      title: 'Şifremi unuttum, nasıl sıfırlarım?',
+      description: 'Giriş sayfasında "Şifremi Unuttum" linkine tıklayın. Kayıtlı e-posta adresinizi girin, size şifre sıfırlama linki gönderilecektir.',
+      category: 'Hesap',
+      icon: Icons.lock_reset_outlined,
     ),
     HelpItem(
-      title: 'İşlem nasıl eklerim?',
-      description: 'Gelir ve gider ekleme rehberi',
-      icon: Icons.add_circle_outline,
-      color: const Color(0xFF10B981),
+      title: 'Nasıl para transferi yaparım?',
+      description: 'Ana sayfadan "Transfer" seçeneğini seçin. Alıcının hesap bilgilerini girin, tutarı belirleyin ve transfer işlemini onaylayın.',
       category: 'İşlemler',
-      content: [
-        '1. Alt menüden "Ekle" butonuna tıklayın',
-        '2. İşlem tipini seçin (Gelir/Gider)',
-        '3. Tutarı girin',
-        '4. Kategori seçin',
-        '5. Tarih ve açıklama ekleyin',
-        '6. "Kaydet" butonuna tıklayın',
-      ],
+      icon: Icons.send_outlined,
     ),
     HelpItem(
-      title: 'Kategorilerimi nasıl düzenlerim?',
-      description: 'Kategori yönetimi hakkında bilgi',
-      icon: Icons.category_outlined,
-      color: const Color(0xFF8B5CF6),
-      category: 'Özellikler',
-      content: [
-        '1. Alt menüden "Kategoriler" sekmesine gidin',
-        '2. Gelir/Gider kategorilerini seçin',
-        '3. "Yeni Kategori Ekle" butonuna tıklayın',
-        '4. Kategori adı, icon ve renk seçin',
-        '5. Mevcut kategorileri düzenlemek için üzerine tıklayın',
-      ],
+      title: 'İşlem geçmişimi nasıl görüntülerim?',
+      description: 'Menüden "Geçmiş" sekmesine gidin. Burada tüm işlemlerinizi tarih, tutar ve işlem türüne göre filtreleyebilirsiniz.',
+      category: 'İşlemler',
+      icon: Icons.history_outlined,
     ),
     HelpItem(
-      title: 'Hedeflerimi nasıl ayarlarım?',
-      description: 'Bütçe hedefleri oluşturma',
-      icon: Icons.flag_outlined,
-      color: const Color(0xFFF59E0B),
-      category: 'Özellikler',
-      content: [
-        '1. "Hedefler" sekmesine gidin',
-        '2. "Yeni Hedef Ekle" butonuna tıklayın',
-        '3. Hedef adı ve kategori belirleyin',
-        '4. Hedef tutarı ve bitiş tarihi girin',
-        '5. İlerlemenizi takip edin',
-      ],
-    ),
-    HelpItem(
-      title: 'Verilerim güvende mi?',
-      description: 'Güvenlik önlemleri hakkında',
-      icon: Icons.security,
-      color: const Color(0xFF06B6D4),
+      title: 'Hesabım güvenli mi?',
+      description: 'Evet! 256-bit SSL şifreleme, iki faktörlü doğrulama ve gelişmiş fraud koruması ile hesabınız maksimum güvenlik altında.',
       category: 'Güvenlik',
-      content: [
-        '• Tüm verileriniz SSL ile şifrelenir',
-        '• Firebase güvenlik sistemi kullanılır',
-        '• Şifreleriniz hash\'lenerek saklanır',
-        '• Kişisel bilgileriniz hiçbir zaman paylaşılmaz',
-        '• Düzenli güvenlik güncellemeleri yapılır',
-      ],
+      icon: Icons.security_outlined,
+    ),
+    HelpItem(
+      title: 'İki faktörlü doğrulamayı nasıl aktifleştiririm?',
+      description: 'Ayarlar > Güvenlik bölümünden "İki Faktörlü Doğrulama" seçeneğini açın. SMS veya authenticator app ile doğrulama kurabilirsiniz.',
+      category: 'Güvenlik',
+      icon: Icons.verified_user_outlined,
     ),
     HelpItem(
       title: 'Uygulama yavaş çalışıyor',
-      description: 'Performans sorunları çözümü',
-      icon: Icons.speed,
-      color: const Color(0xFFEC4899),
+      description: 'Uygulamayı tamamen kapatıp tekrar açmayı deneyin. Sorun devam ederse ayarlardan cache temizleme yapabilirsiniz.',
       category: 'Teknik',
-      content: [
-        '1. Uygulamayı kapatıp yeniden açın',
-        '2. İnternet bağlantınızı kontrol edin',
-        '3. Uygulamayı güncelleyin',
-        '4. Cihazınızı yeniden başlatın',
-        '5. Sorun devam ederse bizimle iletişime geçin',
-      ],
+      icon: Icons.speed_outlined,
     ),
     HelpItem(
-      title: 'Hesabımı nasıl silerim?',
-      description: 'Hesap silme işlemi',
-      icon: Icons.delete_outline,
-      color: const Color(0xFFEF4444),
-      category: 'Hesap Yönetimi',
-      content: [
-        '1. Ayarlar sayfasına gidin',
-        '2. "Hesap Yönetimi" bölümünü bulun',
-        '3. "Hesabı Sil" seçeneğine tıklayın',
-        '4. Şifrenizi doğrulayın',
-        '5. Onay verin (Bu işlem geri alınamaz!)',
-      ],
+      title: 'Bildirimler gelmiyor',
+      description: 'Cihazınızın bildirim ayarlarını kontrol edin. Uygulama ayarlarından da bildirim izinlerinin açık olduğundan emin olun.',
+      category: 'Teknik',
+      icon: Icons.notifications_outlined,
     ),
   ];
+
+  List<HelpItem> get _filteredItems {
+    List<HelpItem> filtered = _selectedCategory == 'Tümü'
+        ? _helpItems
+        : _helpItems.where((item) => item.category == _selectedCategory).toList();
+
+    if (_searchController.text.isNotEmpty) {
+      filtered = filtered.where((item) =>
+          item.title.toLowerCase().contains(_searchController.text.toLowerCase()) ||
+          item.description.toLowerCase().contains(_searchController.text.toLowerCase())).toList();
+    }
+
+    return filtered;
+  }
 
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
+    _controller = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _fadeController,
+      parent: _controller,
       curve: Curves.easeInOut,
     ));
-    _fadeController.forward();
+
+    _controller.forward();
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
+    _controller.dispose();
     _searchController.dispose();
     super.dispose();
-  }
-
-  List<HelpItem> get _filteredItems {
-    List<HelpItem> filtered = _helpItems;
-    
-    // Kategori filtresi
-    if (_selectedCategory != 'Tümü') {
-      filtered = filtered.where((item) => item.category == _selectedCategory).toList();
-    }
-    
-    // Arama filtresi
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((item) => 
-        item.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().contains(_searchQuery.toLowerCase())
-      ).toList();
-    }
-    
-    return filtered;
   }
 
   @override
@@ -234,6 +161,8 @@ class _HelpCenterPageState extends State<HelpCenterPage>
               
               // Help Items
               _buildHelpItems(),
+              
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
         ),
@@ -246,14 +175,14 @@ class _HelpCenterPageState extends State<HelpCenterPage>
       expandedHeight: 100,
       floating: false,
       pinned: true,
-                  backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF8FAFC),
       elevation: 0,
       automaticallyImplyLeading: false,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppTheme.lightBackground, Color(0xFFE2E8F0)],
+              colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -265,11 +194,11 @@ class _HelpCenterPageState extends State<HelpCenterPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Yardım Merkezi 🆘',
+                  'Yardım Merkezi 💡',
                   style: GoogleFonts.inter(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.getTextPrimary(),
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -278,7 +207,7 @@ class _HelpCenterPageState extends State<HelpCenterPage>
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.getTextSecondary(),
+                    color: const Color(0xFF6B7280),
                   ),
                 ),
               ],
@@ -293,7 +222,6 @@ class _HelpCenterPageState extends State<HelpCenterPage>
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -301,81 +229,76 @@ class _HelpCenterPageState extends State<HelpCenterPage>
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: TextFormField(
+        child: TextField(
           controller: _searchController,
+          onChanged: (value) => setState(() {}),
+          decoration: InputDecoration(
+            hintText: 'Sorunuzu aratın...',
+            hintStyle: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+            ),
+            prefixIcon: const Icon(
+              Icons.search_outlined,
+              color: Color(0xFF6B7280),
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ),
+          ),
           style: GoogleFonts.inter(
-            color: AppTheme.getTextPrimary(),
+            color: const Color(0xFF1F2937),
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
-          decoration: InputDecoration(
-            hintText: 'Soru arayın...',
-            hintStyle: GoogleFonts.inter(
-              color: AppTheme.getTextSecondary(),
-              fontSize: 16,
-            ),
-            prefixIcon: Icon(
-              Icons.search,
-              color: AppTheme.getTextSecondary(),
-            ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-          },
         ),
       ),
     );
   }
 
   Widget _buildCategoryFilter() {
-    return Container(
+    return SizedBox(
       height: 60,
-      margin: const EdgeInsets.symmetric(horizontal: 24),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _categories.length,
         itemBuilder: (context, index) {
           final category = _categories[index];
           final isSelected = category == _selectedCategory;
           
           return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () {
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: FilterChip(
+              label: Text(
+                category,
+                style: GoogleFonts.inter(
+                  color: isSelected ? Colors.white : const Color(0xFF1F2937),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              selected: isSelected,
+              onSelected: (selected) {
                 setState(() {
                   _selectedCategory = category;
                 });
               },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF3B82F6) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  category,
-                  style: GoogleFonts.inter(
-                    color: isSelected ? Colors.white : AppTheme.getTextPrimary(),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              backgroundColor: Colors.white,
+              selectedColor: const Color(0xFF3B82F6),
+              checkmarkColor: Colors.white,
+              side: BorderSide(
+                color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFFE5E7EB),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
             ),
           );
@@ -387,53 +310,39 @@ class _HelpCenterPageState extends State<HelpCenterPage>
   Widget _buildContactCards() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Hızlı İletişim',
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextPrimary(),
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+          Expanded(
+            child: _buildContactCard(
+              title: 'Canlı Destek',
+              subtitle: '7/24 müşteri hizmetleri',
+              icon: Icons.support_agent_outlined,
+              color: const Color(0xFF10B981),
+              onTap: () => _showComingSoon('Canlı destek'),
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildContactCard(
-                  'Canlı Destek',
-                  'Hemen sohbet başlat',
-                  Icons.chat_outlined,
-                  const Color(0xFF10B981),
-                  () => _showComingSoon('Canlı destek'),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildContactCard(
-                  'E-posta',
-                  'support@finora.com',
-                  Icons.email_outlined,
-                  const Color(0xFF3B82F6),
-                  () => _showComingSoon('E-posta desteği'),
-                ),
-              ),
-            ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: _buildContactCard(
+              title: 'E-posta',
+              subtitle: 'destek@finora.com',
+              icon: Icons.email_outlined,
+              color: const Color(0xFF3B82F6),
+              onTap: () => _showComingSoon('E-posta desteği'),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildContactCard(
-    String title, 
-    String subtitle, 
-    IconData icon, 
-    Color color,
-    VoidCallback onTap,
-  ) {
+  Widget _buildContactCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -467,7 +376,7 @@ class _HelpCenterPageState extends State<HelpCenterPage>
             Text(
               title,
               style: GoogleFonts.inter(
-                color: AppTheme.getTextPrimary(),
+                color: const Color(0xFF1F2937),
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -475,12 +384,12 @@ class _HelpCenterPageState extends State<HelpCenterPage>
             const SizedBox(height: 4),
             Text(
               subtitle,
-              textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                color: AppTheme.getTextSecondary(),
+                color: const Color(0xFF6B7280),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -489,52 +398,10 @@ class _HelpCenterPageState extends State<HelpCenterPage>
   }
 
   Widget _buildHelpItems() {
-    final filteredItems = _filteredItems;
+    final items = _filteredItems;
     
-    if (filteredItems.isEmpty) {
-      return SliverFillRemaining(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF64748B).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.search_off,
-                  size: 64,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Aradığınız soru bulunamadı',
-                style: GoogleFonts.inter(
-                  color: AppTheme.getTextPrimary(),
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Farklı anahtar kelimeler deneyebilirsiniz',
-                style: GoogleFonts.inter(
-                  color: AppTheme.getTextSecondary(),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return SliverPadding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
@@ -543,34 +410,34 @@ class _HelpCenterPageState extends State<HelpCenterPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Sıkça Sorulan Sorular',
+                    'Sık Sorulan Sorular',
                     style: GoogleFonts.inter(
-                      color: AppTheme.getTextPrimary(),
+                      color: const Color(0xFF1F2937),
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${filteredItems.length} soru bulundu',
+                    '${items.length} sonuç bulundu',
                     style: GoogleFonts.inter(
-                      color: AppTheme.getTextSecondary(),
+                      color: const Color(0xFF6B7280),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildHelpCard(filteredItems[index]),
+                  _buildHelpCard(items[index]),
                 ],
               );
             }
             
             return Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: _buildHelpCard(filteredItems[index]),
+              child: _buildHelpCard(items[index]),
             );
           },
-          childCount: filteredItems.length,
+          childCount: items.length,
         ),
       ),
     );
@@ -578,7 +445,6 @@ class _HelpCenterPageState extends State<HelpCenterPage>
 
   Widget _buildHelpCard(HelpItem item) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -591,62 +457,37 @@ class _HelpCenterPageState extends State<HelpCenterPage>
         ],
       ),
       child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: item.color.withOpacity(0.1),
+            color: const Color(0xFF3B82F6).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             item.icon,
-            color: item.color,
+            color: const Color(0xFF3B82F6),
             size: 20,
           ),
         ),
         title: Text(
           item.title,
           style: GoogleFonts.inter(
-            color: AppTheme.getTextPrimary(),
+            color: const Color(0xFF1F2937),
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            item.description,
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextSecondary(),
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ),
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: item.color.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: item.content.map((step) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    step,
-                    style: GoogleFonts.inter(
-                      color: AppTheme.getTextPrimary(),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      height: 1.5,
-                    ),
-                  ),
-                );
-              }).toList(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(
+              item.description,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6B7280),
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -658,7 +499,7 @@ class _HelpCenterPageState extends State<HelpCenterPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '$feature yakında kullanıma sunulacak! 🚀',
+          '$feature özelliği yakında! 🚀',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontWeight: FontWeight.w500,

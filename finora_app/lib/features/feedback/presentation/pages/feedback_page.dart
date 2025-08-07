@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../../../core/theme/app_theme.dart';
 
 class FeedbackType {
-  final String name;
+  final String title;
   final String description;
   final IconData icon;
   final Color color;
 
   FeedbackType({
-    required this.name,
+    required this.title,
     required this.description,
     required this.icon,
     required this.color,
@@ -26,13 +25,13 @@ class FeedbackPage extends StatefulWidget {
 
 class _FeedbackPageState extends State<FeedbackPage>
     with TickerProviderStateMixin {
-  late AnimationController _fadeController;
+  late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _emailController = TextEditingController();
 
   int _selectedRating = 0;
   FeedbackType? _selectedType;
@@ -40,124 +39,69 @@ class _FeedbackPageState extends State<FeedbackPage>
 
   final List<FeedbackType> _feedbackTypes = [
     FeedbackType(
-      name: 'Özellik İsteği',
-      description: 'Yeni özellik önerinizi paylaşın',
+      title: 'Özellik İsteği',
+      description: 'Yeni bir özellik önerin',
       icon: Icons.lightbulb_outlined,
-      color: const Color(0xFFF59E0B),
+      color: const Color(0xFF3B82F6),
     ),
     FeedbackType(
-      name: 'Hata Bildirimi',
-      description: 'Karşılaştığınız sorunları bildirin',
+      title: 'Hata Bildirimi',
+      description: 'Karşılaştığınız hataları bildirin',
       icon: Icons.bug_report_outlined,
       color: const Color(0xFFEF4444),
     ),
     FeedbackType(
-      name: 'Genel Görüş',
-      description: 'Uygulama hakkındaki düşünceleriniz',
-      icon: Icons.chat_outlined,
-      color: const Color(0xFF3B82F6),
-    ),
-    FeedbackType(
-      name: 'Performans',
-      description: 'Hız ve performans sorunları',
-      icon: Icons.speed,
+      title: 'UI/UX Geri Bildirimi',
+      description: 'Tasarım önerilerinizi paylaşın',
+      icon: Icons.palette_outlined,
       color: const Color(0xFF8B5CF6),
     ),
     FeedbackType(
-      name: 'Tasarım',
-      description: 'Arayüz ve kullanıcı deneyimi',
-      icon: Icons.palette_outlined,
-      color: const Color(0xFFEC4899),
+      title: 'Performans',
+      description: 'Performans sorunlarını bildirin',
+      icon: Icons.speed_outlined,
+      color: const Color(0xFFF59E0B),
     ),
     FeedbackType(
-      name: 'Diğer',
-      description: 'Diğer konulardaki geri bildirimler',
-      icon: Icons.more_horiz,
-      color: const Color(0xFF64748B),
+      title: 'Genel Görüş',
+      description: 'Genel düşüncelerinizi paylaşın',
+      icon: Icons.chat_outlined,
+      color: const Color(0xFF10B981),
+    ),
+    FeedbackType(
+      title: 'Güvenlik',
+      description: 'Güvenlik endişelerinizi bildirin',
+      icon: Icons.security_outlined,
+      color: const Color(0xFFEC4899),
     ),
   ];
 
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
+    _controller = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _fadeController,
+      parent: _controller,
       curve: Curves.easeInOut,
     ));
-    _fadeController.forward();
+
+    _controller.forward();
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
+    _controller.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
     _emailController.dispose();
     super.dispose();
-  }
-
-  void _submitFeedback() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedType == null) {
-      _showSnackBar('Lütfen geri bildirim türünü seçin', isError: true);
-      return;
-    }
-    if (_selectedRating == 0) {
-      _showSnackBar('Lütfen puanlama yapın', isError: true);
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    // Simulated submission
-    await Future.delayed(const Duration(seconds: 2));
-
-    setState(() {
-      _isSubmitting = false;
-    });
-
-    _showSnackBar('Geri bildiriminiz başarıyla gönderildi! Teşekkürler 🙏');
-    _resetForm();
-  }
-
-  void _resetForm() {
-    _formKey.currentState!.reset();
-    _titleController.clear();
-    _descriptionController.clear();
-    _emailController.clear();
-    setState(() {
-      _selectedRating = 0;
-      _selectedType = null;
-    });
-  }
-
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        backgroundColor: isError 
-            ? const Color(0xFFEF4444) 
-            : const Color(0xFF10B981),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
   }
 
   @override
@@ -172,50 +116,37 @@ class _FeedbackPageState extends State<FeedbackPage>
               // Custom App Bar
               _buildCustomAppBar(),
               
-              // Content
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Rating Section
-                        _buildRatingSection(),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Feedback Type Selection
-                        _buildFeedbackTypeSection(),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Title Input
-                        _buildTitleInput(),
-                        
-                        const SizedBox(height: 24),
-                        
-                        // Description Input
-                        _buildDescriptionInput(),
-                        
-                        const SizedBox(height: 24),
-                        
-                        // Email Input
-                        _buildEmailInput(),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Submit Button
-                        _buildSubmitButton(),
-                        
-                        const SizedBox(height: 24),
-                        
-                        // Footer
-                        _buildFooter(),
-                      ],
+              // Form Content
+              SliverPadding(
+                padding: const EdgeInsets.all(24.0),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    // Rating Section
+                    _buildRatingSection(),
+                    const SizedBox(height: 32),
+                    
+                    // Feedback Type Selection
+                    _buildFeedbackTypeSection(),
+                    const SizedBox(height: 32),
+                    
+                    // Form Fields
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          _buildTitleInput(),
+                          const SizedBox(height: 24),
+                          _buildDescriptionInput(),
+                          const SizedBox(height: 24),
+                          _buildEmailInput(),
+                          const SizedBox(height: 32),
+                          _buildSubmitButton(),
+                          const SizedBox(height: 24),
+                          _buildFooter(),
+                        ],
+                      ),
                     ),
-                  ),
+                  ]),
                 ),
               ),
             ],
@@ -230,14 +161,14 @@ class _FeedbackPageState extends State<FeedbackPage>
       expandedHeight: 100,
       floating: false,
       pinned: true,
-                  backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF8FAFC),
       elevation: 0,
       automaticallyImplyLeading: false,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppTheme.lightBackground, Color(0xFFE2E8F0)],
+              colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -249,11 +180,11 @@ class _FeedbackPageState extends State<FeedbackPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Geri Bildirim 💬',
+                  'Geri Bildirim 💭',
                   style: GoogleFonts.inter(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.getTextPrimary(),
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -262,7 +193,7 @@ class _FeedbackPageState extends State<FeedbackPage>
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.getTextSecondary(),
+                    color: const Color(0xFF6B7280),
                   ),
                 ),
               ],
@@ -282,56 +213,32 @@ class _FeedbackPageState extends State<FeedbackPage>
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.star_outline,
-                  color: Color(0xFFF59E0B),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Finora\'yı nasıl değerlendirirsiniz?',
-                      style: GoogleFonts.inter(
-                        color: AppTheme.getTextPrimary(),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Deneyiminizi puanlayın',
-                      style: GoogleFonts.inter(
-                        color: AppTheme.getTextSecondary(),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Text(
+            'Finora\'yı nasıl değerlendirirsiniz?',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF1F2937),
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          Text(
+            'Deneyiminizi 1-5 yıldız arası değerlendirin',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(5, (index) {
@@ -342,28 +249,25 @@ class _FeedbackPageState extends State<FeedbackPage>
                   });
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      index < _selectedRating ? Icons.star : Icons.star_outline,
-                      color: index < _selectedRating 
-                          ? const Color(0xFFF59E0B) 
-                          : const Color(0xFFE2E8F0),
-                      size: 36,
-                    ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Icon(
+                    index < _selectedRating ? Icons.star : Icons.star_border,
+                    color: index < _selectedRating 
+                        ? const Color(0xFFFBBF24) 
+                        : const Color(0xFFD1D5DB),
+                    size: 32,
                   ),
                 ),
               );
             }),
           ),
           if (_selectedRating > 0) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Center(
               child: Text(
                 _getRatingText(_selectedRating),
                 style: GoogleFonts.inter(
-                  color: const Color(0xFFF59E0B),
+                  color: const Color(0xFF1F2937),
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -377,7 +281,7 @@ class _FeedbackPageState extends State<FeedbackPage>
 
   String _getRatingText(int rating) {
     switch (rating) {
-      case 1: return 'Çok kötü 😞';
+      case 1: return 'Çok Kötü 😞';
       case 2: return 'Kötü 😕';
       case 3: return 'Orta 😐';
       case 4: return 'İyi 😊';
@@ -387,327 +291,242 @@ class _FeedbackPageState extends State<FeedbackPage>
   }
 
   Widget _buildFeedbackTypeSection() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Geri bildirim türü seçin',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF1F2937),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Geri Bildirim Türü',
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextPrimary(),
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Hangi konuda geri bildirim vermek istiyorsunuz?',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF6B7280),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Hangi konuda geri bildirim vermek istiyorsunuz?',
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextSecondary(),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+        ),
+        const SizedBox(height: 20),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.2,
           ),
-          const SizedBox(height: 20),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 1.2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: _feedbackTypes.length,
-            itemBuilder: (context, index) {
-              final type = _feedbackTypes[index];
-              final isSelected = _selectedType == type;
-              
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedType = type;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isSelected 
-                        ? type.color.withOpacity(0.1) 
-                        : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected ? type.color : const Color(0xFFE2E8F0),
-                      width: isSelected ? 2 : 1,
+          itemCount: _feedbackTypes.length,
+          itemBuilder: (context, index) {
+            final type = _feedbackTypes[index];
+            final isSelected = _selectedType == type;
+            
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedType = type;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isSelected ? type.color.withOpacity(0.1) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? type.color : const Color(0xFFE5E7EB),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        type.icon,
-                        color: isSelected ? type.color : const Color(0xFF64748B),
-                        size: 32,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        type.name,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          color: isSelected ? type.color : AppTheme.getTextPrimary(),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        type.description,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          color: AppTheme.getTextSecondary(),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
-              );
-            },
-          ),
-        ],
-      ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      type.icon,
+                      color: isSelected ? type.color : const Color(0xFF1F2937),
+                      size: 28,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      type.title,
+                      style: GoogleFonts.inter(
+                        color: isSelected ? type.color : const Color(0xFF1F2937),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildTitleInput() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Başlık',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF1F2937),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Başlık',
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextPrimary(),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _titleController,
+          decoration: InputDecoration(
+            hintText: 'Geri bildiriminiz için kısa bir başlık',
+            hintStyle: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
+              fontSize: 14,
             ),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
+            ),
+            contentPadding: const EdgeInsets.all(16),
           ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _titleController,
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextPrimary(),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              hintText: 'Geri bildiriminizi özetleyin',
-              hintStyle: GoogleFonts.inter(
-                color: AppTheme.getTextSecondary(),
-                fontSize: 16,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
-              ),
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Lütfen başlık girin';
-              }
-              return null;
-            },
+          style: GoogleFonts.inter(
+            color: const Color(0xFF1F2937),
+            fontSize: 16,
           ),
-        ],
-      ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Lütfen bir başlık girin';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildDescriptionInput() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Açıklama',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF1F2937),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Detaylı Açıklama',
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextPrimary(),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _descriptionController,
+          maxLines: 5,
+          decoration: InputDecoration(
+            hintText: 'Detaylı açıklama yazın...',
+            hintStyle: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
+              fontSize: 14,
             ),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
+            ),
+            contentPadding: const EdgeInsets.all(16),
           ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _descriptionController,
-            maxLines: 5,
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextPrimary(),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              hintText: 'Lütfen deneyiminizi detaylı olarak anlatın...',
-              hintStyle: GoogleFonts.inter(
-                color: AppTheme.getTextSecondary(),
-                fontSize: 16,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
-              ),
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Lütfen açıklama girin';
-              }
-              if (value.length < 10) {
-                return 'Açıklama en az 10 karakter olmalıdır';
-              }
-              return null;
-            },
+          style: GoogleFonts.inter(
+            color: const Color(0xFF1F2937),
+            fontSize: 16,
           ),
-        ],
-      ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Lütfen bir açıklama girin';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildEmailInput() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'E-posta (Opsiyonel)',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF1F2937),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'E-posta Adresi (İsteğe bağlı)',
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextPrimary(),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Size geri dönüş yapabilmemiz için',
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextSecondary(),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            hintText: 'ornek@email.com',
+            hintStyle: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
               fontSize: 14,
-              fontWeight: FontWeight.w400,
             ),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
+            ),
+            contentPadding: const EdgeInsets.all(16),
           ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            style: GoogleFonts.inter(
-              color: AppTheme.getTextPrimary(),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              hintText: 'ornek@email.com',
-              hintStyle: GoogleFonts.inter(
-                color: AppTheme.getTextSecondary(),
-                fontSize: 16,
-              ),
-              prefixIcon: Icon(
-                Icons.email_outlined,
-                color: AppTheme.getTextSecondary(),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
-              ),
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-            ),
-            validator: (value) {
-              if (value != null && value.isNotEmpty) {
-                if (!value.contains('@')) {
-                  return 'Geçerli bir e-posta adresi girin';
-                }
-              }
-              return null;
-            },
+          style: GoogleFonts.inter(
+            color: const Color(0xFF1F2937),
+            fontSize: 16,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -718,10 +537,7 @@ class _FeedbackPageState extends State<FeedbackPage>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF3B82F6),
-            Color(0xFF8B5CF6),
-          ],
+          colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
         ),
         boxShadow: [
           BoxShadow(
@@ -742,29 +558,17 @@ class _FeedbackPageState extends State<FeedbackPage>
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      color: Colors.white,
                       strokeWidth: 2,
                     ),
                   )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.send,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Gönder',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
+                : Text(
+                    'Geri Bildirim Gönder',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
           ),
         ),
@@ -774,38 +578,88 @@ class _FeedbackPageState extends State<FeedbackPage>
 
   Widget _buildFooter() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF3B82F6).withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF3B82F6).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.info_outline,
-              color: Color(0xFF3B82F6),
-              size: 20,
-            ),
+          const Icon(
+            Icons.privacy_tip_outlined,
+            color: Color(0xFF3B82F6),
+            size: 20,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Geri bildiriminiz anonim olarak işlenir ve yalnızca ürün geliştirme için kullanılır.',
+              'Geri bildiriminiz gizli tutulur ve sadece geliştirme amaçlı kullanılır.',
               style: GoogleFonts.inter(
-                color: AppTheme.getTextSecondary(),
+                color: const Color(0xFF6B7280),
                 fontSize: 12,
-                fontWeight: FontWeight.w400,
-                height: 1.4,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _submitFeedback() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_selectedRating == 0) {
+      _showSnackBar('Lütfen bir değerlendirme seçin', Colors.red);
+      return;
+    }
+
+    if (_selectedType == null) {
+      _showSnackBar('Lütfen geri bildirim türü seçin', Colors.red);
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    // Simulate API call
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    _showSnackBar('Geri bildiriminiz başarıyla gönderildi! 🎉', Colors.green);
+    _resetForm();
+  }
+
+  void _resetForm() {
+    _titleController.clear();
+    _descriptionController.clear();
+    _emailController.clear();
+    setState(() {
+      _selectedRating = 0;
+      _selectedType = null;
+    });
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
