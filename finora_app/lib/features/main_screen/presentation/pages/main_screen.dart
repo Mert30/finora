@@ -2,6 +2,7 @@ import 'package:finora_app/features/dashboard/presentation/pages/dashboard_page.
 import 'package:finora_app/features/transactions/presentation/pages/history_page.dart';
 import 'package:finora_app/features/budget/presentation/pages/budget_goals_page.dart';
 import 'package:finora_app/features/categories/presentation/pages/category_management_page.dart';
+import 'package:finora_app/features/profile/presentation/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -557,6 +558,7 @@ class _MainScreenState extends State<MainScreen> {
     HistoryPage(transactions: []),
     BudgetGoalsPage(),
     CategoryManagementPage(),
+    ProfilePage(),
   ];
 
   @override
@@ -604,6 +606,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.category_outlined),
             activeIcon: Icon(Icons.category),
             label: 'Kategoriler',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profil',
           ),
         ],
       ),
