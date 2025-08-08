@@ -1022,40 +1022,40 @@ class _DashboardPageState extends State<DashboardPage>
         children: [
           Expanded(
             child: _buildAdvancedQuickActionCard(
-              icon: Icons.auto_awesome,
-              label: 'AI Analiz',
-              subtitle: 'Akıllı Öneriler',
-              color: const Color(0xFF3B82F6),
+              icon: Icons.credit_card_outlined,
+              label: 'Kartlarım',
+              subtitle: 'Banka Kartları',
+              color: const Color(0xFF6366F1),
               gradient: const LinearGradient(
-                colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+                colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
               ),
-              onTap: () => _showAIAnalysis(),
+              onTap: () => _showMyCards(),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: _buildAdvancedQuickActionCard(
-              icon: Icons.qr_code_scanner,
-              label: 'QR Öde',
-              subtitle: 'Hızlı Ödeme',
+              icon: Icons.send_outlined,
+              label: 'Para Gönder',
+              subtitle: 'Hızlı Transfer',
               color: const Color(0xFF10B981),
               gradient: const LinearGradient(
                 colors: [Color(0xFF10B981), Color(0xFF059669)],
               ),
-              onTap: () => _showQRScanner(),
+              onTap: () => _showMoneyTransfer(),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: _buildAdvancedQuickActionCard(
-              icon: Icons.mic,
-              label: 'Sesli İşlem',
-              subtitle: 'Konuşarak Ekle',
-              color: const Color(0xFFF59E0B),
+              icon: Icons.analytics_outlined,
+              label: 'Günlük Özet',
+              subtitle: 'Bugünün Analizi',
+              color: const Color(0xFFEF4444),
               gradient: const LinearGradient(
-                colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
               ),
-              onTap: () => _showVoiceInput(),
+              onTap: () => _showDailySummary(),
             ),
           ),
         ],
@@ -3838,6 +3838,340 @@ class _DashboardPageState extends State<DashboardPage>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // 💳 YENİ ÖZELLİKLER - KARTLARIM, PARA GÖNDER, GÜNLÜK ÖZET
+
+  void _showMyCards() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.credit_card_outlined,
+                    color: Color(0xFF6366F1),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Kartlarım',
+                        style: GoogleFonts.inter(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1F2937),
+                        ),
+                      ),
+                      Text(
+                        'Banka kartlarını yönet',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: Color(0xFF6B7280)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Kart Listesi
+            Expanded(
+              child: ListView(
+                children: [
+                  _buildCreditCard(
+                    bankName: 'İş Bankası',
+                    cardNumber: '**** **** **** 1234',
+                    cardHolder: 'AHMET YILMAZ',
+                    expiryDate: '12/28',
+                    balance: '15.750,00 ₺',
+                    cardColor: const LinearGradient(
+                      colors: [Color(0xFF1E40AF), Color(0xFF3B82F6)],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCreditCard(
+                    bankName: 'Akbank',
+                    cardNumber: '**** **** **** 5678',
+                    cardHolder: 'AHMET YILMAZ',
+                    expiryDate: '09/26',
+                    balance: '8.450,00 ₺',
+                    cardColor: const LinearGradient(
+                      colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCreditCard(
+                    bankName: 'Garanti BBVA',
+                    cardNumber: '**** **** **** 9012',
+                    cardHolder: 'AHMET YILMAZ',
+                    expiryDate: '03/27',
+                    balance: '22.100,00 ₺',
+                    cardColor: const LinearGradient(
+                      colors: [Color(0xFF059669), Color(0xFF10B981)],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Yeni Kart Ekle Butonu
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('💳 Kart ekleme özelliği çok yakında!'),
+                          backgroundColor: const Color(0xFF6366F1),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFF6366F1).withOpacity(0.3),
+                          width: 2,
+                          style: BorderStyle.solid,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              color: Color(0xFF6366F1),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Yeni Kart Ekle',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF1F2937),
+                                  ),
+                                ),
+                                Text(
+                                  'Banka kartınızı güvenli şekilde ekleyin',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            color: Color(0xFF6366F1),
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreditCard({
+    required String bankName,
+    required String cardNumber,
+    required String cardHolder,
+    required String expiryDate,
+    required String balance,
+    required LinearGradient cardColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                bankName,
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'VISA',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            cardNumber,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'KART SAHİBİ',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    cardHolder,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'VADESİ',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    expiryDate,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'BAKİYE',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    balance,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMoneyTransfer() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('💸 Para Gönder özelliği çok yakında!'),
+        backgroundColor: const Color(0xFF10B981),
+      ),
+    );
+  }
+
+  void _showDailySummary() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('📊 Günlük Özet özelliği çok yakında!'),
+        backgroundColor: const Color(0xFFEF4444),
       ),
     );
   }
