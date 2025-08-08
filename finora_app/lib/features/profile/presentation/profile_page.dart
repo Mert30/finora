@@ -58,7 +58,7 @@ class _ProfilePageState extends State<ProfilePage>
     phone: '+90 555 123 45 67',
     memberSince: '15 Ocak 2024',
     profileImageUrl: '',
-    isVerified: false,
+    isVerified: true,
     accountType: 'Premium',
   );
 
@@ -132,8 +132,7 @@ class _ProfilePageState extends State<ProfilePage>
                   child: _buildQuickActions(),
                 ),
               ),
-
-              SliverToBoxAdapter(child: const SizedBox(height: 30)),
+              const SliverToBoxAdapter(child: SizedBox(height: 50)),
             ],
           ),
         ),
@@ -212,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage>
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 30, 24, 16),
+            padding: const EdgeInsets.fromLTRB(24, 40, 24, 16),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -220,16 +219,15 @@ class _ProfilePageState extends State<ProfilePage>
                 Text(
                   'Profil 👤',
                   style: GoogleFonts.inter(
-                    fontSize: 25,
+                    fontSize: 28,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1F2937),
                   ),
                 ),
-
                 Text(
                   'Hesap bilgilerinizi yönetin',
                   style: GoogleFonts.inter(
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF6B7280),
                   ),
@@ -670,38 +668,60 @@ class _ProfilePageState extends State<ProfilePage>
     required VoidCallback onTap,
     bool isDestructive = false,
   }) {
-    return ListTile(
-      onTap: onTap,
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
+    return InkWell(
+      onTap: () {
+        print('📱 InkWell tıklandı: $title');
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            // Icon Container
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 16),
+            // Title & Subtitle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      color: isDestructive ? color : const Color(0xFF1F2937),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Arrow Icon
+            Icon(
+              Icons.arrow_forward_ios,
+              color: const Color(0xFF6B7280),
+              size: 16,
+            ),
+          ],
         ),
-        child: Icon(icon, color: color, size: 20),
       ),
-      title: Text(
-        title,
-        style: GoogleFonts.inter(
-          color: isDestructive ? color : const Color(0xFF1F2937),
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: GoogleFonts.inter(
-          color: const Color(0xFF6B7280),
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      trailing: Icon(
-        Icons.arrow_forward_ios,
-        color: const Color(0xFF6B7280),
-        size: 16,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
     );
   }
 
@@ -720,52 +740,335 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   void _showLogoutConfirmation() {
+    print('🚨 _showLogoutConfirmation çağrıldı!'); // Debug için
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      barrierDismissible: true, // Dialog dışına tıklayınca kapansın
+      builder: (BuildContext dialogContext) => AlertDialog(
         backgroundColor: Colors.white,
+        elevation: 24,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Çıkış Yap',
-          style: GoogleFonts.inter(
-            color: const Color(0xFF1F2937),
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.logout_outlined,
+                color: Color(0xFFEF4444),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Çıkış Yap',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF1F2937),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ),
-        content: Text(
-          'Hesabınızdan çıkış yapmak istediğinizden emin misiniz?',
-          style: GoogleFonts.inter(
-            color: const Color(0xFF6B7280),
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'İptal',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hesabınızdan çıkış yapmak istediğinizden emin misiniz?',
               style: GoogleFonts.inter(
                 color: const Color(0xFF6B7280),
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
               ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Bu işlem sizi ana sayfaya yönlendirecektir.',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () {
+                    print('🚫 İptal butonuna basıldı');
+                    Navigator.pop(dialogContext);
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                  ),
+                  child: Text(
+                    'İptal',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    print('✅ Çıkış Yap butonuna basıldı');
+                    Navigator.pop(dialogContext);
+                    _showComingSoon('Çıkış yapma işlemi');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF4444),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Çıkış Yap',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNotificationSettings() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E7EB),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_active,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Bildirim Ayarları',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF1F2937),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Akıllı bildirimlerinizi yönetin',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF6B7280),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 32),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF3F4F6),
+                        foregroundColor: const Color(0xFF6B7280),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'İptal',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Bildirim ayarları kaydedildi! ✅',
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            backgroundColor: const Color(0xFF10B981),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            margin: const EdgeInsets.all(16),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B5CF6),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Kaydet',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationSettingCard(
+    String title,
+    String description,
+    IconData icon,
+    Color color,
+    bool isEnabled,
+    Function(bool) onChanged,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isEnabled ? color.withOpacity(0.1) : const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isEnabled ? color.withOpacity(0.3) : const Color(0xFFE5E7EB),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF1F2937),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showComingSoon('Çıkış yapma işlemi');
-            },
-            child: Text(
-              'Çıkış Yap',
-              style: GoogleFonts.inter(
-                color: const Color(0xFFEF4444),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          const SizedBox(width: 16),
+          Switch(
+            value: isEnabled,
+            onChanged: onChanged,
+            activeColor: color,
+            inactiveThumbColor: const Color(0xFFD1D5DB),
+            inactiveTrackColor: const Color(0xFFF3F4F6),
           ),
         ],
       ),
