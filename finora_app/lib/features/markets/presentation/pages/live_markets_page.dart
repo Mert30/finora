@@ -159,9 +159,9 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: const EdgeInsets.only(left: 24, right: 24, top: 70, bottom: 16),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Row(
                   children: [
