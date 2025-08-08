@@ -1,4 +1,4 @@
-import 'package:finora_app/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
 import 'package:finora_app/features/password_reset/presentation/pages/password_reset__page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,8 +11,7 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage>
-    with TickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   final TextEditingController _emailController = TextEditingController();
@@ -32,13 +31,10 @@ class _LoginPageState extends State<LoginPage>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutBack,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
+        );
     _slideController.forward();
   }
 
@@ -68,9 +64,10 @@ class _LoginPageState extends State<LoginPage>
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
                 const MainScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
             transitionDuration: const Duration(milliseconds: 600),
           ),
         );
@@ -115,30 +112,30 @@ class _LoginPageState extends State<LoginPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            
+
             // Welcome text
             _buildWelcomeSection(),
-            
+
             const SizedBox(height: 40),
-            
+
             // Login form
             _buildLoginForm(),
-            
+
             const SizedBox(height: 24),
-            
+
             // Forgot password
             _buildForgotPassword(),
-            
+
             const SizedBox(height: 32),
-            
+
             // Login button
             _buildLoginButton(),
-            
+
             if (_errorMessage != null) ...[
               const SizedBox(height: 20),
               _buildErrorMessage(),
             ],
-            
+
             const SizedBox(height: 40),
           ],
         ),
@@ -151,7 +148,7 @@ class _LoginPageState extends State<LoginPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tekrar Hoş Geldiniz! 👋',
+          'Tekrar Hoş Geldiniz!',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontSize: 28,
@@ -186,17 +183,14 @@ class _LoginPageState extends State<LoginPage>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
       ),
       child: Column(
         children: [
           _buildCustomTextField(
             controller: _emailController,
             label: 'E-posta',
-            hint: 'ornek@email.com',
+            hint: 'ornek@gmail.com',
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
           ),
@@ -237,30 +231,17 @@ class _LoginPageState extends State<LoginPage>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             color: Colors.white.withOpacity(0.1),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
           ),
           child: TextField(
             controller: controller,
             obscureText: isPassword ? _obscurePassword : false,
             keyboardType: keyboardType,
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 16,
-            ),
+            style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: GoogleFonts.inter(
-                color: Colors.white40,
-                fontSize: 16,
-              ),
-              prefixIcon: Icon(
-                icon,
-                color: Colors.white60,
-                size: 20,
-              ),
+              hintStyle: GoogleFonts.inter(color: Colors.white60, fontSize: 16),
+              prefixIcon: Icon(icon, color: Colors.white60, size: 20),
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
@@ -296,9 +277,7 @@ class _LoginPageState extends State<LoginPage>
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const PasswordResetPage(),
-            ),
+            MaterialPageRoute(builder: (context) => const PasswordResetPage()),
           );
         },
         child: Text(
@@ -321,10 +300,7 @@ class _LoginPageState extends State<LoginPage>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF00D4FF),
-            Color(0xFF5A67D8),
-          ],
+          colors: [Color(0xFF00D4FF), Color(0xFF5A67D8)],
         ),
         boxShadow: [
           BoxShadow(
@@ -381,18 +357,11 @@ class _LoginPageState extends State<LoginPage>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.red.withOpacity(0.1),
-        border: Border.all(
-          color: Colors.red.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.error_outline,
-            color: Colors.red[300],
-            size: 20,
-          ),
+          Icon(Icons.error_outline, color: Colors.red[300], size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
