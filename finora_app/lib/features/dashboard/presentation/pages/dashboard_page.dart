@@ -634,29 +634,41 @@ class _DashboardPageState extends State<DashboardPage>
       child: Row(
         children: [
           Expanded(
-            child: _buildQuickActionCard(
-              icon: Icons.add,
-              label: 'Gelir Ekle',
+            child: _buildAdvancedQuickActionCard(
+              icon: Icons.auto_awesome,
+              label: 'AI Analiz',
+              subtitle: 'Akıllı Öneriler',
+              color: const Color(0xFF3B82F6),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+              ),
+              onTap: () => _showAIAnalysis(),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildAdvancedQuickActionCard(
+              icon: Icons.qr_code_scanner,
+              label: 'QR Öde',
+              subtitle: 'Hızlı Ödeme',
               color: const Color(0xFF10B981),
-              onTap: () {},
+              gradient: const LinearGradient(
+                colors: [Color(0xFF10B981), Color(0xFF059669)],
+              ),
+              onTap: () => _showQRScanner(),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: _buildQuickActionCard(
-              icon: Icons.remove,
-              label: 'Gider Ekle',
-              color: const Color(0xFFEF4444),
-              onTap: () {},
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildQuickActionCard(
-              icon: Icons.swap_horiz,
-              label: 'Transfer',
-              color: const Color(0xFF8B5CF6),
-              onTap: () {},
+            child: _buildAdvancedQuickActionCard(
+              icon: Icons.mic,
+              label: 'Sesli İşlem',
+              subtitle: 'Konuşarak Ekle',
+              color: const Color(0xFFF59E0B),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+              ),
+              onTap: () => _showVoiceInput(),
             ),
           ),
         ],
@@ -664,24 +676,26 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  Widget _buildQuickActionCard({
+  Widget _buildAdvancedQuickActionCard({
     required IconData icon,
     required String label,
+    required String subtitle,
     required Color color,
+    required LinearGradient gradient,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          gradient: gradient,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: color.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -690,25 +704,417 @@ class _DashboardPageState extends State<DashboardPage>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 icon,
-                color: color,
-                size: 24,
+                color: Colors.white,
+                size: 28,
               ),
             ),
             const SizedBox(height: 12),
             Text(
               label,
               style: GoogleFonts.inter(
-                color: const Color(0xFF1E293B),
+                color: Colors.white,
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: GoogleFonts.inter(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 🤖 AI ANALIZ ÖZELLİĞİ
+  void _showAIAnalysis() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AI Finansal Analiz',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF1F2937),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        'Yapay zeka destekli akıllı öneriler',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF6B7280),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // AI Insights
+            Expanded(
+              child: ListView(
+                children: [
+                  _buildAIInsightCard(
+                    '💡 Tasarruf Önerisi',
+                    'Kahve harcamalarınızı %30 azaltarak aylık 450₺ tasarruf edebilirsiniz.',
+                    const Color(0xFF10B981),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildAIInsightCard(
+                    '📊 Harcama Analizi',
+                    'Bu ay market harcamalarınız geçen aya göre %15 arttı. Bütçe planı öneriyoruz.',
+                    const Color(0xFFF59E0B),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildAIInsightCard(
+                    '🎯 Hedef Tavsiyesi',
+                    'Mevcut gelirinize göre 3 ay içinde 2.000₺ tasarruf hedefi belirleyebilirsiniz.',
+                    const Color(0xFF3B82F6),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildAIInsightCard(
+                    '⚠️ Risk Uyarısı',
+                    'Kredi kartı harcamalarınız son 2 aydır artış gösteriyor. Dikkatli olun!',
+                    const Color(0xFFEF4444),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAIInsightCard(String title, String description, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF1F2937),
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF4B5563),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 📱 QR SCANNER ÖZELLİĞİ
+  void _showQRScanner() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5E7EB),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // QR Scanner UI
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.qr_code_scanner,
+                    color: Colors.white,
+                    size: 80,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'QR Kod ile Ödeme',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'QR kodu okutarak hızlı ve güvenli ödeme yapın',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'QR Scanner özelliği yakında! 📱',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          backgroundColor: const Color(0xFF10B981),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          margin: const EdgeInsets.all(16),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF10B981),
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      'Kamerayı Aç',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 🎤 SESLİ İŞLEM ÖZELLİĞİ
+  void _showVoiceInput() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5E7EB),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Voice Input UI
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: const Icon(
+                      Icons.mic,
+                      color: Colors.white,
+                      size: 60,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Sesli İşlem Ekle',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '"Market alışverişi için 250 lira harcadım" şeklinde konuşun',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Sesli işlem özelliği yakında! 🎤',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                backgroundColor: const Color(0xFFF59E0B),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                margin: const EdgeInsets.all(16),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFFF59E0B),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.mic, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Konuşmaya Başla',
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
