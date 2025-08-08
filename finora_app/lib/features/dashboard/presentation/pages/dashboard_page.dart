@@ -351,6 +351,7 @@ class _DashboardPageState extends State<DashboardPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      drawer: _buildCustomDrawer(),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -415,6 +416,30 @@ class _DashboardPageState extends State<DashboardPage>
       backgroundColor: const Color(0xFFF8FAFC),
       elevation: 0,
       automaticallyImplyLeading: false,
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(
+              Icons.menu_rounded,
+              color: Color(0xFF64748B),
+              size: 24,
+            ),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(
@@ -3011,6 +3036,473 @@ class _DashboardPageState extends State<DashboardPage>
           borderRadius: BorderRadius.circular(12),
         ),
         margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  // 🎨 CUSTOM DRAWER WITH NEW FEATURES
+  Widget _buildCustomDrawer() {
+    return Drawer(
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet_outlined,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Finora',
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              'AI Destekli Finans',
+                              style: GoogleFonts.inter(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            // New Features Section
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // NEW FEATURES LABEL
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.fiber_new_outlined,
+                            color: Color(0xFF10B981),
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Yeni Özellikler',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF1F2937),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEF4444),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'BETA',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // AI INSIGHTS
+                  _buildDrawerTile(
+                    icon: Icons.psychology_outlined,
+                    title: 'AI İçgörüleri',
+                    subtitle: 'Akıllı finansal analizler',
+                    color: const Color(0xFF667EEA),
+                    isNew: true,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showDetailedInsights();
+                    },
+                  ),
+                  
+                  // SMART NOTIFICATIONS  
+                  _buildDrawerTile(
+                    icon: Icons.notifications_active_outlined,
+                    title: 'Akıllı Bildirimler',
+                    subtitle: 'AI destekli uyarılar',
+                    color: const Color(0xFF8B5CF6),
+                    isNew: true,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showSmartNotifications();
+                    },
+                  ),
+                  
+                  // FINANCIAL HEALTH
+                  _buildDrawerTile(
+                    icon: Icons.favorite_outline,
+                    title: 'Finansal Sağlık',
+                    subtitle: 'Sağlık skoru ve analiz',
+                    color: const Color(0xFFEF4444),
+                    isNew: true,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showDetailedHealthAnalysis();
+                    },
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  Divider(color: const Color(0xFFE5E7EB)),
+                  const SizedBox(height: 16),
+                  
+                  // AI POWERED ACTIONS LABEL
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF3B82F6).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome,
+                            color: Color(0xFF3B82F6),
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'AI Powered İşlemler',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF1F2937),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // AI ANALYSIS
+                  _buildDrawerTile(
+                    icon: Icons.analytics_outlined,
+                    title: 'AI Analiz',
+                    subtitle: 'Derin finansal analiz',
+                    color: const Color(0xFF10B981),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showAIAnalysis();
+                    },
+                  ),
+                  
+                  // QR PAY
+                  _buildDrawerTile(
+                    icon: Icons.qr_code_scanner_outlined,
+                    title: 'QR Öde',
+                    subtitle: 'Hızlı QR ile ödeme',
+                    color: const Color(0xFFF59E0B),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showQRScanner();
+                    },
+                  ),
+                  
+                  // VOICE INPUT
+                  _buildDrawerTile(
+                    icon: Icons.mic_outlined,
+                    title: 'Sesli İşlem',
+                    subtitle: 'Sesle harcama kaydı',
+                    color: const Color(0xFF8B5CF6),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showVoiceInput();
+                    },
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  Divider(color: const Color(0xFFE5E7EB)),
+                  const SizedBox(height: 16),
+                  
+                  // STANDARD FEATURES
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    child: Text(
+                      'Standart Özellikler',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF6B7280),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  
+                  _buildDrawerTile(
+                    icon: Icons.settings_outlined,
+                    title: 'Ayarlar',
+                    subtitle: 'Uygulama ayarları',
+                    color: const Color(0xFF64748B),
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Ayarlar sayfası yakında! ⚙️',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          backgroundColor: const Color(0xFF64748B),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          margin: const EdgeInsets.all(16),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  _buildDrawerTile(
+                    icon: Icons.help_outline,
+                    title: 'Yardım',
+                    subtitle: 'Destek ve SSS',
+                    color: const Color(0xFF64748B),
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Yardım merkezi yakında! 🆘',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          backgroundColor: const Color(0xFF64748B),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          margin: const EdgeInsets.all(16),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            
+            // Footer
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Divider(color: const Color(0xFFE5E7EB)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF667EEA).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.rocket_launch_outlined,
+                          color: Color(0xFF667EEA),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Finora v1.0.0',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF1F2937),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              'AI destekli finans uygulaması',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF6B7280),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+    bool isNew = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: color.withOpacity(0.1),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF1F2937),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (isNew) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'YENİ',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF6B7280),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: color.withOpacity(0.6),
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
