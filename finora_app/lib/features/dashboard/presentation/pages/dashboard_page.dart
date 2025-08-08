@@ -7,6 +7,7 @@ import 'package:finora_app/features/transactions/presentation/pages/history_page
 import 'package:finora_app/features/budget/presentation/pages/budget_goals_page.dart';
 import 'package:finora_app/features/categories/presentation/pages/category_management_page.dart';
 import 'package:finora_app/features/settings/presentation/pages/settings_page.dart'; // For NotificationSettings
+import 'package:finora_app/features/money_transfer/presentation/pages/money_transfer_page.dart';
 
 // Analytics sayfası
 class AnalyticsPage extends StatefulWidget {
@@ -4159,10 +4160,24 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   void _showMoneyTransfer() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('💸 Para Gönder özelliği çok yakında!'),
-        backgroundColor: const Color(0xFF10B981),
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const MoneyTransferPage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.ease;
+
+          var tween = Tween(begin: begin, end: end).chain(
+            CurveTween(curve: curve),
+          );
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
       ),
     );
   }
