@@ -1,4 +1,4 @@
-import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
+import 'package:finora_app/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -87,7 +87,7 @@ class _RegisterPageState extends State<RegisterPage>
           context,
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
-                const MainScreen(),
+                const DashboardPage(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:finora_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:finora_app/features/transactions/presentation/pages/add_transaction_page.dart';
+import 'package:finora_app/features/transactions/presentation/pages/history_page.dart';
+import 'package:finora_app/features/budget/presentation/pages/budget_goals_page.dart';
+import 'package:finora_app/features/categories/presentation/pages/category_management_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -102,6 +107,191 @@ class _DashboardPageState extends State<DashboardPage>
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showQuickActionsMenu(),
+        backgroundColor: const Color(0xFF3B82F6),
+        foregroundColor: Colors.white,
+        elevation: 8,
+        child: const Icon(
+          Icons.add,
+          size: 28,
+        ),
+      ),
+    );
+  }
+
+  void _showQuickActionsMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5E7EB),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Title
+            Text(
+              'Hızlı İşlemler',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF1F2937),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Actions Grid
+            GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1.2,
+              children: [
+                _buildQuickActionCard(
+                  'İşlem Ekle',
+                  Icons.add_circle_outline,
+                  const Color(0xFF10B981),
+                  () => Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const AddTransactionPage(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: animation.drive(
+                            Tween(begin: const Offset(0.0, 1.0), end: Offset.zero),
+                          ),
+                          child: child,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                _buildQuickActionCard(
+                  'Geçmiş',
+                  Icons.history_outlined,
+                  const Color(0xFF3B82F6),
+                  () => Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const HistoryPage(transactions: []),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: animation.drive(
+                            Tween(begin: const Offset(0.0, 1.0), end: Offset.zero),
+                          ),
+                          child: child,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                _buildQuickActionCard(
+                  'Hedefler',
+                  Icons.flag_outlined,
+                  const Color(0xFFF59E0B),
+                  () => Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const BudgetGoalsPage(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: animation.drive(
+                            Tween(begin: const Offset(0.0, 1.0), end: Offset.zero),
+                          ),
+                          child: child,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                _buildQuickActionCard(
+                  'Kategoriler',
+                  Icons.category_outlined,
+                  const Color(0xFF8B5CF6),
+                  () => Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const CategoryManagementPage(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: animation.drive(
+                            Tween(begin: const Offset(0.0, 1.0), end: Offset.zero),
+                          ),
+                          child: child,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: () {
+        Navigator.pop(context); // Bottom sheet'i kapat
+        onTap(); // Action'ı çalıştır
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF1F2937),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -169,26 +359,23 @@ class _DashboardPageState extends State<DashboardPage>
                       ),
                       child: IconButton(
                         icon: const Icon(
-                          Icons.notifications_outlined,
+                          Icons.person_outline,
                           color: Color(0xFF64748B),
                           size: 24,
                         ),
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Bildirimler özelliği yakında! 🔔',
-                                style: GoogleFonts.inter(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              backgroundColor: const Color(0xFF3B82F6),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              margin: const EdgeInsets.all(16),
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation, secondaryAnimation) => const ProfilePage(),
+                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                return SlideTransition(
+                                  position: animation.drive(
+                                    Tween(begin: const Offset(1.0, 0.0), end: Offset.zero),
+                                  ),
+                                  child: child,
+                                );
+                              },
                             ),
                           );
                         },
