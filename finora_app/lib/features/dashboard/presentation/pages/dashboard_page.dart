@@ -6,6 +6,7 @@ import 'package:finora_app/features/transactions/presentation/pages/add_transact
 import 'package:finora_app/features/transactions/presentation/pages/history_page.dart';
 import 'package:finora_app/features/budget/presentation/pages/budget_goals_page.dart';
 import 'package:finora_app/features/categories/presentation/pages/category_management_page.dart';
+import 'package:finora_app/features/profile/presentation/pages/profile_page.dart'; // For NotificationSettings
 
 // Analytics sayfası
 class AnalyticsPage extends StatefulWidget {
@@ -473,35 +474,36 @@ class _DashboardPageState extends State<DashboardPage>
                             ),
                             onPressed: () => _showSmartNotifications(),
                           ),
-                          // Notification Badge
-                          Positioned(
-                            right: 8,
-                            top: 8,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEF4444),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
+                          // Notification Badge - Only show if notifications are active
+                          if (NotificationSettings.hasActiveNotifications)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEF4444),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
                                 ),
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
-                              child: Text(
-                                '3',
-                                style: GoogleFonts.inter(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
                                 ),
-                                textAlign: TextAlign.center,
+                                child: Text(
+                                  '${NotificationSettings.activeNotificationCount}',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -1682,9 +1684,31 @@ class _DashboardPageState extends State<DashboardPage>
          );
    }
 
-   // 🔔 SMART NOTIFICATIONS SYSTEM
-   void _showSmartNotifications() {
-     showModalBottomSheet(
+       // 🔔 SMART NOTIFICATIONS SYSTEM
+    void _showSmartNotifications() {
+      // If no notifications are active, redirect to settings
+      if (!NotificationSettings.hasActiveNotifications) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Bildirimler kapalı! Ayarlardan açabilirsiniz. ⚙️',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            backgroundColor: const Color(0xFF6B7280),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        return;
+      }
+      
+      showModalBottomSheet(
        context: context,
        isScrollControlled: true,
        backgroundColor: Colors.transparent,
@@ -1773,57 +1797,77 @@ class _DashboardPageState extends State<DashboardPage>
              
              const SizedBox(height: 24),
              
-             // Notifications List
-             Expanded(
-               child: ListView(
-                 children: [
-                   _buildSmartNotificationCard(
-                     'Bütçe Aşım Uyarısı',
-                     'Bu ay market harcamalarınız bütçenizi %15 aştı. Dikkatli olun!',
-                     '2 dakika önce',
-                     const Color(0xFFEF4444),
-                     Icons.warning_outlined,
-                     true,
-                   ),
-                   const SizedBox(height: 12),
-                   _buildSmartNotificationCard(
-                     'Tasarruf Fırsatı',
-                     'Kahve harcamalarınızı azaltarak aylık 450₺ tasarruf edebilirsiniz.',
-                     '1 saat önce',
-                     const Color(0xFF10B981),
-                     Icons.lightbulb_outlined,
-                     true,
-                   ),
-                   const SizedBox(height: 12),
-                   _buildSmartNotificationCard(
-                     'Hedef Başarısı',
-                     'Tebrikler! "Tatil Fonu" hedefinizin %80\'ini tamamladınız.',
-                     '3 saat önce',
-                     const Color(0xFF3B82F6),
-                     Icons.flag_outlined,
-                     true,
-                   ),
-                   const SizedBox(height: 12),
-                   _buildSmartNotificationCard(
-                     'Fatura Hatırlatması',
-                     'Elektrik faturanızın son ödeme tarihi 3 gün sonra.',
-                     'Dün',
-                     const Color(0xFFF59E0B),
-                     Icons.receipt_outlined,
-                     false,
-                   ),
-                   const SizedBox(height: 12),
-                   _buildSmartNotificationCard(
-                     'Gelir Artışı',
-                     'Bu ay geliriniz geçen aya göre %12 arttı. Harika!',
-                     '2 gün önce',
-                     const Color(0xFF8B5CF6),
-                     Icons.trending_up_outlined,
-                     false,
-                   ),
-                 ],
-               ),
-             ),
+                           // Notifications List
+              Expanded(
+                child: ListView(
+                  children: [
+                    // Only show budget alerts if enabled
+                    if (NotificationSettings.budgetAlerts) ...[
+                      _buildSmartNotificationCard(
+                        'Bütçe Aşım Uyarısı',
+                        'Bu ay market harcamalarınız bütçenizi %15 aştı. Dikkatli olun!',
+                        '2 dakika önce',
+                        const Color(0xFFEF4444),
+                        Icons.warning_outlined,
+                        true,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    
+                    // Only show saving tips if enabled
+                    if (NotificationSettings.savingTips) ...[
+                      _buildSmartNotificationCard(
+                        'Tasarruf Fırsatı',
+                        'Kahve harcamalarınızı azaltarak aylık 450₺ tasarruf edebilirsiniz.',
+                        '1 saat önce',
+                        const Color(0xFF10B981),
+                        Icons.lightbulb_outlined,
+                        true,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    
+                    // Only show goal updates if enabled
+                    if (NotificationSettings.goalUpdates) ...[
+                      _buildSmartNotificationCard(
+                        'Hedef Başarısı',
+                        'Tebrikler! "Tatil Fonu" hedefinizin %80\'ini tamamladınız.',
+                        '3 saat önce',
+                        const Color(0xFF3B82F6),
+                        Icons.flag_outlined,
+                        true,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    
+                    // Only show bill reminders if enabled
+                    if (NotificationSettings.billReminders) ...[
+                      _buildSmartNotificationCard(
+                        'Fatura Hatırlatması',
+                        'Elektrik faturanızın son ödeme tarihi 3 gün sonra.',
+                        'Dün',
+                        const Color(0xFFF59E0B),
+                        Icons.receipt_outlined,
+                        false,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    
+                    // Only show daily summary if enabled
+                    if (NotificationSettings.dailySummary) ...[
+                      _buildSmartNotificationCard(
+                        'Günlük Özet',
+                        'Bu ay geliriniz geçen aya göre %12 arttı. Harika!',
+                        '2 gün önce',
+                        const Color(0xFF8B5CF6),
+                        Icons.summarize_outlined,
+                        false,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
+                ),
+              ),
              
              const SizedBox(height: 16),
              
