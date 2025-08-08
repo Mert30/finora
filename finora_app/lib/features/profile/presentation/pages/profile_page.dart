@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:finora_app/features/about/presentation/pages/about_page.dart';
+import 'package:finora_app/features/help/presentation/pages/help_center_page.dart';
+import 'package:finora_app/features/legal/presentation/pages/terms_of_use_page.dart';
+import 'package:finora_app/features/legal/presentation/pages/privacy_policy_page.dart';
 
 class UserProfile {
   final String name;
@@ -797,7 +801,20 @@ class _ProfilePageState extends State<ProfilePage>
                   title: 'Yardım Merkezi',
                   subtitle: 'SSS ve destek',
                   color: const Color(0xFF3B82F6),
-                  onTap: () => _showComingSoon('Yardım merkezi'),
+                  onTap: () => Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const HelpCenterPage(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: animation.drive(
+                            Tween(begin: const Offset(1.0, 0.0), end: Offset.zero),
+                          ),
+                          child: child,
+                        );
+                      },
+                    ),
+                  ),
                 ),
                 _buildDivider(),
                 _buildSettingsTile(
@@ -805,7 +822,20 @@ class _ProfilePageState extends State<ProfilePage>
                   title: 'Kullanım Koşulları',
                   subtitle: 'Şartlar ve koşullar',
                   color: const Color(0xFF6B7280),
-                  onTap: () => _showComingSoon('Kullanım koşulları'),
+                  onTap: () => Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const TermsOfUsePage(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: animation.drive(
+                            Tween(begin: const Offset(1.0, 0.0), end: Offset.zero),
+                          ),
+                          child: child,
+                        );
+                      },
+                    ),
+                  ),
                 ),
                 _buildDivider(),
                 _buildSettingsTile(
@@ -813,7 +843,41 @@ class _ProfilePageState extends State<ProfilePage>
                   title: 'Gizlilik Politikası',
                   subtitle: 'Veri kullanımı ve gizlilik',
                   color: const Color(0xFF6B7280),
-                  onTap: () => _showComingSoon('Gizlilik politikası'),
+                  onTap: () => Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const PrivacyPolicyPage(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: animation.drive(
+                            Tween(begin: const Offset(1.0, 0.0), end: Offset.zero),
+                          ),
+                          child: child,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                _buildDivider(),
+                _buildSettingsTile(
+                  icon: Icons.info_outline_rounded,
+                  title: 'Hakkında',
+                  subtitle: 'Uygulama bilgileri ve teknolojiler',
+                  color: const Color(0xFF3B82F6),
+                  onTap: () => Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const AboutPage(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: animation.drive(
+                            Tween(begin: const Offset(1.0, 0.0), end: Offset.zero),
+                          ),
+                          child: child,
+                        );
+                      },
+                    ),
+                  ),
                 ),
                 _buildDivider(),
                 _buildSettingsTile(

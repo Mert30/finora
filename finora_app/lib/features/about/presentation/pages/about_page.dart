@@ -979,14 +979,15 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
             ),
             child: Image.asset(
               logoPath,
-              width: 32,
-              height: 32,
+              width: 40,
+              height: 40,
+              fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 // Fallback icon if image not found
                 return Icon(
                   Icons.code_outlined,
                   color: color,
-                  size: 32,
+                  size: 40,
                 );
               },
             ),
@@ -1110,21 +1111,22 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
               color: Colors.white.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Image.asset(
-              logoPath,
-              width: 32,
-              height: 32,
-              errorBuilder: (context, error, stackTrace) {
-                // Fallback icon based on store
-                return Icon(
-                  storeName.contains('Google')
-                      ? Icons.android_outlined
-                      : Icons.apple_outlined,
-                  color: Colors.white,
-                  size: 32,
-                );
-              },
-            ),
+                         child: Image.asset(
+               logoPath,
+               width: 40,
+               height: 40,
+               fit: BoxFit.contain,
+               errorBuilder: (context, error, stackTrace) {
+                 // Fallback icon based on store
+                 return Icon(
+                   storeName.contains('Google')
+                       ? Icons.android_outlined
+                       : Icons.apple_outlined,
+                   color: Colors.white,
+                   size: 40,
+                 );
+               },
+             ),
           ),
           const SizedBox(height: 12),
           // Store Name
