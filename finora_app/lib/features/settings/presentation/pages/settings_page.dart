@@ -1,6 +1,7 @@
 import 'package:finora_app/features/about/presentation/about_page.dart';
 import 'package:finora_app/features/feedback/presentation/feedback_page.dart';
 import 'package:finora_app/features/help/presentation/help_center_page.dart';
+import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
 import 'package:finora_app/features/password_reset/presentation/pages/password_reset__page.dart';
 import 'package:finora_app/features/profile/presentation/profile_page.dart';
 import 'package:finora_app/features/settings/presentation/pages/currency_settings_page.dart';
@@ -232,15 +233,7 @@ class _SettingsPageState extends State<SettingsPage>
                           title: 'Çıkış Yap',
                           subtitle: 'Hesabınızdan güvenli şekilde çıkın',
                           isDestructive: true,
-                          onTap: () => {
-                            _showLogoutDialog(context),
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const WelcomePage(),
-                              ),
-                            ),
-                          },
+                          onTap: () => _showLogoutDialog(context),
                         ),
                       ]),
 
@@ -290,7 +283,7 @@ class _SettingsPageState extends State<SettingsPage>
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const SettingsPage()),
+              MaterialPageRoute(builder: (context) => const MainScreen()),
             );
           },
         ),
@@ -402,7 +395,7 @@ class _SettingsPageState extends State<SettingsPage>
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Premium Üye',
+                    'Standart Üye',
                     style: GoogleFonts.inter(
                       color: Colors.white,
                       fontSize: 12,
@@ -702,8 +695,10 @@ class _SettingsPageState extends State<SettingsPage>
           TextButton(
             onPressed: () {
               FirebaseAuth.instance.signOut();
-              Navigator.pop(context);
-              // Navigate to login page
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const WelcomePage()),
+              );
             },
             child: Text(
               'Çıkış Yap',
