@@ -3,6 +3,7 @@ import 'package:finora_app/features/categories/presentation/category_management_
 import 'package:finora_app/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:finora_app/features/transactions/presentation/pages/history_page.dart';
 import 'package:finora_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:finora_app/features/markets/presentation/pages/live_markets_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../transactions/presentation/pages/add_transaction_page.dart';
@@ -416,6 +417,18 @@ class _MainScreenState extends State<MainScreen> {
           },
         ),
         _buildDrawerTile(
+          icon: Icons.trending_up_outlined,
+          title: 'Canlı Piyasalar',
+          subtitle: 'Borsa, döviz ve altın takibi',
+          color: const Color(0xFF059669),
+          showBadge: true,
+          badgeText: 'LIVE',
+          onTap: () {
+            Navigator.pop(context);
+            _showLiveMarkets();
+          },
+        ),
+        _buildDrawerTile(
           icon: Icons.backup_outlined,
           title: 'Yedekleme & Sync',
           subtitle: 'Veri senkronizasyonu',
@@ -801,6 +814,29 @@ class _MainScreenState extends State<MainScreen> {
       SnackBar(
         content: Text('📤 Rapor paylaşım seçenekleri hazırlanıyor...'),
         backgroundColor: const Color(0xFF6B21A8),
+      ),
+    );
+  }
+
+  void _showLiveMarkets() {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const LiveMarketsPage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.ease;
+
+          var tween = Tween(begin: begin, end: end).chain(
+            CurveTween(curve: curve),
+          );
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
       ),
     );
   }
