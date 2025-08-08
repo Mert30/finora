@@ -1,3 +1,4 @@
+import 'package:finora_app/features/money_transfer/presentation/money_transfer_page.dart';
 import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -2325,10 +2326,26 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   void _showMoneyTransfer() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('💸 Para Gönder özelliği çok yakında!'),
-        backgroundColor: const Color(0xFF10B981),
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MoneyTransferPage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.ease;
+
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
       ),
     );
   }
