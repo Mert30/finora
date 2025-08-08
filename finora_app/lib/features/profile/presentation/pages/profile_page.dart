@@ -5,26 +5,7 @@ import 'package:finora_app/features/about/presentation/pages/about_page.dart';
 import 'package:finora_app/features/help/presentation/pages/help_center_page.dart';
 import 'package:finora_app/features/legal/presentation/pages/terms_of_use_page.dart';
 import 'package:finora_app/features/legal/presentation/pages/privacy_policy_page.dart';
-
-// Notification Settings Model
-class NotificationSettings {
-  static bool budgetAlerts = true;
-  static bool savingTips = true;
-  static bool goalUpdates = true;
-  static bool billReminders = false;
-  static bool dailySummary = false;
-  
-  static bool get hasActiveNotifications => 
-    budgetAlerts || savingTips || goalUpdates || billReminders || dailySummary;
-    
-  static int get activeNotificationCount {
-    int count = 0;
-    if (budgetAlerts) count++;
-    if (savingTips) count++;
-    if (goalUpdates) count++;
-    return count; // Only show count for important ones
-  }
-}
+import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
 
 class UserProfile {
   final String name;
@@ -757,15 +738,35 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 _buildDivider(),
                 _buildSettingsTile(
-                  icon: Icons.notifications_outlined,
-                  title: 'Bildirimler',
-                  subtitle: NotificationSettings.hasActiveNotifications 
-                    ? '${NotificationSettings.activeNotificationCount} aktif bildirim'
-                    : 'Tüm bildirimler kapalı',
+                  icon: Icons.settings_outlined,
+                  title: 'Ayarlar',
+                  subtitle: 'Bildirimler, dil ve uygulama ayarları',
                   color: const Color(0xFF8B5CF6),
-                  onTap: () => _showNotificationSettings(),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const SettingsPage(),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          const begin = Offset(1.0, 0.0);
+                          const end = Offset.zero;
+                          const curve = Curves.ease;
+
+                          var tween = Tween(begin: begin, end: end).chain(
+                            CurveTween(curve: curve),
+                          );
+
+                          return SlideTransition(
+                            position: animation.drive(tween),
+                            child: child,
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
                 _buildDivider(),
+
                 _buildSettingsTile(
                   icon: Icons.language_outlined,
                   title: 'Dil & Bölge',
@@ -1129,303 +1130,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  void _showNotificationSettings() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.75,
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Header
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.notifications_active,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Bildirim Ayarları',
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF1F2937),
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          'Akıllı bildirimlerinizi yönetin',
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF6B7280),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Settings List
-              Expanded(
-                child: ListView(
-                  children: [
-                    _buildNotificationSettingCard(
-                      'Bütçe Uyarıları',
-                      'Harcama limitlerini aştığınızda bildirim alın',
-                      Icons.warning_outlined,
-                      const Color(0xFFEF4444),
-                      NotificationSettings.budgetAlerts,
-                      (value) {
-                        setModalState(() {
-                          NotificationSettings.budgetAlerts = value;
-                        });
-                        setState(() {}); // Ana sayfayı güncelle
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    _buildNotificationSettingCard(
-                      'Tasarruf Önerileri',
-                      'AI destekli tasarruf fırsatları hakkında bilgi alın',
-                      Icons.lightbulb_outlined,
-                      const Color(0xFF10B981),
-                      NotificationSettings.savingTips,
-                      (value) {
-                        setModalState(() {
-                          NotificationSettings.savingTips = value;
-                        });
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    _buildNotificationSettingCard(
-                      'Hedef Güncellemeleri',
-                      'Finansal hedeflerinizdeki ilerlemeler',
-                      Icons.flag_outlined,
-                      const Color(0xFF3B82F6),
-                      NotificationSettings.goalUpdates,
-                      (value) {
-                        setModalState(() {
-                          NotificationSettings.goalUpdates = value;
-                        });
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    _buildNotificationSettingCard(
-                      'Fatura Hatırlatmaları',
-                      'Ödeme tarihleri yaklaştığında hatırlatma',
-                      Icons.receipt_outlined,
-                      const Color(0xFFF59E0B),
-                      NotificationSettings.billReminders,
-                      (value) {
-                        setModalState(() {
-                          NotificationSettings.billReminders = value;
-                        });
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    _buildNotificationSettingCard(
-                      'Günlük Özet',
-                      'Günlük harcama raporu ve özetler',
-                      Icons.summarize_outlined,
-                      const Color(0xFF8B5CF6),
-                      NotificationSettings.dailySummary,
-                      (value) {
-                        setModalState(() {
-                          NotificationSettings.dailySummary = value;
-                        });
-                        setState(() {});
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF3F4F6),
-                        foregroundColor: const Color(0xFF6B7280),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'İptal',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Bildirim ayarları kaydedildi! ✅',
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            backgroundColor: const Color(0xFF10B981),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            margin: const EdgeInsets.all(16),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B5CF6),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'Kaydet',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildNotificationSettingCard(
-    String title,
-    String description,
-    IconData icon,
-    Color color,
-    bool isEnabled,
-    Function(bool) onChanged,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isEnabled ? color.withOpacity(0.1) : const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isEnabled ? color.withOpacity(0.3) : const Color(0xFFE5E7EB),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF1F2937),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Switch(
-            value: isEnabled,
-            onChanged: onChanged,
-            activeColor: color,
-            inactiveThumbColor: const Color(0xFFD1D5DB),
-            inactiveTrackColor: const Color(0xFFF3F4F6),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showComingSoon(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
