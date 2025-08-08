@@ -87,7 +87,7 @@ class _RegisterPageState extends State<RegisterPage>
           context,
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
-                const DashboardPage(),
+                const MainScreen(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },

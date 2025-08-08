@@ -7,6 +7,292 @@ import 'package:finora_app/features/transactions/presentation/pages/history_page
 import 'package:finora_app/features/budget/presentation/pages/budget_goals_page.dart';
 import 'package:finora_app/features/categories/presentation/pages/category_management_page.dart';
 
+// Analytics sayfası
+class AnalyticsPage extends StatefulWidget {
+  const AnalyticsPage({super.key});
+
+  @override
+  State<AnalyticsPage> createState() => _AnalyticsPageState();
+}
+
+class _AnalyticsPageState extends State<AnalyticsPage>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  
+  String selectedPeriod = 'Bu Ay';
+  
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+    _fadeController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: CustomScrollView(
+        slivers: [
+          _buildCustomAppBar(),
+          SliverToBoxAdapter(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _buildComingSoonCard(),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomAppBar() {
+    return SliverAppBar(
+      expandedHeight: 120,
+      floating: false,
+      pinned: true,
+      backgroundColor: const Color(0xFFF8FAFC),
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Analitik',
+                          style: GoogleFonts.inter(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Yakında kullanıma sunulacak',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.info_outline,
+                          color: Color(0xFF64748B),
+                          size: 24,
+                        ),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Analitik özelliği yakında! 📊',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              backgroundColor: const Color(0xFF3B82F6),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              margin: const EdgeInsets.all(16),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComingSoonCard() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF667EEA).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.analytics_outlined,
+            color: Colors.white,
+            size: 80,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Analitik Özelliği',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Detaylı finansal analizler, grafikler ve raporlar yakında burada olacak!',
+            style: GoogleFonts.inter(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// MainScreen - Dashboard'lı navbar sistemi
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _pages = const [
+    DashboardPage(),
+    AddTransactionPage(),
+    HistoryPage(transactions: []),
+    BudgetGoalsPage(),
+    CategoryManagementPage(),
+    ProfilePage(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(index: _currentIndex, children: _pages),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        selectedItemColor: const Color(0xFF3B82F6),
+        unselectedItemColor: const Color(0xFF64748B),
+        backgroundColor: Colors.white,
+        elevation: 8,
+        selectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Anasayfa',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add_circle_outline),
+            activeIcon: Icon(Icons.add_circle),
+            label: 'Ekle',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history_outlined),
+            activeIcon: Icon(Icons.history),
+            label: 'Geçmiş',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.flag_outlined),
+            activeIcon: Icon(Icons.flag),
+            label: 'Hedefler',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.category_outlined),
+            activeIcon: Icon(Icons.category),
+            label: 'Kategoriler',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profil',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -107,191 +393,6 @@ class _DashboardPageState extends State<DashboardPage>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showQuickActionsMenu(),
-        backgroundColor: const Color(0xFF3B82F6),
-        foregroundColor: Colors.white,
-        elevation: 8,
-        child: const Icon(
-          Icons.add,
-          size: 28,
-        ),
-      ),
-    );
-  }
-
-  void _showQuickActionsMenu() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE5E7EB),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Title
-            Text(
-              'Hızlı İşlemler',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF1F2937),
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Actions Grid
-            GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1.2,
-              children: [
-                _buildQuickActionCard(
-                  'İşlem Ekle',
-                  Icons.add_circle_outline,
-                  const Color(0xFF10B981),
-                  () => Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const AddTransactionPage(),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        return SlideTransition(
-                          position: animation.drive(
-                            Tween(begin: const Offset(0.0, 1.0), end: Offset.zero),
-                          ),
-                          child: child,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                _buildQuickActionCard(
-                  'Geçmiş',
-                  Icons.history_outlined,
-                  const Color(0xFF3B82F6),
-                  () => Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const HistoryPage(transactions: []),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        return SlideTransition(
-                          position: animation.drive(
-                            Tween(begin: const Offset(0.0, 1.0), end: Offset.zero),
-                          ),
-                          child: child,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                _buildQuickActionCard(
-                  'Hedefler',
-                  Icons.flag_outlined,
-                  const Color(0xFFF59E0B),
-                  () => Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const BudgetGoalsPage(),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        return SlideTransition(
-                          position: animation.drive(
-                            Tween(begin: const Offset(0.0, 1.0), end: Offset.zero),
-                          ),
-                          child: child,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                _buildQuickActionCard(
-                  'Kategoriler',
-                  Icons.category_outlined,
-                  const Color(0xFF8B5CF6),
-                  () => Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const CategoryManagementPage(),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        return SlideTransition(
-                          position: animation.drive(
-                            Tween(begin: const Offset(0.0, 1.0), end: Offset.zero),
-                          ),
-                          child: child,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: () {
-        Navigator.pop(context); // Bottom sheet'i kapat
-        onTap(); // Action'ı çalıştır
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: GoogleFonts.inter(
-                color: const Color(0xFF1F2937),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -359,23 +460,26 @@ class _DashboardPageState extends State<DashboardPage>
                       ),
                       child: IconButton(
                         icon: const Icon(
-                          Icons.person_outline,
+                          Icons.notifications_outlined,
                           color: Color(0xFF64748B),
                           size: 24,
                         ),
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder: (context, animation, secondaryAnimation) => const ProfilePage(),
-                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                return SlideTransition(
-                                  position: animation.drive(
-                                    Tween(begin: const Offset(1.0, 0.0), end: Offset.zero),
-                                  ),
-                                  child: child,
-                                );
-                              },
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Bildirimler özelliği yakında! 🔔',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              backgroundColor: const Color(0xFF3B82F6),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              margin: const EdgeInsets.all(16),
                             ),
                           );
                         },

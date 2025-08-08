@@ -67,7 +67,7 @@ class _LoginPageState extends State<LoginPage>
           context,
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
-                const DashboardPage(),
+                const MainScreen(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },
