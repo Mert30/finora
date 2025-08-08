@@ -687,6 +687,7 @@ class _DashboardPageState extends State<DashboardPage>
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        height: 120, // SABİT YÜKSEKLİK - Tüm kartlar aynı boyutta!
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: gradient,
@@ -700,38 +701,42 @@ class _DashboardPageState extends State<DashboardPage>
           ],
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center, // İçeriği ortala
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10), // Biraz küçülttük
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
                 icon,
                 color: Colors.white,
-                size: 28,
+                size: 24, // Icon boyutunu küçülttük
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10), // Boşlukları azalttık
             Text(
               label,
               style: GoogleFonts.inter(
                 color: Colors.white,
-                fontSize: 14,
+                fontSize: 13, // Font boyutunu küçülttük
                 fontWeight: FontWeight.w700,
+                height: 1.2,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3), // Daha az boşluk
             Text(
               subtitle,
               style: GoogleFonts.inter(
                 color: Colors.white.withOpacity(0.8),
-                fontSize: 11,
+                fontSize: 10, // Subtitle daha küçük
                 fontWeight: FontWeight.w500,
+                height: 1.2,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
