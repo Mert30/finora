@@ -1,4 +1,3 @@
-import 'package:finora_app/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
 import 'package:finora_app/features/password_reset/presentation/pages/password_reset__page.dart';
 import 'package:flutter/material.dart';
@@ -112,8 +111,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
-
             // Welcome text
             _buildWelcomeSection(),
 

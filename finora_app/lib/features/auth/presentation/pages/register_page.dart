@@ -135,7 +135,7 @@ class _RegisterPageState extends State<RegisterPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
             // Welcome text
             _buildWelcomeSection(),
@@ -167,7 +167,7 @@ class _RegisterPageState extends State<RegisterPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Hesap Oluşturun 🚀',
+          'Hesap Oluşturun',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontSize: 28,

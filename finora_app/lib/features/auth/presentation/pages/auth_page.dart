@@ -37,7 +37,6 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Hafif degrade arka plan
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -58,13 +57,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
                 children: [
                   const SizedBox(height: 40),
 
-                  // Header with back button and logo
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: _buildHeader(),
-                  ),
-
-                  const SizedBox(height: 30),
+                  // Header removed - no back button, logo or app name
 
                   // Toggle buttons
                   FadeTransition(
@@ -143,79 +136,6 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Row(
-        children: [
-          // Back button
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.white.withOpacity(0.1),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.white70,
-                size: 20,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-
-          const Spacer(),
-
-          // Logo and brand
-          Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.15),
-                      Colors.white.withOpacity(0.05),
-                    ],
-                  ),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Image.asset(
-                  'lib/features/welcome/assets/images/finora_logo.png',
-                  height: 30,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'FINORA',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2,
-                ),
-              ),
-            ],
-          ),
-
-          const Spacer(),
-
-          // Placeholder for symmetry
-          const SizedBox(width: 48),
-        ],
-      ),
     );
   }
 

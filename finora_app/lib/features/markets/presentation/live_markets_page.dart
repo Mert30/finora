@@ -108,7 +108,11 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
               color: Color(0xFF64748B),
               size: 20,
             ),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+              ),
+            },
           ),
         ),
       ),
