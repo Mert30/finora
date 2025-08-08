@@ -1,4 +1,4 @@
-import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
+import 'package:finora_app/features/about/presentation/about_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -93,7 +93,7 @@ class _TermsOfUsePageState extends State<TermsOfUsePage>
           child: IconButton(
             onPressed: () => Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const SettingsPage()),
+              MaterialPageRoute(builder: (context) => const AboutPage()),
             ),
             icon: const Icon(
               Icons.arrow_back_ios_new,

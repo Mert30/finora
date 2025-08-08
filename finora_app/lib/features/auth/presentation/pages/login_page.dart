@@ -148,7 +148,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tekrar Hoş Geldiniz! 👋',
+          'Tekrar Hoş Geldiniz!',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontSize: 28,

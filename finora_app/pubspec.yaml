@@ -63,6 +63,11 @@ flutter:
   assets:
     - lib/features/welcome/assets/images/finora_logo.png
     - lib/features/welcome/assets/animations/analysis.json
+    - lib/features/about/assets/android.png
+    - lib/features/about/assets/ios.png
+    - lib/features/about/assets/flutter.png
+    - lib/features/about/assets/dart.png
+    - lib/features/about/assets/firebase.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

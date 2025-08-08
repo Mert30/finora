@@ -1,7 +1,6 @@
+import 'package:finora_app/features/about/presentation/about_page.dart';
 import 'package:finora_app/features/feedback/presentation/feedback_page.dart';
 import 'package:finora_app/features/help/presentation/help_center_page.dart';
-import 'package:finora_app/features/legal/presentation/privacy_policy_page.dart';
-import 'package:finora_app/features/legal/presentation/terms_of_use_page.dart';
 import 'package:finora_app/features/password_reset/presentation/pages/password_reset__page.dart';
 import 'package:finora_app/features/profile/presentation/profile_page.dart';
 import 'package:finora_app/features/settings/presentation/pages/currency_settings_page.dart';
@@ -211,27 +210,15 @@ class _SettingsPageState extends State<SettingsPage>
 
                       const SizedBox(height: 24),
 
-                      _buildSettingsSection('Yasal', [
+                      _buildSettingsSection('Hakkında', [
                         _buildSettingsTile(
-                          icon: Icons.description_outlined,
-                          title: 'Kullanım Koşulları',
-                          subtitle: 'Şartlar ve koşullar',
+                          icon: Icons.info_outline,
+                          title: 'Hakkında',
+                          subtitle: 'Uygulama hakkında bilgiler',
                           onTap: () => Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const PrivacyPolicyPage(),
-                            ),
-                          ),
-                        ),
-
-                        _buildSettingsTile(
-                          icon: Icons.privacy_tip_outlined,
-                          title: 'Gizlilik Politikası',
-                          subtitle: 'Veri kullanımı ve gizlilik',
-                          onTap: () => Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const TermsOfUsePage(),
+                              builder: (context) => const AboutPage(),
                             ),
                           ),
                         ),
@@ -620,7 +607,7 @@ class _SettingsPageState extends State<SettingsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Finora',
+                  'FINŌRA',
                   style: GoogleFonts.inter(
                     color: const Color(0xFF1E293B),
                     fontSize: 16,
