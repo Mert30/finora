@@ -379,6 +379,24 @@ class _DashboardPageState extends State<DashboardPage>
                       // Financial Health Score
                       _buildFinancialHealthScore(),
                       
+                      // DEBUG: Test Container
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 24),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '🔥 TEST: Financial Health Score buraya eklendi!',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      
                       const SizedBox(height: 24),
                       
                       // Summary Cards
