@@ -838,25 +838,25 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
         'name': 'Flutter',
         'logo': 'assets/images/tech_logos/flutter_logo.png',
         'color': const Color(0xFF02569B),
-        'description': 'UI Framework'
+        'description': 'Framework'
       },
       {
         'name': 'Dart',
         'logo': 'assets/images/tech_logos/dart_logo.png',
         'color': const Color(0xFF0175C2),
-        'description': 'Programming Language'
+        'description': 'Language'
       },
       {
         'name': 'Firebase',
         'logo': 'assets/images/tech_logos/firebase_logo.png',
         'color': const Color(0xFFFFCA28),
-        'description': 'Backend Services'
+        'description': 'Backend'
       },
       {
         'name': 'Android',
         'logo': 'assets/images/tech_logos/android_logo.png',
         'color': const Color(0xFF3DDC84),
-        'description': 'Mobile Platform'
+        'description': 'Platform'
       },
     ];
 
@@ -952,7 +952,8 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
 
   Widget _buildTechCard(String name, String logoPath, String description, Color color) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      height: 140, // Sabit yükseklik - tüm kartlar aynı boyutta!
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -969,50 +970,58 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center, // İçeriği ortala
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Logo Container
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Image.asset(
               logoPath,
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 // Fallback icon if image not found
                 return Icon(
                   Icons.code_outlined,
                   color: color,
-                  size: 40,
+                  size: 36,
                 );
               },
             ),
           ),
-          const SizedBox(height: 12),
-          // Technology Name
+          const SizedBox(height: 10),
+          // Technology Name - Tek satır, overflow ellipsis
           Text(
             name,
             style: GoogleFonts.inter(
               color: const Color(0xFF1F2937),
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w700,
+              height: 1.2,
             ),
             textAlign: TextAlign.center,
+            maxLines: 1, // Tek satır
+            overflow: TextOverflow.ellipsis, // Taşarsa ... koy
           ),
           const SizedBox(height: 4),
-          // Description
+          // Description - Tek satır, overflow ellipsis
           Text(
             description,
             style: GoogleFonts.inter(
               color: const Color(0xFF6B7280),
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
+              height: 1.2,
             ),
             textAlign: TextAlign.center,
+            maxLines: 1, // Tek satır
+            overflow: TextOverflow.ellipsis, // Taşarsa ... koy
           ),
         ],
       ),
