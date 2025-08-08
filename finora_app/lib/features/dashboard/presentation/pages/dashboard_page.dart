@@ -379,24 +379,6 @@ class _DashboardPageState extends State<DashboardPage>
                       // Financial Health Score
                       _buildFinancialHealthScore(),
                       
-                      // DEBUG: Test Container
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 24),
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '🔥 TEST: Financial Health Score buraya eklendi!',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      
                       const SizedBox(height: 24),
                       
                       // Summary Cards
@@ -481,31 +463,46 @@ class _DashboardPageState extends State<DashboardPage>
                           ),
                         ],
                       ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.notifications_outlined,
-                          color: Color(0xFF64748B),
-                          size: 24,
-                        ),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Bildirimler özelliği yakında! 🔔',
-                                style: GoogleFonts.inter(
+                      child: Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.notifications_outlined,
+                              color: Color(0xFF64748B),
+                              size: 24,
+                            ),
+                            onPressed: () => _showSmartNotifications(),
+                          ),
+                          // Notification Badge
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEF4444),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w500,
+                                  width: 2,
                                 ),
                               ),
-                              backgroundColor: const Color(0xFF3B82F6),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
                               ),
-                              margin: const EdgeInsets.all(16),
+                              child: Text(
+                                '3',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
-                          );
-                        },
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1682,10 +1679,434 @@ class _DashboardPageState extends State<DashboardPage>
           ),
         ],
       ),
-    );
-  }
+         );
+   }
 
-  Widget _buildSummaryCards() {
+   // 🔔 SMART NOTIFICATIONS SYSTEM
+   void _showSmartNotifications() {
+     showModalBottomSheet(
+       context: context,
+       isScrollControlled: true,
+       backgroundColor: Colors.transparent,
+       builder: (context) => Container(
+         height: MediaQuery.of(context).size.height * 0.8,
+         padding: const EdgeInsets.all(24),
+         decoration: const BoxDecoration(
+           color: Colors.white,
+           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+         ),
+         child: Column(
+           crossAxisAlignment: CrossAxisAlignment.start,
+           children: [
+             // Handle
+             Center(
+               child: Container(
+                 width: 40,
+                 height: 4,
+                 decoration: BoxDecoration(
+                   color: const Color(0xFFE5E7EB),
+                   borderRadius: BorderRadius.circular(2),
+                 ),
+               ),
+             ),
+             const SizedBox(height: 24),
+             
+             // Header
+             Row(
+               children: [
+                 Container(
+                   padding: const EdgeInsets.all(12),
+                   decoration: BoxDecoration(
+                     gradient: const LinearGradient(
+                       colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+                     ),
+                     borderRadius: BorderRadius.circular(16),
+                   ),
+                   child: const Icon(
+                     Icons.auto_awesome,
+                     color: Colors.white,
+                     size: 24,
+                   ),
+                 ),
+                 const SizedBox(width: 16),
+                 Expanded(
+                   child: Column(
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                       Text(
+                         'Akıllı Bildirimler',
+                         style: GoogleFonts.inter(
+                           color: const Color(0xFF1F2937),
+                           fontSize: 20,
+                           fontWeight: FontWeight.w700,
+                         ),
+                       ),
+                       Text(
+                         'AI destekli kişisel uyarılar',
+                         style: GoogleFonts.inter(
+                           color: const Color(0xFF6B7280),
+                           fontSize: 14,
+                           fontWeight: FontWeight.w500,
+                         ),
+                       ),
+                     ],
+                   ),
+                 ),
+                 // Notification Count
+                 Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                   decoration: BoxDecoration(
+                     color: const Color(0xFFEF4444),
+                     borderRadius: BorderRadius.circular(16),
+                   ),
+                   child: Text(
+                     '3 Yeni',
+                     style: GoogleFonts.inter(
+                       color: Colors.white,
+                       fontSize: 12,
+                       fontWeight: FontWeight.w700,
+                     ),
+                   ),
+                 ),
+               ],
+             ),
+             
+             const SizedBox(height: 24),
+             
+             // Notifications List
+             Expanded(
+               child: ListView(
+                 children: [
+                   _buildSmartNotificationCard(
+                     'Bütçe Aşım Uyarısı',
+                     'Bu ay market harcamalarınız bütçenizi %15 aştı. Dikkatli olun!',
+                     '2 dakika önce',
+                     const Color(0xFFEF4444),
+                     Icons.warning_outlined,
+                     true,
+                   ),
+                   const SizedBox(height: 12),
+                   _buildSmartNotificationCard(
+                     'Tasarruf Fırsatı',
+                     'Kahve harcamalarınızı azaltarak aylık 450₺ tasarruf edebilirsiniz.',
+                     '1 saat önce',
+                     const Color(0xFF10B981),
+                     Icons.lightbulb_outlined,
+                     true,
+                   ),
+                   const SizedBox(height: 12),
+                   _buildSmartNotificationCard(
+                     'Hedef Başarısı',
+                     'Tebrikler! "Tatil Fonu" hedefinizin %80\'ini tamamladınız.',
+                     '3 saat önce',
+                     const Color(0xFF3B82F6),
+                     Icons.flag_outlined,
+                     true,
+                   ),
+                   const SizedBox(height: 12),
+                   _buildSmartNotificationCard(
+                     'Fatura Hatırlatması',
+                     'Elektrik faturanızın son ödeme tarihi 3 gün sonra.',
+                     'Dün',
+                     const Color(0xFFF59E0B),
+                     Icons.receipt_outlined,
+                     false,
+                   ),
+                   const SizedBox(height: 12),
+                   _buildSmartNotificationCard(
+                     'Gelir Artışı',
+                     'Bu ay geliriniz geçen aya göre %12 arttı. Harika!',
+                     '2 gün önce',
+                     const Color(0xFF8B5CF6),
+                     Icons.trending_up_outlined,
+                     false,
+                   ),
+                 ],
+               ),
+             ),
+             
+             const SizedBox(height: 16),
+             
+             // Actions
+             Row(
+               children: [
+                 Expanded(
+                   child: ElevatedButton(
+                     onPressed: () {
+                       Navigator.pop(context);
+                       _showNotificationSettings();
+                     },
+                     style: ElevatedButton.styleFrom(
+                       backgroundColor: const Color(0xFFF3F4F6),
+                       foregroundColor: const Color(0xFF6B7280),
+                       padding: const EdgeInsets.symmetric(vertical: 16),
+                       elevation: 0,
+                       shape: RoundedRectangleBorder(
+                         borderRadius: BorderRadius.circular(12),
+                       ),
+                     ),
+                     child: Text(
+                       'Ayarlar',
+                       style: GoogleFonts.inter(
+                         fontSize: 16,
+                         fontWeight: FontWeight.w600,
+                       ),
+                     ),
+                   ),
+                 ),
+                 const SizedBox(width: 12),
+                 Expanded(
+                   child: ElevatedButton(
+                     onPressed: () {
+                       Navigator.pop(context);
+                       _markAllNotificationsAsRead();
+                     },
+                     style: ElevatedButton.styleFrom(
+                       backgroundColor: const Color(0xFF3B82F6),
+                       foregroundColor: Colors.white,
+                       padding: const EdgeInsets.symmetric(vertical: 16),
+                       elevation: 0,
+                       shape: RoundedRectangleBorder(
+                         borderRadius: BorderRadius.circular(12),
+                       ),
+                     ),
+                     child: Text(
+                       'Tümünü Okundu İşaretle',
+                       style: GoogleFonts.inter(
+                         fontSize: 16,
+                         fontWeight: FontWeight.w600,
+                       ),
+                     ),
+                   ),
+                 ),
+               ],
+             ),
+           ],
+         ),
+       ),
+     );
+   }
+
+   Widget _buildSmartNotificationCard(
+     String title,
+     String message,
+     String time,
+     Color color,
+     IconData icon,
+     bool isNew,
+   ) {
+     return Container(
+       padding: const EdgeInsets.all(16),
+       decoration: BoxDecoration(
+         color: isNew ? color.withOpacity(0.1) : const Color(0xFFF9FAFB),
+         borderRadius: BorderRadius.circular(16),
+         border: Border.all(
+           color: isNew ? color.withOpacity(0.3) : const Color(0xFFE5E7EB),
+         ),
+       ),
+       child: Row(
+         crossAxisAlignment: CrossAxisAlignment.start,
+         children: [
+           // Icon
+           Container(
+             padding: const EdgeInsets.all(10),
+             decoration: BoxDecoration(
+               color: color,
+               borderRadius: BorderRadius.circular(12),
+             ),
+             child: Icon(
+               icon,
+               color: Colors.white,
+               size: 20,
+             ),
+           ),
+           const SizedBox(width: 16),
+           
+           // Content
+           Expanded(
+             child: Column(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 Row(
+                   children: [
+                     Expanded(
+                       child: Text(
+                         title,
+                         style: GoogleFonts.inter(
+                           color: const Color(0xFF1F2937),
+                           fontSize: 16,
+                           fontWeight: FontWeight.w700,
+                         ),
+                       ),
+                     ),
+                     if (isNew)
+                       Container(
+                         width: 8,
+                         height: 8,
+                         decoration: BoxDecoration(
+                           color: color,
+                           borderRadius: BorderRadius.circular(4),
+                         ),
+                       ),
+                   ],
+                 ),
+                 const SizedBox(height: 6),
+                 Text(
+                   message,
+                   style: GoogleFonts.inter(
+                     color: const Color(0xFF4B5563),
+                     fontSize: 14,
+                     fontWeight: FontWeight.w500,
+                     height: 1.4,
+                   ),
+                 ),
+                 const SizedBox(height: 8),
+                 Text(
+                   time,
+                   style: GoogleFonts.inter(
+                     color: const Color(0xFF9CA3AF),
+                     fontSize: 12,
+                     fontWeight: FontWeight.w500,
+                   ),
+                 ),
+               ],
+             ),
+           ),
+         ],
+       ),
+     );
+   }
+
+   void _showNotificationSettings() {
+     showModalBottomSheet(
+       context: context,
+       backgroundColor: Colors.transparent,
+       builder: (context) => Container(
+         padding: const EdgeInsets.all(24),
+         decoration: const BoxDecoration(
+           color: Colors.white,
+           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+         ),
+         child: Column(
+           mainAxisSize: MainAxisSize.min,
+           children: [
+             // Handle
+             Container(
+               width: 40,
+               height: 4,
+               decoration: BoxDecoration(
+                 color: const Color(0xFFE5E7EB),
+                 borderRadius: BorderRadius.circular(2),
+               ),
+             ),
+             const SizedBox(height: 24),
+             
+             // Header
+             Text(
+               'Bildirim Ayarları',
+               style: GoogleFonts.inter(
+                 color: const Color(0xFF1F2937),
+                 fontSize: 20,
+                 fontWeight: FontWeight.w700,
+               ),
+             ),
+             const SizedBox(height: 24),
+             
+             // Settings
+             _buildNotificationSetting('Bütçe Uyarıları', 'Harcama limitlerini aştığınızda', true),
+             _buildNotificationSetting('Tasarruf Önerileri', 'AI destekli tasarruf fırsatları', true),
+             _buildNotificationSetting('Hedef Güncellemeleri', 'Finansal hedef ilerlemeleri', true),
+             _buildNotificationSetting('Fatura Hatırlatmaları', 'Ödeme tarihi yaklaştığında', false),
+             _buildNotificationSetting('Günlük Özet', 'Günlük harcama raporu', false),
+             
+             const SizedBox(height: 24),
+             
+             ElevatedButton(
+               onPressed: () => Navigator.pop(context),
+               style: ElevatedButton.styleFrom(
+                 backgroundColor: const Color(0xFF3B82F6),
+                 foregroundColor: Colors.white,
+                 padding: const EdgeInsets.symmetric(vertical: 16),
+                 minimumSize: const Size(double.infinity, 0),
+                 shape: RoundedRectangleBorder(
+                   borderRadius: BorderRadius.circular(12),
+                 ),
+               ),
+               child: Text(
+                 'Kaydet',
+                 style: GoogleFonts.inter(
+                   fontSize: 16,
+                   fontWeight: FontWeight.w600,
+                 ),
+               ),
+             ),
+           ],
+         ),
+       ),
+     );
+   }
+
+   Widget _buildNotificationSetting(String title, String description, bool isEnabled) {
+     return Padding(
+       padding: const EdgeInsets.only(bottom: 16),
+       child: Row(
+         children: [
+           Expanded(
+             child: Column(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 Text(
+                   title,
+                   style: GoogleFonts.inter(
+                     color: const Color(0xFF1F2937),
+                     fontSize: 16,
+                     fontWeight: FontWeight.w600,
+                   ),
+                 ),
+                 Text(
+                   description,
+                   style: GoogleFonts.inter(
+                     color: const Color(0xFF6B7280),
+                     fontSize: 14,
+                     fontWeight: FontWeight.w500,
+                   ),
+                 ),
+               ],
+             ),
+           ),
+           Switch(
+             value: isEnabled,
+             onChanged: (value) {
+               // AI-ready: Track user notification preferences
+             },
+             activeColor: const Color(0xFF3B82F6),
+           ),
+         ],
+       ),
+     );
+   }
+
+   void _markAllNotificationsAsRead() {
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+         content: Text(
+           'Tüm bildirimler okundu olarak işaretlendi! ✅',
+           style: GoogleFonts.inter(
+             color: Colors.white,
+             fontWeight: FontWeight.w600,
+           ),
+         ),
+         backgroundColor: const Color(0xFF10B981),
+         behavior: SnackBarBehavior.floating,
+         shape: RoundedRectangleBorder(
+           borderRadius: BorderRadius.circular(12),
+         ),
+         margin: const EdgeInsets.all(16),
+       ),
+     );
+   }
+
+   Widget _buildSummaryCards() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
