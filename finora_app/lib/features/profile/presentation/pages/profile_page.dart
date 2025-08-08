@@ -885,7 +885,10 @@ class _ProfilePageState extends State<ProfilePage>
                   title: 'Çıkış Yap',
                   subtitle: 'Hesabınızdan çıkış yapın',
                   color: const Color(0xFFEF4444),
-                  onTap: () => _showLogoutConfirmation(),
+                  onTap: () {
+                    print('🔥 Çıkış Yap butonuna tıklandı!');
+                    _showLogoutConfirmation();
+                  },
                   isDestructive: true,
                 ),
               ],
@@ -904,42 +907,64 @@ class _ProfilePageState extends State<ProfilePage>
     required VoidCallback onTap,
     bool isDestructive = false,
   }) {
-    return ListTile(
-      onTap: onTap,
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          icon,
-          color: color,
-          size: 20,
+    return InkWell(
+      onTap: () {
+        print('📱 InkWell tıklandı: $title');
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            // Icon Container
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Title & Subtitle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      color: isDestructive ? color : const Color(0xFF1F2937),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Arrow Icon
+            Icon(
+              Icons.arrow_forward_ios,
+              color: const Color(0xFF6B7280),
+              size: 16,
+            ),
+          ],
         ),
       ),
-      title: Text(
-        title,
-        style: GoogleFonts.inter(
-          color: isDestructive ? color : const Color(0xFF1F2937),
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: GoogleFonts.inter(
-          color: const Color(0xFF6B7280),
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      trailing: Icon(
-        Icons.arrow_forward_ios,
-        color: const Color(0xFF6B7280),
-        size: 16,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
     );
   }
 
@@ -958,54 +983,124 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   void _showLogoutConfirmation() {
+    print('🚨 _showLogoutConfirmation çağrıldı!'); // Debug için
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      barrierDismissible: true, // Dialog dışına tıklayınca kapansın
+      builder: (BuildContext dialogContext) => AlertDialog(
         backgroundColor: Colors.white,
+        elevation: 24,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        title: Text(
-          'Çıkış Yap',
-          style: GoogleFonts.inter(
-            color: const Color(0xFF1F2937),
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.logout_outlined,
+                color: Color(0xFFEF4444),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Çıkış Yap',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF1F2937),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ),
-        content: Text(
-          'Hesabınızdan çıkış yapmak istediğinizden emin misiniz?',
-          style: GoogleFonts.inter(
-            color: const Color(0xFF6B7280),
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'İptal',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hesabınızdan çıkış yapmak istediğinizden emin misiniz?',
               style: GoogleFonts.inter(
                 color: const Color(0xFF6B7280),
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showComingSoon('Çıkış yapma işlemi');
-            },
-            child: Text(
-              'Çıkış Yap',
+            const SizedBox(height: 8),
+            Text(
+              'Bu işlem sizi ana sayfaya yönlendirecektir.',
               style: GoogleFonts.inter(
-                color: const Color(0xFFEF4444),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+                color: const Color(0xFF9CA3AF),
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
               ),
             ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () {
+                    print('🚫 İptal butonuna basıldı');
+                    Navigator.pop(dialogContext);
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(
+                        color: Color(0xFFE5E7EB),
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'İptal',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    print('✅ Çıkış Yap butonuna basıldı');
+                    Navigator.pop(dialogContext);
+                    _showComingSoon('Çıkış yapma işlemi');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF4444),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Çıkış Yap',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
