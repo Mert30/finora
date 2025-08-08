@@ -702,7 +702,31 @@ class _DashboardPageState extends State<DashboardPage>
       pinned: true,
       backgroundColor: const Color(0xFFF8FAFC),
       elevation: 0,
-      automaticallyImplyLeading: true,
+      automaticallyImplyLeading: false,
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(
+              Icons.menu_rounded,
+              color: Color(0xFF64748B),
+              size: 24,
+            ),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+      ),
       actions: [
         Padding(
           padding: const EdgeInsets.all(8.0),
