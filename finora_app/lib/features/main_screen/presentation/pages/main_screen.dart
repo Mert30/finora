@@ -23,7 +23,7 @@ class _MainScreenState extends State<MainScreen> {
     HistoryPage(transactions: []),
     BudgetGoalsPage(),
     CategoryManagementPage(),
-    ProfilePage(), // ✅ PROFILE PAGE EKLENDİ!
+    // ProfilePage removed - accessible via Settings
   ];
 
   @override
@@ -72,11 +72,6 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.category_outlined),
             activeIcon: Icon(Icons.category),
             label: 'Kategoriler',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profil',
           ),
         ],
       ),
@@ -204,29 +199,17 @@ class _MainScreenState extends State<MainScreen> {
                     },
                   ),
 
-                  _buildMainDrawerTile(
-                    icon: Icons.category_outlined,
-                    title: 'Kategoriler',
-                    subtitle: 'Kategori yönetimi',
-                    color: const Color(0xFFEC4899),
-                    isSelected: _currentIndex == 4,
-                    onTap: () {
-                      Navigator.pop(context);
-                      setState(() => _currentIndex = 4);
-                    },
-                  ),
-
-                  _buildMainDrawerTile(
-                    icon: Icons.person_outline,
-                    title: 'Profil',
-                    subtitle: 'Hesap ayarları ve bilgiler',
-                    color: const Color(0xFF64748B),
-                    isSelected: _currentIndex == 5,
-                    onTap: () {
-                      Navigator.pop(context);
-                      setState(() => _currentIndex = 5);
-                    },
-                  ),
+                                     _buildMainDrawerTile(
+                     icon: Icons.category_outlined,
+                     title: 'Kategoriler',
+                     subtitle: 'Kategori yönetimi',
+                     color: const Color(0xFFEC4899),
+                     isSelected: _currentIndex == 4,
+                     onTap: () {
+                       Navigator.pop(context);
+                       setState(() => _currentIndex = 4);
+                     },
+                   ),
                 ],
               ),
             ),

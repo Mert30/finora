@@ -762,6 +762,52 @@ class _DashboardPageState extends State<DashboardPage>
             ),
           ),
         ),
+        // Settings Button
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.settings_outlined,
+                color: Color(0xFF64748B),
+                size: 24,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => const ProfilePage(),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      const begin = Offset(1.0, 0.0);
+                      const end = Offset.zero;
+                      const curve = Curves.ease;
+
+                      var tween = Tween(begin: begin, end: end).chain(
+                        CurveTween(curve: curve),
+                      );
+
+                      return SlideTransition(
+                        position: animation.drive(tween),
+                        child: child,
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
