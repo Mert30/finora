@@ -37,17 +37,17 @@ class _ProfilePageState extends State<ProfilePage>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  
+
   // Firebase data
   FirebaseUserProfile? _userProfile;
   ProfileStats? _profileStats;
   bool _isLoading = true;
   bool _isEditing = false;
-  
+
   // Edit controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  
+
   @override
   void initState() {
     super.initState();
@@ -62,7 +62,7 @@ class _ProfilePageState extends State<ProfilePage>
       parent: _fadeController,
       curve: Curves.easeInOut,
     ));
-    
+
     _loadUserProfile();
     _fadeController.forward();
   }
@@ -85,7 +85,7 @@ class _ProfilePageState extends State<ProfilePage>
           final transactions = await TransactionService.getTransactions(userId);
           final goals = await GoalService.getGoals(userId);
           final categories = await CategoryService.getCategories(userId);
-          
+
           // Calculate stats
           final totalIncome = transactions
               .where((t) => t.isIncome)
@@ -94,7 +94,7 @@ class _ProfilePageState extends State<ProfilePage>
               .where((t) => !t.isIncome)
               .fold(0.0, (sum, t) => sum + t.amount);
           final activeGoals = goals.where((g) => !g.isCompleted).length;
-          
+
           setState(() {
             _userProfile = profile;
             _profileStats = ProfileStats(
@@ -105,10 +105,10 @@ class _ProfilePageState extends State<ProfilePage>
               categoriesUsed: categories.length,
             );
             _isLoading = false;
-            
+
             // Set initial values for edit mode
-            _nameController.text = profile.personalInfo['fullName'] ?? profile.name;
-            _phoneController.text = profile.personalInfo['phone'] ?? profile.phone;
+            _nameController.text = profile.fullName ?? profile.name;
+            _phoneController.text = profile.phone ?? '';
           });
         }
       }
@@ -120,24 +120,24 @@ class _ProfilePageState extends State<ProfilePage>
 
   Future<void> _saveProfileChanges() async {
     if (_userProfile == null) return;
-    
+
     try {
       setState(() => _isLoading = true);
-      
+
       // Update user profile
       await UserService.updateUserProfile(_userProfile!.userId, {
         'personalInfo.name': _nameController.text.trim(),
         'personalInfo.phone': _phoneController.text.trim(),
       });
-      
+
       // Reload profile data
       await _loadUserProfile();
-      
+
       setState(() {
         _isEditing = false;
         _isLoading = false;
       });
-      
+
       _showSnackBar('Profil başarıyla güncellendi! ✅', Colors.green);
     } catch (e) {
       setState(() => _isLoading = false);
@@ -167,10 +167,10 @@ class _ProfilePageState extends State<ProfilePage>
 
   String _getInitials(String? name) {
     if (name == null || name.trim().isEmpty) return 'U';
-    
+
     final parts = name.trim().split(' ').where((part) => part.isNotEmpty).toList();
     if (parts.isEmpty) return 'U';
-    
+
     if (parts.length == 1) {
       return parts.first[0].toUpperCase();
     } else {
@@ -211,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Header
               Row(
                 children: [
@@ -258,7 +258,7 @@ class _ProfilePageState extends State<ProfilePage>
                 ],
               ),
               const SizedBox(height: 32),
-              
+
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
@@ -288,7 +288,7 @@ class _ProfilePageState extends State<ProfilePage>
                                   ),
                                   child: Center(
                                                                          child: Text(
-                                       _getInitials(_userProfile?.name),
+                                       _getInitials(_userProfile?.fullName ?? _userProfile?.name),
                                        style: GoogleFonts.inter(
                                          color: Colors.white,
                                          fontSize: 32,
@@ -335,7 +335,7 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                       ),
                       const SizedBox(height: 32),
-                      
+
                       // Form Fields
                       _buildEditField(
                         label: 'Ad Soyad',
@@ -344,7 +344,7 @@ class _ProfilePageState extends State<ProfilePage>
                         hint: 'Adınızı ve soyadınızı girin',
                       ),
                       const SizedBox(height: 20),
-                      
+
                       _buildEditField(
                         label: 'Telefon Numarası',
                         controller: _phoneController,
@@ -353,7 +353,7 @@ class _ProfilePageState extends State<ProfilePage>
                         keyboardType: TextInputType.phone,
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Email (Read-only)
                       _buildReadOnlyField(
                         label: 'E-posta',
@@ -365,9 +365,9 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Save Button
               SizedBox(
                 width: double.infinity,
@@ -544,11 +544,11 @@ class _ProfilePageState extends State<ProfilePage>
                           const SizedBox(height: 20),
                           _buildProfileHeader(),
                           const SizedBox(height: 24),
-                          if (_userProfile?.phone != null && 
-                              _userProfile!.phone.isNotEmpty) 
+                          if (_userProfile?.phone != null &&
+                              _userProfile!.phone.isNotEmpty)
                             _buildContactInfo(),
-                          if (_userProfile?.phone != null && 
-                              _userProfile!.phone.isNotEmpty) 
+                          if (_userProfile?.phone != null &&
+                              _userProfile!.phone.isNotEmpty)
                             const SizedBox(height: 24),
                           if (_profileStats != null) _buildStatsSection(),
                           if (_profileStats != null) const SizedBox(height: 24),
@@ -682,115 +682,105 @@ class _ProfilePageState extends State<ProfilePage>
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           children: [
-            // Profile Picture & Basic Info
-            Row(
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF667EEA).withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                                      child: Center(
-                      child: Text(
-                        _getInitials(_userProfile?.name),
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                 ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                                                             _userProfile?.name ?? '',
-                              style: GoogleFonts.inter(
-                                color: const Color(0xFF1F2937),
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          if (_userProfile?.isVerified == true)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.verified,
-                                    color: Color(0xFF10B981),
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Doğrulandı',
-                                    style: GoogleFonts.inter(
-                                      color: const Color(0xFF10B981),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _userProfile?.accountType ?? '',
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF8B5CF6),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Üye: ${_userProfile?.memberSince ?? ''}',
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF6B7280),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF667EEA).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
-                ),
-              ],
+                ],
+              ),
+              child: Center(
+                                 child: Text(
+                   _getInitials(_userProfile?.fullName ?? _userProfile?.name),
+                   style: GoogleFonts.inter(
+                     color: Colors.white,
+                     fontSize: 24,
+                     fontWeight: FontWeight.w700,
+                   ),
+                 ),
+              ),
             ),
-            
-            const SizedBox(height: 24),
-            
-            // Contact Information
-            _buildContactInfo(),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                                                 child: Text(
+                           _userProfile?.fullName ?? _userProfile?.name ?? '',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF1F2937),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (_userProfile?.isVerified == true)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.verified,
+                                color: Color(0xFF10B981),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Doğrulandı',
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF10B981),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _userProfile?.accountType ?? '',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF8B5CF6),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Üye: ${_userProfile?.memberSince ?? ''}',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -798,22 +788,49 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildContactInfo() {
-    return Column(
-      children: [
-        _buildContactItem(
-          icon: Icons.email_outlined,
-          label: 'E-posta',
-          value: _userProfile?.email ?? '',
-          color: const Color(0xFF3B82F6),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
-        _buildContactItem(
-          icon: Icons.phone_outlined,
-          label: 'Telefon',
-                      value: _userProfile?.phone ?? '',
-          color: const Color(0xFF10B981),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'İletişim Bilgileri',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF1F2937),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildContactItem(
+              icon: Icons.email_outlined,
+              label: 'E-posta',
+              value: _userProfile?.email ?? '',
+              color: const Color(0xFF3B82F6),
+            ),
+            const SizedBox(height: 16),
+            _buildContactItem(
+              icon: Icons.phone_outlined,
+              label: 'Telefon',
+              value: _userProfile?.phone ?? '',
+              color: const Color(0xFF10B981),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -828,9 +845,7 @@ class _ProfilePageState extends State<ProfilePage>
       decoration: BoxDecoration(
         color: color.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-        ),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Row(
         children: [
@@ -840,11 +855,7 @@ class _ProfilePageState extends State<ProfilePage>
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
+            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -967,11 +978,7 @@ class _ProfilePageState extends State<ProfilePage>
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
+            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 12),
           Text(
@@ -1069,11 +1076,7 @@ class _ProfilePageState extends State<ProfilePage>
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 24,
-              ),
+              child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(height: 12),
             Text(
@@ -1347,11 +1350,7 @@ class _ProfilePageState extends State<ProfilePage>
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 20,
-              ),
+              child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(width: 16),
             // Title & Subtitle
@@ -1405,7 +1404,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   void _showLogoutConfirmation() {
     print('🚨 _showLogoutConfirmation çağrıldı!'); // Debug için
-    
+
     showDialog(
       context: context,
       barrierDismissible: true, // Dialog dışına tıklayınca kapansın
