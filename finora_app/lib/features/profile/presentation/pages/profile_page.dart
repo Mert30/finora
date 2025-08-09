@@ -1,31 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:finora_app/features/about/presentation/pages/about_page.dart';
 import 'package:finora_app/features/help/presentation/pages/help_center_page.dart';
 import 'package:finora_app/features/legal/presentation/pages/terms_of_use_page.dart';
 import 'package:finora_app/features/legal/presentation/pages/privacy_policy_page.dart';
 import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
-
-class UserProfile {
-  final String name;
-  final String email;
-  final String phone;
-  final String memberSince;
-  final String profileImageUrl;
-  final bool isVerified;
-  final String accountType;
-
-  UserProfile({
-    required this.name,
-    required this.email,
-    required this.phone,
-    required this.memberSince,
-    required this.profileImageUrl,
-    required this.isVerified,
-    required this.accountType,
-  });
-}
+import '/core/models/firebase_models.dart';
+import '/core/services/firebase_service.dart';
 
 class ProfileStats {
   final int totalTransactions;
@@ -52,119 +35,526 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage>
     with TickerProviderStateMixin {
-  late AnimationController _controller;
+  late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  // Demo data
-  final UserProfile _userProfile = UserProfile(
-    name: 'Ahmet Yılmaz',
-    email: 'ahmet.yilmaz@email.com',
-    phone: '+90 555 123 45 67',
-    memberSince: '15 Ocak 2024',
-    profileImageUrl: '',
-    isVerified: true,
-    accountType: 'Premium',
-  );
-
-  final ProfileStats _stats = ProfileStats(
-    totalTransactions: 127,
-    totalIncome: 85000,
-    totalExpense: 42000,
-    activeGoals: 5,
-    categoriesUsed: 12,
-  );
-
+  
+  // Firebase data
+  FirebaseUserProfile? _userProfile;
+  ProfileStats? _profileStats;
+  bool _isLoading = true;
+  bool _isEditing = false;
+  
+  // Edit controllers
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _controller,
+      parent: _fadeController,
       curve: Curves.easeInOut,
     ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _controller.forward();
+    
+    _loadUserProfile();
+    _fadeController.forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _fadeController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        final profile = await UserService.getUserProfile(userId);
+        if (profile != null) {
+          // Get user stats from all services
+          final transactions = await TransactionService.getTransactions(userId);
+          final goals = await GoalService.getGoals(userId);
+          final categories = await CategoryService.getCategories(userId);
+          
+          // Calculate stats
+          final totalIncome = transactions
+              .where((t) => t.type == 'income')
+              .fold(0.0, (sum, t) => sum + t.amount);
+          final totalExpense = transactions
+              .where((t) => t.type == 'expense')
+              .fold(0.0, (sum, t) => sum + t.amount);
+          final activeGoals = goals.where((g) => !g.isCompleted).length;
+          
+          setState(() {
+            _userProfile = profile;
+            _profileStats = ProfileStats(
+              totalTransactions: transactions.length,
+              totalIncome: totalIncome,
+              totalExpense: totalExpense,
+              activeGoals: activeGoals,
+              categoriesUsed: categories.length,
+            );
+            _isLoading = false;
+            
+            // Set initial values for edit mode
+            _nameController.text = profile.personalInfo['fullName'] ?? '';
+            _phoneController.text = profile.personalInfo['phone'] ?? '';
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading user profile: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveProfileChanges() async {
+    if (_userProfile == null) return;
+    
+    try {
+      setState(() => _isLoading = true);
+      
+      // Update user profile
+      final updatedPersonalInfo = Map<String, dynamic>.from(_userProfile!.personalInfo);
+      updatedPersonalInfo['fullName'] = _nameController.text.trim();
+      updatedPersonalInfo['phone'] = _phoneController.text.trim();
+      
+      await UserService.updateUserProfile(_userProfile!.userId, {
+        'personalInfo': updatedPersonalInfo,
+      });
+      
+      // Reload profile data
+      await _loadUserProfile();
+      
+      setState(() {
+        _isEditing = false;
+        _isLoading = false;
+      });
+      
+      _showSnackBar('Profil başarıyla güncellendi! ✅', Colors.green);
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Profil güncellenirken hata oluştu: $e', Colors.red);
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  void _showEditProfile() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: 24,
+            left: 24,
+            right: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E7EB),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Color(0xFF6366F1),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Profili Düzenle',
+                          style: GoogleFonts.inter(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                        Text(
+                          'Bilgilerinizi güncelleyin',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Color(0xFF6B7280)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile Photo Section
+                      Center(
+                        child: Column(
+                          children: [
+                            Stack(
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(50),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF667EEA).withOpacity(0.3),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      _userProfile?.personalInfo['fullName']?.split(' ').map((e) => e[0]).join() ?? '',
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white,
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF6366F1),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Profil Fotoğrafı Değiştir',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF6366F1),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      
+                      // Form Fields
+                      _buildEditField(
+                        label: 'Ad Soyad',
+                        controller: _nameController,
+                        icon: Icons.person_outline,
+                        hint: 'Adınızı ve soyadınızı girin',
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      _buildEditField(
+                        label: 'Telefon Numarası',
+                        controller: _phoneController,
+                        icon: Icons.phone_outlined,
+                        hint: '+90 555 123 45 67',
+                        keyboardType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Email (Read-only)
+                      _buildReadOnlyField(
+                        label: 'E-posta',
+                        value: _userProfile?.email ?? '',
+                        icon: Icons.email_outlined,
+                        subtitle: 'E-posta adresi değiştirilemez',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Save Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _saveProfileChanges();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Değişiklikleri Kaydet',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    required String hint,
+    TextInputType? keyboardType,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1F2937),
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF9CA3AF),
+              ),
+              prefixIcon: Icon(
+                icon,
+                color: const Color(0xFF6B7280),
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReadOnlyField({
+    required String label,
+    required String value,
+    required IconData icon,
+    required String subtitle,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: const Color(0xFF9CA3AF),
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF6B7280),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: CustomScrollView(
-            slivers: [
-              // Custom App Bar
-              _buildCustomAppBar(),
-              
-              // Profile Header
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildProfileHeader(),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+              ),
+            )
+          : SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: CustomScrollView(
+                  slivers: [
+                    _buildCustomAppBar(),
+                    SliverToBoxAdapter(
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 20),
+                          _buildProfileHeader(),
+                          const SizedBox(height: 24),
+                          if (_userProfile?.personalInfo['phone'] != null && 
+                              _userProfile!.personalInfo['phone']!.isNotEmpty) 
+                            _buildContactInfo(),
+                          if (_userProfile?.personalInfo['phone'] != null && 
+                              _userProfile!.personalInfo['phone']!.isNotEmpty) 
+                            const SizedBox(height: 24),
+                          if (_profileStats != null) _buildStatsSection(),
+                          if (_profileStats != null) const SizedBox(height: 24),
+                          _buildQuickActions(),
+                          const SizedBox(height: 24),
+                          _buildAccountSettings(),
+                          const SizedBox(height: 24),
+                          _buildSupportSection(),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              
-              // Stats Section
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildStatsSection(),
-                ),
-              ),
-              
-              // Quick Actions
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildQuickActions(),
-                ),
-              ),
-              
-              // Account Settings
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildAccountSettings(),
-                ),
-              ),
-              
-              // Support & Legal
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildSupportSection(),
-                ),
-              ),
-              
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
@@ -305,7 +695,7 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                   child: Center(
                     child: Text(
-                      _userProfile.name.split(' ').map((e) => e[0]).join(),
+                      _userProfile?.personalInfo['fullName']?.split(' ').map((e) => e[0]).join() ?? '',
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 24,
@@ -323,7 +713,7 @@ class _ProfilePageState extends State<ProfilePage>
                         children: [
                           Expanded(
                             child: Text(
-                              _userProfile.name,
+                              _userProfile?.personalInfo['fullName'] ?? '',
                               style: GoogleFonts.inter(
                                 color: const Color(0xFF1F2937),
                                 fontSize: 20,
@@ -331,7 +721,7 @@ class _ProfilePageState extends State<ProfilePage>
                               ),
                             ),
                           ),
-                          if (_userProfile.isVerified)
+                          if (_userProfile?.isVerified == true)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -365,7 +755,7 @@ class _ProfilePageState extends State<ProfilePage>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _userProfile.accountType,
+                        _userProfile?.accountType ?? '',
                         style: GoogleFonts.inter(
                           color: const Color(0xFF8B5CF6),
                           fontSize: 14,
@@ -374,7 +764,7 @@ class _ProfilePageState extends State<ProfilePage>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Üye: ${_userProfile.memberSince}',
+                        'Üye: ${_userProfile?.memberSince ?? ''}',
                         style: GoogleFonts.inter(
                           color: const Color(0xFF6B7280),
                           fontSize: 14,
@@ -403,14 +793,14 @@ class _ProfilePageState extends State<ProfilePage>
         _buildContactItem(
           icon: Icons.email_outlined,
           label: 'E-posta',
-          value: _userProfile.email,
+          value: _userProfile?.email ?? '',
           color: const Color(0xFF3B82F6),
         ),
         const SizedBox(height: 16),
         _buildContactItem(
           icon: Icons.phone_outlined,
           label: 'Telefon',
-          value: _userProfile.phone,
+          value: _userProfile?.personalInfo['phone'] ?? '',
           color: const Color(0xFF10B981),
         ),
       ],
@@ -496,7 +886,7 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildStatCard(
                   title: 'Toplam İşlem',
-                  value: _stats.totalTransactions.toString(),
+                  value: _profileStats?.totalTransactions.toString() ?? '0',
                   icon: Icons.receipt_long_outlined,
                   color: const Color(0xFF3B82F6),
                 ),
@@ -505,7 +895,7 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildStatCard(
                   title: 'Aktif Hedef',
-                  value: _stats.activeGoals.toString(),
+                  value: _profileStats?.activeGoals.toString() ?? '0',
                   icon: Icons.flag_outlined,
                   color: const Color(0xFF8B5CF6),
                 ),
@@ -518,7 +908,7 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildStatCard(
                   title: 'Toplam Gelir',
-                  value: '₺${_stats.totalIncome.toStringAsFixed(0)}',
+                  value: '₺${_profileStats?.totalIncome.toStringAsFixed(0) ?? '0'}',
                   icon: Icons.trending_up_outlined,
                   color: const Color(0xFF10B981),
                 ),
@@ -527,7 +917,7 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildStatCard(
                   title: 'Toplam Gider',
-                  value: '₺${_stats.totalExpense.toStringAsFixed(0)}',
+                  value: '₺${_profileStats?.totalExpense.toStringAsFixed(0) ?? '0'}',
                   icon: Icons.trending_down_outlined,
                   color: const Color(0xFFEF4444),
                 ),
