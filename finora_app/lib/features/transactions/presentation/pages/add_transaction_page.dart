@@ -27,11 +27,30 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   String? _selectedCategory;
   DateTime? _selectedDate;
   bool _isSaving = false;
-  bool _isLoading = true;
+  bool _isLoading = false; // No need for loading anymore
   
-  // Firebase kategorileri
-  List<FirebaseCategoryModel> _incomeCategories = [];
-  List<FirebaseCategoryModel> _expenseCategories = [];
+  // Sabit kategoriler - kullanıcı bunlardan seçer
+  final Map<String, List<Map<String, dynamic>>> _categories = {
+    'income': [
+      {'name': 'Maaş', 'icon': Icons.work_outline, 'color': Color(0xFF10B981)},
+      {'name': 'Freelance', 'icon': Icons.computer_outlined, 'color': Color(0xFF3B82F6)},
+      {'name': 'Yatırım', 'icon': Icons.trending_up_outlined, 'color': Color(0xFF8B5CF6)},
+      {'name': 'Kira Geliri', 'icon': Icons.home_outlined, 'color': Color(0xFF06B6D4)},
+      {'name': 'Satış', 'icon': Icons.sell_outlined, 'color': Color(0xFFF59E0B)},
+      {'name': 'Diğer', 'icon': Icons.more_horiz, 'color': Color(0xFF64748B)},
+    ],
+    'expense': [
+      {'name': 'Yemek & İçecek', 'icon': Icons.restaurant_outlined, 'color': Color(0xFFEF4444)},
+      {'name': 'Ulaşım', 'icon': Icons.directions_car_outlined, 'color': Color(0xFF3B82F6)},
+      {'name': 'Alışveriş', 'icon': Icons.shopping_bag_outlined, 'color': Color(0xFF8B5CF6)},
+      {'name': 'Eğlence', 'icon': Icons.movie_outlined, 'color': Color(0xFFEC4899)},
+      {'name': 'Sağlık', 'icon': Icons.local_hospital_outlined, 'color': Color(0xFF10B981)},
+      {'name': 'Faturalar', 'icon': Icons.receipt_outlined, 'color': Color(0xFFF59E0B)},
+      {'name': 'Eğitim', 'icon': Icons.school_outlined, 'color': Color(0xFF06B6D4)},
+      {'name': 'Giyim', 'icon': Icons.checkroom_outlined, 'color': Color(0xFFEC4899)},
+      {'name': 'Diğer', 'icon': Icons.more_horiz, 'color': Color(0xFF64748B)},
+    ]
+  };
 
   @override
   void initState() {
@@ -66,78 +85,78 @@ class _AddTransactionPageState extends State<AddTransactionPage>
     _fadeController.forward();
     _slideController.forward();
     
-    _loadCategories();
+    // _loadCategories(); // Removed as categories are now hardcoded
   }
   
-  Future<void> _loadCategories() async {
-    try {
-      debugPrint('🔄 Starting to load categories...');
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      debugPrint('👤 User ID: $userId');
+  // Future<void> _loadCategories() async { // Removed as categories are now hardcoded
+  //   try {
+  //     debugPrint('🔄 Starting to load categories...');
+  //     final userId = FirebaseAuth.instance.currentUser?.uid;
+  //     debugPrint('👤 User ID: $userId');
       
-      if (userId != null) {
-        debugPrint('📂 Loading income categories...');
-        final incomeCategories = await CategoryService.getCategories(
-          userId, 
-          type: 'income',
-          isActive: true,
-        );
-        debugPrint('✅ Income categories loaded: ${incomeCategories.length}');
+  //     if (userId != null) {
+  //       debugPrint('📂 Loading income categories...');
+  //       final incomeCategories = await CategoryService.getCategories(
+  //         userId, 
+  //         type: 'income',
+  //         isActive: true,
+  //       );
+  //       debugPrint('✅ Income categories loaded: ${incomeCategories.length}');
         
-        debugPrint('📂 Loading expense categories...');
-        final expenseCategories = await CategoryService.getCategories(
-          userId, 
-          type: 'expense',
-          isActive: true,
-        );
-        debugPrint('✅ Expense categories loaded: ${expenseCategories.length}');
+  //       debugPrint('📂 Loading expense categories...');
+  //       final expenseCategories = await CategoryService.getCategories(
+  //         userId, 
+  //         type: 'expense',
+  //         isActive: true,
+  //       );
+  //       debugPrint('✅ Expense categories loaded: ${expenseCategories.length}');
         
-        // If no categories exist, create default ones
-        if (incomeCategories.isEmpty && expenseCategories.isEmpty) {
-          debugPrint('⚠️ No categories found, creating defaults...');
-          await CategoryService.createDefaultCategories(userId);
+  //       // If no categories exist, create default ones
+  //       if (incomeCategories.isEmpty && expenseCategories.isEmpty) {
+  //         debugPrint('⚠️ No categories found, creating defaults...');
+  //         await CategoryService.createDefaultCategories(userId);
           
-          // Reload categories after creation
-          final newIncomeCategories = await CategoryService.getCategories(
-            userId, 
-            type: 'income',
-            isActive: true,
-          );
-          final newExpenseCategories = await CategoryService.getCategories(
-            userId, 
-            type: 'expense',
-            isActive: true,
-          );
+  //         // Reload categories after creation
+  //         final newIncomeCategories = await CategoryService.getCategories(
+  //           userId, 
+  //           type: 'income',
+  //           isActive: true,
+  //         );
+  //         final newExpenseCategories = await CategoryService.getCategories(
+  //           userId, 
+  //           type: 'expense',
+  //           isActive: true,
+  //         );
           
-          setState(() {
-            _incomeCategories = newIncomeCategories;
-            _expenseCategories = newExpenseCategories;
-            _isLoading = false;
-          });
-          debugPrint('✅ Default categories created and loaded!');
-        } else {
-          setState(() {
-            _incomeCategories = incomeCategories;
-            _expenseCategories = expenseCategories;
-            _isLoading = false;
-          });
-          debugPrint('🎉 Categories loaded successfully!');
-        }
-      } else {
-        debugPrint('❌ No user ID found');
-        setState(() {
-          _isLoading = false;
-        });
-        _showSnackBar('Kullanıcı oturumu bulunamadı', isError: true);
-      }
-    } catch (e) {
-      debugPrint('💥 Error loading categories: $e');
-      setState(() {
-        _isLoading = false;
-      });
-      _showSnackBar('Kategoriler yüklenirken hata oluştu', isError: true);
-    }
-  }
+  //         setState(() {
+  //           _incomeCategories = newIncomeCategories;
+  //           _expenseCategories = newExpenseCategories;
+  //           _isLoading = false;
+  //         });
+  //         debugPrint('✅ Default categories created and loaded!');
+  //       } else {
+  //         setState(() {
+  //           _incomeCategories = incomeCategories;
+  //           _expenseCategories = expenseCategories;
+  //           _isLoading = false;
+  //         });
+  //         debugPrint('🎉 Categories loaded successfully!');
+  //       }
+  //     } else {
+  //       debugPrint('❌ No user ID found');
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //       _showSnackBar('Kullanıcı oturumu bulunamadı', isError: true);
+  //     }
+  //   } catch (e) {
+  //     debugPrint('💥 Error loading categories: $e');
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //     _showSnackBar('Kategoriler yüklenirken hata oluştu', isError: true);
+  //   }
+  // }
 
   @override
   void dispose() {
@@ -171,28 +190,50 @@ class _AddTransactionPageState extends State<AddTransactionPage>
 
     try {
       // Find selected category details
-      final currentCategories = _isIncome ? _incomeCategories : _expenseCategories;
+      final currentCategories = _categories[_isIncome ? 'income' : 'expense']!;
       final selectedCategoryModel = currentCategories.firstWhere(
-        (cat) => cat.name == _selectedCategory,
+        (cat) => cat['name'] == _selectedCategory,
       );
+      
+      // Convert icon to iconName string
+      final IconData icon = selectedCategoryModel['icon'];
+      String iconName = 'category'; // default
+      if (icon == Icons.work_outline) iconName = 'work_outlined';
+      else if (icon == Icons.computer_outlined) iconName = 'laptop_outlined';
+      else if (icon == Icons.trending_up_outlined) iconName = 'trending_up_outlined';
+      else if (icon == Icons.home_outlined) iconName = 'home_outlined';
+      else if (icon == Icons.sell_outlined) iconName = 'sell_outlined';
+      else if (icon == Icons.more_horiz) iconName = 'more_horiz';
+      else if (icon == Icons.restaurant_outlined) iconName = 'restaurant_outlined';
+      else if (icon == Icons.directions_car_outlined) iconName = 'directions_car_outlined';
+      else if (icon == Icons.shopping_bag_outlined) iconName = 'shopping_bag_outlined';
+      else if (icon == Icons.movie_outlined) iconName = 'movie_outlined';
+      else if (icon == Icons.local_hospital_outlined) iconName = 'local_hospital_outlined';
+      else if (icon == Icons.receipt_outlined) iconName = 'receipt_outlined';
+      else if (icon == Icons.school_outlined) iconName = 'school_outlined';
+      else if (icon == Icons.checkroom_outlined) iconName = 'checkroom_outlined';
+      
+      // Convert color to hex string
+      final Color color = selectedCategoryModel['color'];
+      final String colorHex = '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
 
       // Create FirebaseTransaction object
       final transaction = FirebaseTransaction(
         id: '', // Will be set by Firestore
         userId: userId,
         title: _descriptionController.text.trim().isEmpty 
-            ? '${_isIncome ? 'Gelir' : 'Gider'} - ${selectedCategoryModel.name}'
+            ? '${_isIncome ? 'Gelir' : 'Gider'} - ${selectedCategoryModel['name']}'
             : _descriptionController.text.trim(),
-        category: selectedCategoryModel.name,
+        category: selectedCategoryModel['name'],
         amount: double.parse(_amountController.text.replaceAll(',', '.')),
         isIncome: _isIncome,
-        iconName: selectedCategoryModel.iconName,
-        colorHex: selectedCategoryModel.colorHex,
+        iconName: iconName,
+        colorHex: colorHex,
         description: _descriptionController.text.trim().isEmpty 
             ? null 
             : _descriptionController.text.trim(),
         date: _selectedDate!,
-        categoryId: selectedCategoryModel.id,
+        categoryId: '', // No categoryId needed for hardcoded categories
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -254,68 +295,62 @@ class _AddTransactionPageState extends State<AddTransactionPage>
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
-                ),
-              )
-            : FadeTransition(
-                opacity: _fadeAnimation,
-                child: CustomScrollView(
-                  slivers: [
-                    // Custom App Bar
-                    _buildCustomAppBar(),
-                    
-                    // Content
-                    SliverToBoxAdapter(
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              children: [
-                                // Income/Expense Toggle
-                                _buildIncomeExpenseToggle(),
-                                
-                                const SizedBox(height: 32),
-                                
-                                // Amount Input
-                                _buildAmountInput(),
-                                
-                                const SizedBox(height: 24),
-                                
-                                // Category Selection
-                                _buildCategorySection(),
-                                
-                                const SizedBox(height: 24),
-                                
-                                // Date and Description
-                                Row(
-                                  children: [
-                                    Expanded(child: _buildDatePicker()),
-                                    const SizedBox(width: 16),
-                                    Expanded(child: _buildDescriptionInput()),
-                                  ],
-                                ),
-                                
-                                const SizedBox(height: 40),
-                                
-                                // Save Button
-                                _buildSaveButton(),
-                                
-                                const SizedBox(height: 24),
-                              ],
-                            ),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: CustomScrollView(
+            slivers: [
+              // Custom App Bar
+              _buildCustomAppBar(),
+              
+              // Content
+              SliverToBoxAdapter(
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          // Income/Expense Toggle
+                          _buildIncomeExpenseToggle(),
+                          
+                          const SizedBox(height: 32),
+                          
+                          // Amount Input
+                          _buildAmountInput(),
+                          
+                          const SizedBox(height: 24),
+                          
+                          // Category Selection
+                          _buildCategorySection(),
+                          
+                          const SizedBox(height: 24),
+                          
+                          // Date and Description
+                          Row(
+                            children: [
+                              Expanded(child: _buildDatePicker()),
+                              const SizedBox(width: 16),
+                              Expanded(child: _buildDescriptionInput()),
+                            ],
                           ),
-                        ),
+                          
+                          const SizedBox(height: 40),
+                          
+                          // Save Button
+                          _buildSaveButton(),
+                          
+                          const SizedBox(height: 24),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -525,7 +560,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   }
 
   Widget _buildCategorySection() {
-    final currentCategories = _isIncome ? _incomeCategories : _expenseCategories;
+    final currentCategories = _categories[_isIncome ? 'income' : 'expense']!;
     debugPrint('🎨 Building category section: ${currentCategories.length} categories, isIncome: $_isIncome');
     
     return Container(
@@ -553,82 +588,69 @@ class _AddTransactionPageState extends State<AddTransactionPage>
             ),
           ),
           const SizedBox(height: 16),
-          if (currentCategories.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'Kategori bulunamadı. Lütfen bekleyin...',
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF64748B),
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            )
-          else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 1.0,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: currentCategories.length,
-              itemBuilder: (context, index) {
-                final category = currentCategories[index];
-                final isSelected = _selectedCategory == category.name;
-                
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedCategory = category.name;
-                    });
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              childAspectRatio: 1.0,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: currentCategories.length,
+            itemBuilder: (context, index) {
+              final category = currentCategories[index];
+              final isSelected = _selectedCategory == category['name'];
+              
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCategory = category['name'];
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isSelected 
+                        ? category['color'].withOpacity(0.1) 
+                        : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
                       color: isSelected 
-                          ? category.color.withOpacity(0.1) 
-                          : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isSelected 
-                            ? category.color 
-                            : const Color(0xFFE2E8F0),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          category.icon,
-                          color: isSelected 
-                              ? category.color 
-                              : const Color(0xFF64748B),
-                          size: 24,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          category.name,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            color: isSelected 
-                                ? category.color 
-                                : const Color(0xFF64748B),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                          ? category['color'] 
+                          : const Color(0xFFE2E8F0),
+                      width: isSelected ? 2 : 1,
                     ),
                   ),
-                );
-              },
-            ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        category['icon'],
+                        color: isSelected 
+                            ? category['color'] 
+                            : const Color(0xFF64748B),
+                        size: 24,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        category['name'],
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          color: isSelected 
+                              ? category['color'] 
+                              : const Color(0xFF64748B),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
