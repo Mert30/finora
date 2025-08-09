@@ -1,4 +1,3 @@
-import 'package:finora_app/features/about/presentation/about_page.dart';
 import 'package:finora_app/features/feedback/presentation/feedback_page.dart';
 import 'package:finora_app/features/help/presentation/help_center_page.dart';
 import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
@@ -10,30 +9,7 @@ import 'package:finora_app/features/welcome/presentation/pages/welcome_page.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-// Notification Settings Model
-class NotificationSettings {
-  static bool budgetAlerts = true;
-  static bool savingTips = true;
-  static bool goalUpdates = true;
-  static bool billReminders = false;
-  static bool dailySummary = false;
-
-  static bool get hasActiveNotifications =>
-      budgetAlerts ||
-      savingTips ||
-      goalUpdates ||
-      billReminders ||
-      dailySummary;
-
-  static int get activeNotificationCount {
-    int count = 0;
-    if (budgetAlerts) count++;
-    if (savingTips) count++;
-    if (goalUpdates) count++;
-    return count; // Only show count for important ones
-  }
-}
+import '/core/models/firebase_models.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -108,7 +84,7 @@ class _SettingsPageState extends State<SettingsPage>
                       // Profile Card
                       _buildProfileCard(user),
 
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 32),
 
                       // Settings Sections
                       _buildSettingsSection('Hesap & Güvenlik', [
@@ -153,75 +129,75 @@ class _SettingsPageState extends State<SettingsPage>
 
                       const SizedBox(height: 24),
 
+                      _buildSettingsSection('Bildirimler', [
+                        _buildToggleSettingsTile(
+                          icon: Icons.warning_outlined,
+                          title: 'Bütçe Uyarıları',
+                          subtitle:
+                              'Harcama limitlerini aştığınızda bildirim alın',
+                          value: NotificationSettings.budgetAlerts,
+                          onChanged: (value) {
+                            setState(() {
+                              NotificationSettings.budgetAlerts = value;
+                            });
+                          },
+                        ),
+                        _buildToggleSettingsTile(
+                          icon: Icons.lightbulb_outlined,
+                          title: 'Tasarruf Önerileri',
+                          subtitle:
+                              'AI destekli tasarruf fırsatları hakkında bilgi alın',
+                          value: NotificationSettings.savingTips,
+                          onChanged: (value) {
+                            setState(() {
+                              NotificationSettings.savingTips = value;
+                            });
+                          },
+                        ),
+                        _buildToggleSettingsTile(
+                          icon: Icons.flag_outlined,
+                          title: 'Hedef Güncellemeleri',
+                          subtitle: 'Finansal hedeflerinizdeki ilerlemeler',
+                          value: NotificationSettings.goalUpdates,
+                          onChanged: (value) {
+                            setState(() {
+                              NotificationSettings.goalUpdates = value;
+                            });
+                          },
+                        ),
+                        _buildToggleSettingsTile(
+                          icon: Icons.receipt_outlined,
+                          title: 'Fatura Hatırlatmaları',
+                          subtitle: 'Ödeme tarihleri yaklaştığında hatırlatma',
+                          value: NotificationSettings.billReminders,
+                          onChanged: (value) {
+                            setState(() {
+                              NotificationSettings.billReminders = value;
+                            });
+                          },
+                        ),
+                        _buildToggleSettingsTile(
+                          icon: Icons.summarize_outlined,
+                          title: 'Günlük Özet',
+                          subtitle: 'Günlük harcama raporu ve özetler',
+                          value: NotificationSettings.dailySummary,
+                          onChanged: (value) {
+                            setState(() {
+                              NotificationSettings.dailySummary = value;
+                            });
+                          },
+                        ),
+                      ]),
+
+                      const SizedBox(height: 24),
+
                       _buildSettingsSection('Uygulama', [
-                        const SizedBox(height: 12),
-                        _buildSettingsSection('Bildirimler', [
-                          _buildToggleSettingsTile(
-                            icon: Icons.warning_outlined,
-                            title: 'Bütçe Uyarıları',
-                            subtitle:
-                                'Harcama limitlerini aştığınızda bildirim alın',
-                            value: NotificationSettings.budgetAlerts,
-                            onChanged: (value) {
-                              setState(() {
-                                NotificationSettings.budgetAlerts = value;
-                              });
-                            },
-                          ),
-                          _buildToggleSettingsTile(
-                            icon: Icons.lightbulb_outlined,
-                            title: 'Tasarruf Önerileri',
-                            subtitle:
-                                'AI destekli tasarruf fırsatları hakkında bilgi alın',
-                            value: NotificationSettings.savingTips,
-                            onChanged: (value) {
-                              setState(() {
-                                NotificationSettings.savingTips = value;
-                              });
-                            },
-                          ),
-                          _buildToggleSettingsTile(
-                            icon: Icons.flag_outlined,
-                            title: 'Hedef Güncellemeleri',
-                            subtitle: 'Finansal hedeflerinizdeki ilerlemeler',
-                            value: NotificationSettings.goalUpdates,
-                            onChanged: (value) {
-                              setState(() {
-                                NotificationSettings.goalUpdates = value;
-                              });
-                            },
-                          ),
-                          _buildToggleSettingsTile(
-                            icon: Icons.receipt_outlined,
-                            title: 'Fatura Hatırlatmaları',
-                            subtitle:
-                                'Ödeme tarihleri yaklaştığında hatırlatma',
-                            value: NotificationSettings.billReminders,
-                            onChanged: (value) {
-                              setState(() {
-                                NotificationSettings.billReminders = value;
-                              });
-                            },
-                          ),
-                          _buildToggleSettingsTile(
-                            icon: Icons.summarize_outlined,
-                            title: 'Günlük Özet',
-                            subtitle: 'Günlük harcama raporu ve özetler',
-                            value: NotificationSettings.dailySummary,
-                            onChanged: (value) {
-                              setState(() {
-                                NotificationSettings.dailySummary = value;
-                              });
-                            },
-                          ),
-                        ]),
-                        const SizedBox(height: 10),
                         _buildSettingsTile(
                           icon: Icons.language_outlined,
                           title: 'Dil',
                           subtitle: 'Türkçe',
                           onTap: () => {
-                            Navigator.pushReplacement(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
@@ -235,7 +211,7 @@ class _SettingsPageState extends State<SettingsPage>
                           title: 'Para Birimi',
                           subtitle: 'TL (Türk Lirası)',
                           onTap: () => {
-                            Navigator.pushReplacement(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
@@ -254,7 +230,7 @@ class _SettingsPageState extends State<SettingsPage>
                           title: 'Yardım Merkezi',
                           subtitle: 'SSS ve yardım dökümanları',
                           onTap: () => {
-                            Navigator.pushReplacement(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const HelpCenterPage(),
@@ -267,7 +243,7 @@ class _SettingsPageState extends State<SettingsPage>
                           title: 'Geri Bildirim',
                           subtitle: 'Önerilerinizi paylaşın',
                           onTap: () => {
-                            Navigator.pushReplacement(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const FeedbackPage(),
@@ -278,24 +254,8 @@ class _SettingsPageState extends State<SettingsPage>
                         _buildSettingsTile(
                           icon: Icons.star_outline,
                           title: 'Uygulamayı Değerlendir',
-                          subtitle: 'Google Play\'den puan verin',
+                          subtitle: 'App Store\'da puan verin',
                           onTap: () => _showComingSoon(context),
-                        ),
-                      ]),
-
-                      const SizedBox(height: 24),
-
-                      _buildSettingsSection('Hakkında', [
-                        _buildSettingsTile(
-                          icon: Icons.info_outline,
-                          title: 'Hakkında',
-                          subtitle: 'Uygulama hakkında bilgiler',
-                          onTap: () => Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AboutPage(),
-                            ),
-                          ),
                         ),
                       ]),
 
@@ -374,13 +334,13 @@ class _SettingsPageState extends State<SettingsPage>
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   'Ayarlar',
                   style: GoogleFonts.inter(
-                    fontSize: 26,
+                    fontSize: 25,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1E293B),
                   ),
@@ -478,6 +438,18 @@ class _SettingsPageState extends State<SettingsPage>
                   ),
                 ),
               ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.edit_outlined,
+              color: Colors.white,
+              size: 20,
             ),
           ),
         ],
@@ -674,7 +646,7 @@ class _SettingsPageState extends State<SettingsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'FINŌRA',
+                  'Finora',
                   style: GoogleFonts.inter(
                     color: const Color(0xFF1E293B),
                     fontSize: 16,

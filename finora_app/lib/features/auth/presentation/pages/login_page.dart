@@ -3,6 +3,7 @@ import 'package:finora_app/features/password_reset/presentation/pages/password_r
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '/core/services/firebase_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -59,31 +60,55 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       );
 
       if (userCredential.user != null) {
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const MainScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: const Duration(milliseconds: 600),
-          ),
-        );
+        final user = userCredential.user!;
+
+        // Check if user profile exists in Firestore
+        final userProfile = await UserService.getUserProfile(user.uid);
+
+        if (userProfile == null) {
+          // Profile doesn't exist, user might be from old auth system
+          // Show a message and sign out, force re-registration
+          await _auth.signOut();
+          setState(() {
+            _errorMessage = 'Hesabınız bulunamadı. Lütfen tekrar kayıt olun.';
+          });
+          return;
+        }
+
+        // Profile exists, proceed to main screen
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const MainScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+              transitionDuration: const Duration(milliseconds: 600),
+            ),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = _getErrorMessage(e.code);
       });
-    } catch (_) {
+    } on FirebaseServiceException catch (e) {
       setState(() {
-        _errorMessage = 'Bilinmeyen bir hata oluştu.';
+        _errorMessage = 'Profil kontrol hatası: ${e.message}';
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Bilinmeyen bir hata oluştu: $e';
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -111,6 +136,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 20),
+
             // Welcome text
             _buildWelcomeSection(),
 

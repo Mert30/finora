@@ -2,6 +2,8 @@ import 'package:finora_app/features/main_screen/presentation/pages/main_screen.d
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '/core/services/firebase_service.dart';
+import '/core/models/firebase_models.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -53,6 +55,14 @@ class _RegisterPageState extends State<RegisterPage>
   }
 
   void _register() async {
+    // Input validation
+    if (_nameController.text.trim().isEmpty) {
+      setState(() {
+        _errorMessage = 'Ad ve soyad gereklidir.';
+      });
+      return;
+    }
+
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
         _errorMessage = 'Şifreler eşleşmiyor.';
@@ -73,42 +83,136 @@ class _RegisterPageState extends State<RegisterPage>
     });
 
     try {
+      // 1. Create Firebase Auth user
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
       if (userCredential.user != null) {
-        await userCredential.user!.updateDisplayName(
-          _nameController.text.trim(),
-        );
+        final user = userCredential.user!;
+        await user.updateDisplayName(_nameController.text.trim());
 
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const MainScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: const Duration(milliseconds: 600),
-          ),
-        );
+        // 2. Create user profile in Firestore
+        await _createUserProfile(user);
+
+        // 3. Create default categories
+        await CategoryService.createDefaultCategories(user.uid);
+
+        // 4. Navigate to main screen
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const MainScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+              transitionDuration: const Duration(milliseconds: 600),
+            ),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = _getErrorMessage(e.code);
       });
-    } catch (_) {
+    } on FirebaseServiceException catch (e) {
       setState(() {
-        _errorMessage = 'Bilinmeyen bir hata oluştu.';
+        _errorMessage = 'Profil oluşturulurken hata: ${e.message}';
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Bilinmeyen bir hata oluştu: $e';
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  // Create complete user profile
+  Future<void> _createUserProfile(User user) async {
+    final now = DateTime.now();
+
+    // Create user profile
+    final userProfile = FirebaseUserProfile(
+      userId: user.uid,
+      name: _nameController.text.trim(),
+      email: user.email ?? '',
+      phone: '', // Will be updated in profile settings
+      memberSince: _formatDate(now),
+      profileImageUrl: '',
+      isVerified: user.emailVerified,
+      accountType: 'free',
+      firstName: _extractFirstName(_nameController.text.trim()),
+      lastName: _extractLastName(_nameController.text.trim()),
+      createdAt: now,
+      updatedAt: now,
+      stats: ProfileStats(
+        totalTransactions: 0,
+        totalIncome: 0.0,
+        totalExpense: 0.0,
+        activeGoals: 0,
+        categoriesUsed: 0,
+      ),
+    );
+
+    await UserService.createUserProfile(userProfile);
+
+    // Create default settings
+    final userSettings = FirebaseUserSettings(
+      userId: user.uid,
+      language: 'tr',
+      currency: 'TRY',
+      theme: 'light',
+      notifications: const NotificationSettings(),
+      security: SecuritySettings(),
+      privacy: PrivacySettings(),
+      updatedAt: now,
+    );
+
+    await SettingsService.updateSettings(userSettings);
+
+    debugPrint('✅ Complete user setup finished for: ${user.uid}');
+  }
+
+  String _extractFirstName(String fullName) {
+    final parts = fullName.split(' ');
+    return parts.isNotEmpty ? parts.first : '';
+  }
+
+  String _extractLastName(String fullName) {
+    final parts = fullName.split(' ');
+    return parts.length > 1 ? parts.sublist(1).join(' ') : '';
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day} ${_getMonthName(date.month)} ${date.year}';
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      '',
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık',
+    ];
+    return months[month];
   }
 
   String _getErrorMessage(String errorCode) {
@@ -135,7 +239,7 @@ class _RegisterPageState extends State<RegisterPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
 
             // Welcome text
             _buildWelcomeSection(),
@@ -167,7 +271,7 @@ class _RegisterPageState extends State<RegisterPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Hesap Oluşturun',
+          'Hesap Oluşturun 🚀',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontSize: 28,

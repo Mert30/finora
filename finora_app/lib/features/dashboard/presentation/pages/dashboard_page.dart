@@ -1,8 +1,13 @@
-import 'package:finora_app/features/money_transfer/presentation/money_transfer_page.dart';
-import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:finora_app/features/transactions/presentation/pages/add_transaction_page.dart';
+import 'package:finora_app/features/transactions/presentation/pages/history_page.dart';
+import 'package:finora_app/features/budgets/presentation/budget_goals_page.dart';
+import 'package:finora_app/features/categories/presentation/category_management_page.dart';
+import '/core/models/firebase_models.dart';
+import 'package:finora_app/features/money_transfer/presentation/money_transfer_page.dart';
+import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
