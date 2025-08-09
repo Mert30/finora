@@ -71,27 +71,67 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   
   Future<void> _loadCategories() async {
     try {
+      debugPrint('🔄 Starting to load categories...');
       final userId = FirebaseAuth.instance.currentUser?.uid;
+      debugPrint('👤 User ID: $userId');
+      
       if (userId != null) {
+        debugPrint('📂 Loading income categories...');
         final incomeCategories = await CategoryService.getCategories(
           userId, 
           type: 'income',
           isActive: true,
         );
+        debugPrint('✅ Income categories loaded: ${incomeCategories.length}');
+        
+        debugPrint('📂 Loading expense categories...');
         final expenseCategories = await CategoryService.getCategories(
           userId, 
           type: 'expense',
           isActive: true,
         );
+        debugPrint('✅ Expense categories loaded: ${expenseCategories.length}');
         
+        // If no categories exist, create default ones
+        if (incomeCategories.isEmpty && expenseCategories.isEmpty) {
+          debugPrint('⚠️ No categories found, creating defaults...');
+          await CategoryService.createDefaultCategories(userId);
+          
+          // Reload categories after creation
+          final newIncomeCategories = await CategoryService.getCategories(
+            userId, 
+            type: 'income',
+            isActive: true,
+          );
+          final newExpenseCategories = await CategoryService.getCategories(
+            userId, 
+            type: 'expense',
+            isActive: true,
+          );
+          
+          setState(() {
+            _incomeCategories = newIncomeCategories;
+            _expenseCategories = newExpenseCategories;
+            _isLoading = false;
+          });
+          debugPrint('✅ Default categories created and loaded!');
+        } else {
+          setState(() {
+            _incomeCategories = incomeCategories;
+            _expenseCategories = expenseCategories;
+            _isLoading = false;
+          });
+          debugPrint('🎉 Categories loaded successfully!');
+        }
+      } else {
+        debugPrint('❌ No user ID found');
         setState(() {
-          _incomeCategories = incomeCategories;
-          _expenseCategories = expenseCategories;
           _isLoading = false;
         });
+        _showSnackBar('Kullanıcı oturumu bulunamadı', isError: true);
       }
     } catch (e) {
-      debugPrint('Error loading categories: $e');
+      debugPrint('💥 Error loading categories: $e');
       setState(() {
         _isLoading = false;
       });
