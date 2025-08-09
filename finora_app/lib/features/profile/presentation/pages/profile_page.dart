@@ -1388,9 +1388,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  void _showEditProfile() {
-    _showComingSoon('Profil düzenleme');
-  }
+
 
   void _showLogoutConfirmation() {
     print('🚨 _showLogoutConfirmation çağrıldı!'); // Debug için
