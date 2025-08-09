@@ -107,8 +107,8 @@ class _ProfilePageState extends State<ProfilePage>
             _isLoading = false;
             
             // Set initial values for edit mode
-            _nameController.text = profile.personalInfo['fullName'] ?? '';
-            _phoneController.text = profile.personalInfo['phone'] ?? '';
+            _nameController.text = profile.name;
+            _phoneController.text = profile.phone;
           });
         }
       }
@@ -125,12 +125,9 @@ class _ProfilePageState extends State<ProfilePage>
       setState(() => _isLoading = true);
       
       // Update user profile
-      final updatedPersonalInfo = Map<String, dynamic>.from(_userProfile!.personalInfo);
-      updatedPersonalInfo['fullName'] = _nameController.text.trim();
-      updatedPersonalInfo['phone'] = _phoneController.text.trim();
-      
       await UserService.updateUserProfile(_userProfile!.userId, {
-        'personalInfo': updatedPersonalInfo,
+        'name': _nameController.text.trim(),
+        'phone': _phoneController.text.trim(),
       });
       
       // Reload profile data
@@ -278,7 +275,7 @@ class _ProfilePageState extends State<ProfilePage>
                                   ),
                                   child: Center(
                                     child: Text(
-                                      _userProfile?.personalInfo['fullName']?.split(' ').map((e) => e[0]).join() ?? '',
+                                      _userProfile?.name.split(' ').map((e) => e[0]).join() ?? '',
                                       style: GoogleFonts.inter(
                                         color: Colors.white,
                                         fontSize: 32,
@@ -534,11 +531,11 @@ class _ProfilePageState extends State<ProfilePage>
                           const SizedBox(height: 20),
                           _buildProfileHeader(),
                           const SizedBox(height: 24),
-                          if (_userProfile?.personalInfo['phone'] != null && 
-                              _userProfile!.personalInfo['phone']!.isNotEmpty) 
+                          if (_userProfile?.phone != null && 
+                              _userProfile!.phone.isNotEmpty) 
                             _buildContactInfo(),
-                          if (_userProfile?.personalInfo['phone'] != null && 
-                              _userProfile!.personalInfo['phone']!.isNotEmpty) 
+                          if (_userProfile?.phone != null && 
+                              _userProfile!.phone.isNotEmpty) 
                             const SizedBox(height: 24),
                           if (_profileStats != null) _buildStatsSection(),
                           if (_profileStats != null) const SizedBox(height: 24),
@@ -695,7 +692,7 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                   child: Center(
                     child: Text(
-                      _userProfile?.personalInfo['fullName']?.split(' ').map((e) => e[0]).join() ?? '',
+                                                             _userProfile?.name.split(' ').map((e) => e[0]).join() ?? '',
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 24,
@@ -713,7 +710,7 @@ class _ProfilePageState extends State<ProfilePage>
                         children: [
                           Expanded(
                             child: Text(
-                              _userProfile?.personalInfo['fullName'] ?? '',
+                                                             _userProfile?.name ?? '',
                               style: GoogleFonts.inter(
                                 color: const Color(0xFF1F2937),
                                 fontSize: 20,
@@ -800,7 +797,7 @@ class _ProfilePageState extends State<ProfilePage>
         _buildContactItem(
           icon: Icons.phone_outlined,
           label: 'Telefon',
-          value: _userProfile?.personalInfo['phone'] ?? '',
+                      value: _userProfile?.phone ?? '',
           color: const Color(0xFF10B981),
         ),
       ],
