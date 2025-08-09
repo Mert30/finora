@@ -88,10 +88,10 @@ class _ProfilePageState extends State<ProfilePage>
           
           // Calculate stats
           final totalIncome = transactions
-              .where((t) => t.type == 'income')
+              .where((t) => t.isIncome)
               .fold(0.0, (sum, t) => sum + t.amount);
           final totalExpense = transactions
-              .where((t) => t.type == 'expense')
+              .where((t) => !t.isIncome)
               .fold(0.0, (sum, t) => sum + t.amount);
           final activeGoals = goals.where((g) => !g.isCompleted).length;
           
