@@ -60,17 +60,27 @@ class _HistoryPageState extends State<HistoryPage>
     try {
       debugPrint('🔄 Loading transactions from Firebase...');
       final userId = FirebaseAuth.instance.currentUser?.uid;
+      debugPrint('👤 User ID: $userId');
       
       if (userId != null) {
+        debugPrint('🔥 Calling TransactionService.getTransactions...');
         final transactions = await TransactionService.getTransactions(userId);
         debugPrint('✅ Loaded ${transactions.length} transactions');
+        
+        // Debug: Print each transaction
+        for (int i = 0; i < transactions.length && i < 3; i++) {
+          final t = transactions[i];
+          debugPrint('📋 Transaction ${i + 1}: ${t.title} - ${t.category} - ₺${t.amount}');
+        }
         
         setState(() {
           _transactions = transactions;
           _isLoading = false;
         });
         
+        debugPrint('🔄 Applying filters...');
         _applyFilters();
+        debugPrint('✅ Filters applied. Filtered count: ${_filteredTransactions.length}');
       } else {
         debugPrint('❌ No user ID found');
         setState(() {
@@ -427,7 +437,10 @@ class _HistoryPageState extends State<HistoryPage>
   }
 
   Widget _buildTransactionsList() {
+    debugPrint('🎨 Building transactions list. Loading: $_isLoading, Filtered count: ${_filteredTransactions.length}');
+    
     if (_isLoading) {
+      debugPrint('⏳ Showing loading indicator');
       return const SliverFillRemaining(
         child: Center(
           child: CircularProgressIndicator(
@@ -438,11 +451,13 @@ class _HistoryPageState extends State<HistoryPage>
     }
     
     if (_filteredTransactions.isEmpty) {
+      debugPrint('📭 Showing empty state');
       return SliverFillRemaining(
         child: _buildEmptyState(),
       );
     }
 
+    debugPrint('📋 Showing ${_filteredTransactions.length} transactions');
     return SliverPadding(
       padding: const EdgeInsets.all(24.0),
       sliver: SliverList(
