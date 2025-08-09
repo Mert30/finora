@@ -378,7 +378,7 @@ class _HistoryPageState extends State<HistoryPage>
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
-          items: ['Tümü', 'Gelir', 'Gider'].map((String value) {
+          items: ['Tümü', 'Gelir', 'Gider', 'Bu Ay', 'Bu Hafta'].map((String value) {
             return DropdownMenuItem<String>(
               value: value,
               child: Text(value),
@@ -419,7 +419,7 @@ class _HistoryPageState extends State<HistoryPage>
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
-          items: ['Tarih', 'Tutar', 'Kategori'].map((String value) {
+          items: ['En Yeni', 'En Eski', 'Tutar (Yüksek)', 'Tutar (Düşük)'].map((String value) {
             return DropdownMenuItem<String>(
               value: value,
               child: Text(value),
