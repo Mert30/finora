@@ -473,12 +473,11 @@ class CategoryService {
       debugPrint('🔍 Getting categories for user: $userId, type: $type, isActive: $isActive');
       Query query = _getCategoriesCollection(userId);
 
+      // Only use type filter to avoid composite index requirement
       if (type != null) {
         query = query.where('type', isEqualTo: type);
       }
-      if (isActive != null) {
-        query = query.where('isActive', isEqualTo: isActive);
-      }
+      // Remove isActive filter from query - will filter in memory
 
       debugPrint('🔥 Executing Firestore query...');
       final snapshot = await query.get();
@@ -490,8 +489,14 @@ class CategoryService {
           final doc = snapshot.docs[i];
           debugPrint('🔄 Processing category ${i + 1}: ${doc.id}');
           final category = FirebaseCategoryModel.fromFirestore(doc, userId);
-          categories.add(category);
-          debugPrint('✅ Successfully parsed category: ${category.name}');
+          
+          // Filter isActive in memory
+          if (isActive == null || category.isActive == isActive) {
+            categories.add(category);
+            debugPrint('✅ Successfully parsed category: ${category.name}');
+          } else {
+            debugPrint('⏭️ Skipped inactive category: ${category.name}');
+          }
         } catch (e) {
           debugPrint('💥 Error parsing category ${i + 1}: $e');
           debugPrint('📄 Document data: ${snapshot.docs[i].data()}');
