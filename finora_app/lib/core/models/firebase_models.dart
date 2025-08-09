@@ -745,38 +745,38 @@ class NotificationSettings {
   final bool smsEnabled;
 
   // Static properties for global access (kept for backward compatibility)
-  static bool _budgetAlerts = true;
-  static bool _savingTips = true;
-  static bool _goalUpdates = false;
-  static bool _billReminders = true;
-  static bool _dailySummary = false;
+  static bool _globalBudgetAlerts = true;
+  static bool _globalSavingTips = true;
+  static bool _globalGoalUpdates = false;
+  static bool _globalBillReminders = true;
+  static bool _globalDailySummary = false;
 
-  static bool get budgetAlerts => _budgetAlerts;
-  static set budgetAlerts(bool value) => _budgetAlerts = value;
+  static bool get budgetAlerts => _globalBudgetAlerts;
+  static set budgetAlerts(bool value) => _globalBudgetAlerts = value;
   
-  static bool get savingTips => _savingTips;
-  static set savingTips(bool value) => _savingTips = value;
+  static bool get savingTips => _globalSavingTips;
+  static set savingTips(bool value) => _globalSavingTips = value;
   
-  static bool get goalUpdates => _goalUpdates;
-  static set goalUpdates(bool value) => _goalUpdates = value;
+  static bool get goalUpdates => _globalGoalUpdates;
+  static set goalUpdates(bool value) => _globalGoalUpdates = value;
   
-  static bool get billReminders => _billReminders;
-  static set billReminders(bool value) => _billReminders = value;
+  static bool get billReminders => _globalBillReminders;
+  static set billReminders(bool value) => _globalBillReminders = value;
   
-  static bool get dailySummary => _dailySummary;
-  static set dailySummary(bool value) => _dailySummary = value;
+  static bool get dailySummary => _globalDailySummary;
+  static set dailySummary(bool value) => _globalDailySummary = value;
 
   static bool get hasActiveNotifications {
-    return _budgetAlerts || _savingTips || _goalUpdates || _billReminders || _dailySummary;
+    return _globalBudgetAlerts || _globalSavingTips || _globalGoalUpdates || _globalBillReminders || _globalDailySummary;
   }
 
   static int get activeNotificationCount {
     int count = 0;
-    if (_budgetAlerts) count++;
-    if (_savingTips) count++;
-    if (_goalUpdates) count++;
-    if (_billReminders) count++;
-    if (_dailySummary) count++;
+    if (_globalBudgetAlerts) count++;
+    if (_globalSavingTips) count++;
+    if (_globalGoalUpdates) count++;
+    if (_globalBillReminders) count++;
+    if (_globalDailySummary) count++;
     return count;
   }
 
