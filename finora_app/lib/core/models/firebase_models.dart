@@ -735,11 +735,11 @@ class FirebaseUserSettings {
 }
 
 class NotificationSettings {
-  final bool budgetAlerts;
-  final bool savingTips;
-  final bool goalUpdates;
-  final bool billReminders;
-  final bool dailySummary;
+  final bool instanceBudgetAlerts;
+  final bool instanceSavingTips;
+  final bool instanceGoalUpdates;
+  final bool instanceBillReminders;
+  final bool instanceDailySummary;
   final bool pushEnabled;
   final bool emailEnabled;
   final bool smsEnabled;
@@ -781,11 +781,11 @@ class NotificationSettings {
   }
 
   const NotificationSettings({
-    this.budgetAlerts = true,
-    this.savingTips = true,
-    this.goalUpdates = false,
-    this.billReminders = true,
-    this.dailySummary = false,
+    this.instanceBudgetAlerts = true,
+    this.instanceSavingTips = true,
+    this.instanceGoalUpdates = false,
+    this.instanceBillReminders = true,
+    this.instanceDailySummary = false,
     this.pushEnabled = true,
     this.emailEnabled = false,
     this.smsEnabled = true,
@@ -793,11 +793,11 @@ class NotificationSettings {
 
   Map<String, dynamic> toMap() {
     return {
-      'budgetAlerts': budgetAlerts,
-      'savingTips': savingTips,
-      'goalUpdates': goalUpdates,
-      'billReminders': billReminders,
-      'dailySummary': dailySummary,
+      'budgetAlerts': instanceBudgetAlerts,
+      'savingTips': instanceSavingTips,
+      'goalUpdates': instanceGoalUpdates,
+      'billReminders': instanceBillReminders,
+      'dailySummary': instanceDailySummary,
       'pushEnabled': pushEnabled,
       'emailEnabled': emailEnabled,
       'smsEnabled': smsEnabled,
@@ -806,11 +806,11 @@ class NotificationSettings {
 
   factory NotificationSettings.fromMap(Map<String, dynamic> map) {
     return NotificationSettings(
-      budgetAlerts: map['budgetAlerts'] ?? true,
-      savingTips: map['savingTips'] ?? true,
-      goalUpdates: map['goalUpdates'] ?? false,
-      billReminders: map['billReminders'] ?? true,
-      dailySummary: map['dailySummary'] ?? false,
+      instanceBudgetAlerts: map['budgetAlerts'] ?? true,
+      instanceSavingTips: map['savingTips'] ?? true,
+      instanceGoalUpdates: map['goalUpdates'] ?? false,
+      instanceBillReminders: map['billReminders'] ?? true,
+      instanceDailySummary: map['dailySummary'] ?? false,
       pushEnabled: map['pushEnabled'] ?? true,
       emailEnabled: map['emailEnabled'] ?? false,
       smsEnabled: map['smsEnabled'] ?? true,
