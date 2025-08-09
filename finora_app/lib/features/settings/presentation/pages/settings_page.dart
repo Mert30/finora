@@ -3,26 +3,7 @@ import 'package:finora_app/features/password_reset/presentation/pages/password_r
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-// Notification Settings Model
-class NotificationSettings {
-  static bool budgetAlerts = true;
-  static bool savingTips = true;
-  static bool goalUpdates = true;
-  static bool billReminders = false;
-  static bool dailySummary = false;
-  
-  static bool get hasActiveNotifications => 
-    budgetAlerts || savingTips || goalUpdates || billReminders || dailySummary;
-    
-  static int get activeNotificationCount {
-    int count = 0;
-    if (budgetAlerts) count++;
-    if (savingTips) count++;
-    if (goalUpdates) count++;
-    return count; // Only show count for important ones
-  }
-}
+import '/core/models/firebase_models.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

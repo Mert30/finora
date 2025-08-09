@@ -6,7 +6,7 @@ import 'package:finora_app/features/transactions/presentation/pages/add_transact
 import 'package:finora_app/features/transactions/presentation/pages/history_page.dart';
 import 'package:finora_app/features/budget/presentation/pages/budget_goals_page.dart';
 import 'package:finora_app/features/categories/presentation/pages/category_management_page.dart';
-import 'package:finora_app/features/settings/presentation/pages/settings_page.dart'; // For NotificationSettings
+import '/core/models/firebase_models.dart';
 import 'package:finora_app/features/money_transfer/presentation/pages/money_transfer_page.dart';
 
 // Analytics sayfası
