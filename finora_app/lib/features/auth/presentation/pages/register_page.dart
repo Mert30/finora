@@ -151,8 +151,7 @@ class _RegisterPageState extends State<RegisterPage>
       profileImageUrl: '',
       isVerified: user.emailVerified,
       accountType: 'free',
-      firstName: _extractFirstName(_nameController.text.trim()),
-      lastName: _extractLastName(_nameController.text.trim()),
+      fullName: _nameController.text.trim(), // Use fullName instead of firstName/lastName
       createdAt: now,
       updatedAt: now,
       stats: ProfileStats(
@@ -181,16 +180,6 @@ class _RegisterPageState extends State<RegisterPage>
     await SettingsService.updateSettings(userSettings);
     
     debugPrint('✅ Complete user setup finished for: ${user.uid}');
-  }
-
-  String _extractFirstName(String fullName) {
-    final parts = fullName.split(' ');
-    return parts.isNotEmpty ? parts.first : '';
-  }
-
-  String _extractLastName(String fullName) {
-    final parts = fullName.split(' ');
-    return parts.length > 1 ? parts.sublist(1).join(' ') : '';
   }
 
   String _formatDate(DateTime date) {
