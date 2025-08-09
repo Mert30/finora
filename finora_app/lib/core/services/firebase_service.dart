@@ -469,7 +469,7 @@ class CategoryService {
     String? type, // 'income' or 'expense'
     bool? isActive,
   }) async {
-    final result = await FirebaseService._handleErrors(() async {
+    try {
       debugPrint('🔍 Getting categories for user: $userId, type: $type, isActive: $isActive');
       Query query = _getCategoriesCollection(userId);
 
@@ -480,20 +480,33 @@ class CategoryService {
         query = query.where('isActive', isEqualTo: isActive);
       }
 
+      debugPrint('🔥 Executing Firestore query...');
       final snapshot = await query.get();
       debugPrint('📋 Found ${snapshot.docs.length} categories in Firestore');
       
-      final categories = snapshot.docs
-          .map((doc) => FirebaseCategoryModel.fromFirestore(doc, userId))
-          .toList();
+      final categories = <FirebaseCategoryModel>[];
+      for (int i = 0; i < snapshot.docs.length; i++) {
+        try {
+          final doc = snapshot.docs[i];
+          debugPrint('🔄 Processing category ${i + 1}: ${doc.id}');
+          final category = FirebaseCategoryModel.fromFirestore(doc, userId);
+          categories.add(category);
+          debugPrint('✅ Successfully parsed category: ${category.name}');
+        } catch (e) {
+          debugPrint('💥 Error parsing category ${i + 1}: $e');
+          debugPrint('📄 Document data: ${snapshot.docs[i].data()}');
+        }
+      }
       
       // Sort in memory to avoid index requirement
       categories.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-      debugPrint('✅ Categories sorted by sortOrder');
+      debugPrint('✅ Categories sorted by sortOrder: ${categories.length} total');
       
       return categories;
-    });
-    return result ?? [];
+    } catch (e) {
+      debugPrint('💥 Major error in getCategories: $e');
+      return [];
+    }
   }
 
   // ➤ GET CATEGORIES STREAM (Real-time)
