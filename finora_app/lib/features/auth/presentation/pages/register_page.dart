@@ -172,7 +172,7 @@ class _RegisterPageState extends State<RegisterPage>
       language: 'tr',
       currency: 'TRY',
       theme: 'light',
-      notifications: NotificationSettings(),
+      notifications: const NotificationSettings(),
       security: SecuritySettings(),
       privacy: PrivacySettings(),
       updatedAt: now,

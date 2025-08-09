@@ -735,28 +735,61 @@ class FirebaseUserSettings {
 }
 
 class NotificationSettings {
-  static bool budgetAlerts = true;
-  static bool savingTips = true;
-  static bool goalUpdates = false;
-  static bool billReminders = true;
-  static bool dailySummary = false;
-  static bool pushEnabled = true;
-  static bool emailEnabled = false;
-  static bool smsEnabled = true;
+  final bool budgetAlerts;
+  final bool savingTips;
+  final bool goalUpdates;
+  final bool billReminders;
+  final bool dailySummary;
+  final bool pushEnabled;
+  final bool emailEnabled;
+  final bool smsEnabled;
+
+  // Static properties for global access (kept for backward compatibility)
+  static bool _budgetAlerts = true;
+  static bool _savingTips = true;
+  static bool _goalUpdates = false;
+  static bool _billReminders = true;
+  static bool _dailySummary = false;
+
+  static bool get budgetAlerts => _budgetAlerts;
+  static set budgetAlerts(bool value) => _budgetAlerts = value;
+  
+  static bool get savingTips => _savingTips;
+  static set savingTips(bool value) => _savingTips = value;
+  
+  static bool get goalUpdates => _goalUpdates;
+  static set goalUpdates(bool value) => _goalUpdates = value;
+  
+  static bool get billReminders => _billReminders;
+  static set billReminders(bool value) => _billReminders = value;
+  
+  static bool get dailySummary => _dailySummary;
+  static set dailySummary(bool value) => _dailySummary = value;
 
   static bool get hasActiveNotifications {
-    return budgetAlerts || savingTips || goalUpdates || billReminders || dailySummary;
+    return _budgetAlerts || _savingTips || _goalUpdates || _billReminders || _dailySummary;
   }
 
   static int get activeNotificationCount {
     int count = 0;
-    if (budgetAlerts) count++;
-    if (savingTips) count++;
-    if (goalUpdates) count++;
-    if (billReminders) count++;
-    if (dailySummary) count++;
+    if (_budgetAlerts) count++;
+    if (_savingTips) count++;
+    if (_goalUpdates) count++;
+    if (_billReminders) count++;
+    if (_dailySummary) count++;
     return count;
   }
+
+  const NotificationSettings({
+    this.budgetAlerts = true,
+    this.savingTips = true,
+    this.goalUpdates = false,
+    this.billReminders = true,
+    this.dailySummary = false,
+    this.pushEnabled = true,
+    this.emailEnabled = false,
+    this.smsEnabled = true,
+  });
 
   Map<String, dynamic> toMap() {
     return {
@@ -772,15 +805,16 @@ class NotificationSettings {
   }
 
   factory NotificationSettings.fromMap(Map<String, dynamic> map) {
-    budgetAlerts = map['budgetAlerts'] ?? true;
-    savingTips = map['savingTips'] ?? true;
-    goalUpdates = map['goalUpdates'] ?? false;
-    billReminders = map['billReminders'] ?? true;
-    dailySummary = map['dailySummary'] ?? false;
-    pushEnabled = map['pushEnabled'] ?? true;
-    emailEnabled = map['emailEnabled'] ?? false;
-    smsEnabled = map['smsEnabled'] ?? true;
-    return NotificationSettings();
+    return NotificationSettings(
+      budgetAlerts: map['budgetAlerts'] ?? true,
+      savingTips: map['savingTips'] ?? true,
+      goalUpdates: map['goalUpdates'] ?? false,
+      billReminders: map['billReminders'] ?? true,
+      dailySummary: map['dailySummary'] ?? false,
+      pushEnabled: map['pushEnabled'] ?? true,
+      emailEnabled: map['emailEnabled'] ?? false,
+      smsEnabled: map['smsEnabled'] ?? true,
+    );
   }
 }
 
