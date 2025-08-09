@@ -21,7 +21,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = const [
     DashboardPage(),
     AddTransactionPage(),
-    HistoryPage(transactions: []),
+    HistoryPage(),
     BudgetGoalsPage(),
     CategoryManagementPage(),
     // ProfilePage removed - accessible via Settings
