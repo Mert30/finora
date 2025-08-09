@@ -521,9 +521,12 @@ class CategoryService {
   // ➤ CREATE DEFAULT CATEGORIES FOR NEW USER
   static Future<void> createDefaultCategories(String userId) async {
     await FirebaseService._handleErrors(() async {
+      debugPrint('🏗️ Creating default categories for user: $userId');
       final defaultCategories = _getDefaultCategories(userId);
+      debugPrint('📋 Default categories to create: ${defaultCategories.length}');
       
       for (final category in defaultCategories) {
+        debugPrint('➕ Creating category: ${category.name} (${category.type})');
         await _getCategoriesCollection(userId).add(category.toFirestore());
       }
       
@@ -547,6 +550,7 @@ class CategoryService {
         transactionCount: 0,
         totalAmount: 0,
         isDefault: true,
+        isActive: true,
         sortOrder: 1,
         createdAt: now,
         updatedAt: now,
@@ -561,6 +565,7 @@ class CategoryService {
         transactionCount: 0,
         totalAmount: 0,
         isDefault: true,
+        isActive: true,
         sortOrder: 2,
         createdAt: now,
         updatedAt: now,
@@ -577,6 +582,7 @@ class CategoryService {
         transactionCount: 0,
         totalAmount: 0,
         isDefault: true,
+        isActive: true,
         sortOrder: 1,
         createdAt: now,
         updatedAt: now,
@@ -592,6 +598,7 @@ class CategoryService {
         transactionCount: 0,
         totalAmount: 0,
         isDefault: true,
+        isActive: true,
         sortOrder: 2,
         createdAt: now,
         updatedAt: now,
@@ -607,6 +614,7 @@ class CategoryService {
         transactionCount: 0,
         totalAmount: 0,
         isDefault: true,
+        isActive: true,
         sortOrder: 3,
         createdAt: now,
         updatedAt: now,

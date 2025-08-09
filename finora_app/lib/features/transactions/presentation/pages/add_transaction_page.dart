@@ -526,6 +526,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
 
   Widget _buildCategorySection() {
     final currentCategories = _isIncome ? _incomeCategories : _expenseCategories;
+    debugPrint('🎨 Building category section: ${currentCategories.length} categories, isIncome: $_isIncome');
     
     return Container(
       padding: const EdgeInsets.all(24),
@@ -544,7 +545,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Kategori',
+            'Kategori (${currentCategories.length})',
             style: GoogleFonts.inter(
               color: const Color(0xFF1E293B),
               fontSize: 16,
@@ -552,69 +553,82 @@ class _AddTransactionPageState extends State<AddTransactionPage>
             ),
           ),
           const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1.0,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: currentCategories.length,
-            itemBuilder: (context, index) {
-              final category = currentCategories[index];
-              final isSelected = _selectedCategory == category.name;
-              
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedCategory = category.name;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected 
-                        ? category.color.withOpacity(0.1) 
-                        : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
+          if (currentCategories.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Kategori bulunamadı. Lütfen bekleyin...',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF64748B),
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 1.0,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: currentCategories.length,
+              itemBuilder: (context, index) {
+                final category = currentCategories[index];
+                final isSelected = _selectedCategory == category.name;
+                
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = category.name;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
                       color: isSelected 
-                          ? category.color 
-                          : const Color(0xFFE2E8F0),
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        category.icon,
+                          ? category.color.withOpacity(0.1) 
+                          : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
                         color: isSelected 
                             ? category.color 
-                            : const Color(0xFF64748B),
-                        size: 24,
+                            : const Color(0xFFE2E8F0),
+                        width: isSelected ? 2 : 1,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        category.name,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          category.icon,
                           color: isSelected 
                               ? category.color 
                               : const Color(0xFF64748B),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          size: 24,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Text(
+                          category.name,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            color: isSelected 
+                                ? category.color 
+                                : const Color(0xFF64748B),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
         ],
       ),
     );
