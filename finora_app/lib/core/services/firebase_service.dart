@@ -135,7 +135,7 @@ class TransactionService {
 
   // ➤ CREATE TRANSACTION
   static Future<String> createTransaction(FirebaseTransaction transaction) async {
-    return await FirebaseService._handleErrors(() async {
+    final result = await FirebaseService._handleErrors(() async {
       final docRef = await _getTransactionsCollection(transaction.userId)
           .add(transaction.toFirestore());
       
@@ -145,7 +145,8 @@ class TransactionService {
       await _updateUserStatsAfterTransaction(transaction);
       
       return docRef.id;
-    }) ?? '';
+    });
+    return result ?? '';
   }
 
   // ➤ GET TRANSACTIONS
@@ -156,7 +157,7 @@ class TransactionService {
     bool? isIncome,
     String? categoryId,
   }) async {
-    return await FirebaseService._handleErrors(() async {
+    final result = await FirebaseService._handleErrors(() async {
       Query query = _getTransactionsCollection(userId)
           .orderBy('date', descending: true);
 
@@ -181,7 +182,8 @@ class TransactionService {
       return snapshot.docs
           .map((doc) => FirebaseTransaction.fromFirestore(doc, userId))
           .toList();
-    }) ?? [];
+    });
+    return result ?? [];
   }
 
   // ➤ GET TRANSACTIONS STREAM (Real-time)
@@ -236,7 +238,7 @@ class TransactionService {
 
   // ➤ GET MONTHLY SUMMARY
   static Future<Map<String, double>> getMonthlySummary(String userId, DateTime month) async {
-    return await FirebaseService._handleErrors(() async {
+    final result = await FirebaseService._handleErrors(() async {
       final startOfMonth = DateTime(month.year, month.month, 1);
       final endOfMonth = DateTime(month.year, month.month + 1, 0);
 
@@ -262,7 +264,8 @@ class TransactionService {
         'expense': totalExpense,
         'balance': totalIncome - totalExpense,
       };
-    }) ?? {'income': 0, 'expense': 0, 'balance': 0};
+    });
+    return result ?? {'income': 0, 'expense': 0, 'balance': 0};
   }
 
   // ➤ Private: Update user stats after transaction
@@ -332,7 +335,7 @@ class GoalService {
 
   // ➤ CREATE GOAL
   static Future<String> createGoal(FirebaseBudgetGoal goal) async {
-    return await FirebaseService._handleErrors(() async {
+    final result = await FirebaseService._handleErrors(() async {
       final docRef = await _getGoalsCollection(goal.userId).add(goal.toFirestore());
       debugPrint('✅ Goal created: ${docRef.id}');
       
@@ -340,7 +343,8 @@ class GoalService {
       await _updateActiveGoalsCount(goal.userId);
       
       return docRef.id;
-    }) ?? '';
+    });
+    return result ?? '';
   }
 
   // ➤ GET GOALS
@@ -348,7 +352,7 @@ class GoalService {
     bool? isActive,
     bool? isCompleted,
   }) async {
-    return await FirebaseService._handleErrors(() async {
+    final result = await FirebaseService._handleErrors(() async {
       Query query = _getGoalsCollection(userId).orderBy('createdAt', descending: true);
 
       if (isActive != null) {
@@ -362,7 +366,8 @@ class GoalService {
       return snapshot.docs
           .map((doc) => FirebaseBudgetGoal.fromFirestore(doc, userId))
           .toList();
-    }) ?? [];
+    });
+    return result ?? [];
   }
 
   // ➤ GET GOALS STREAM (Real-time)
@@ -451,11 +456,12 @@ class CategoryService {
 
   // ➤ CREATE CATEGORY
   static Future<String> createCategory(FirebaseCategoryModel category) async {
-    return await FirebaseService._handleErrors(() async {
+    final result = await FirebaseService._handleErrors(() async {
       final docRef = await _getCategoriesCollection(category.userId).add(category.toFirestore());
       debugPrint('✅ Category created: ${docRef.id}');
       return docRef.id;
-    }) ?? '';
+    });
+    return result ?? '';
   }
 
   // ➤ GET CATEGORIES
@@ -463,7 +469,7 @@ class CategoryService {
     String? type, // 'income' or 'expense'
     bool? isActive,
   }) async {
-    return await FirebaseService._handleErrors(() async {
+    final result = await FirebaseService._handleErrors(() async {
       Query query = _getCategoriesCollection(userId).orderBy('sortOrder');
 
       if (type != null) {
@@ -477,7 +483,8 @@ class CategoryService {
       return snapshot.docs
           .map((doc) => FirebaseCategoryModel.fromFirestore(doc, userId))
           .toList();
-    }) ?? [];
+    });
+    return result ?? [];
   }
 
   // ➤ GET CATEGORIES STREAM (Real-time)
@@ -622,16 +629,17 @@ class CardService {
 
   // ➤ CREATE CARD
   static Future<String> createCard(FirebaseCard card) async {
-    return await FirebaseService._handleErrors(() async {
+    final result = await FirebaseService._handleErrors(() async {
       final docRef = await _getCardsCollection(card.userId).add(card.toFirestore());
       debugPrint('✅ Card created: ${docRef.id}');
       return docRef.id;
-    }) ?? '';
+    });
+    return result ?? '';
   }
 
   // ➤ GET CARDS
   static Future<List<FirebaseCard>> getCards(String userId, {bool? isActive}) async {
-    return await FirebaseService._handleErrors(() async {
+    final result = await FirebaseService._handleErrors(() async {
       Query query = _getCardsCollection(userId);
 
       if (isActive != null) {
@@ -646,7 +654,8 @@ class CardService {
       // Sort in memory to avoid index requirement
       cards.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return cards;
-    }) ?? [];
+    });
+    return result ?? [];
   }
 
   // ➤ GET CARDS STREAM (Real-time)
