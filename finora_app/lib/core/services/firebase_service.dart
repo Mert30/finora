@@ -73,10 +73,21 @@ class UserService {
   }
 
   // ➤ UPDATE USER PROFILE
-  static Future<void> updateUserProfile(FirebaseUserProfile profile) async {
+  static Future<void> updateUserProfile(String userId, Map<String, dynamic> updates) async {
+    await FirebaseService._handleErrors(() async {
+      await _usersCollection.doc(userId).update({
+        ...updates,
+        'metadata.updatedAt': FieldValue.serverTimestamp(),
+      });
+      debugPrint('✅ User profile updated: $userId');
+    });
+  }
+
+  // ➤ UPDATE FULL USER PROFILE (with object)
+  static Future<void> updateFullUserProfile(FirebaseUserProfile profile) async {
     await FirebaseService._handleErrors(() async {
       await _usersCollection.doc(profile.userId).update(profile.toFirestore());
-      debugPrint('✅ User profile updated: ${profile.userId}');
+      debugPrint('✅ User profile fully updated: ${profile.userId}');
     });
   }
 

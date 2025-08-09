@@ -107,8 +107,8 @@ class _ProfilePageState extends State<ProfilePage>
             _isLoading = false;
             
             // Set initial values for edit mode
-            _nameController.text = profile.name;
-            _phoneController.text = profile.phone;
+            _nameController.text = profile.personalInfo['fullName'] ?? profile.name;
+            _phoneController.text = profile.personalInfo['phone'] ?? profile.phone;
           });
         }
       }
@@ -126,8 +126,8 @@ class _ProfilePageState extends State<ProfilePage>
       
       // Update user profile
       await UserService.updateUserProfile(_userProfile!.userId, {
-        'name': _nameController.text.trim(),
-        'phone': _phoneController.text.trim(),
+        'personalInfo.name': _nameController.text.trim(),
+        'personalInfo.phone': _phoneController.text.trim(),
       });
       
       // Reload profile data

@@ -51,6 +51,24 @@ class FirebaseUserProfile {
     this.address,
   });
 
+  // Getter for personalInfo to maintain compatibility
+  Map<String, dynamic> get personalInfo => {
+    'fullName': name,
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'memberSince': memberSince,
+    'profileImageUrl': profileImageUrl,
+    'isVerified': isVerified,
+    'accountType': accountType,
+    'firstName': firstName,
+    'lastName': lastName,
+    'dateOfBirth': dateOfBirth,
+    'gender': gender,
+    'nationalId': nationalId,
+    'address': address?.toMap(),
+  };
+
   // Firestore'a kaydetmek için
   Map<String, dynamic> toFirestore() {
     return {
