@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '/core/services/firebase_service.dart';
+import '/core/models/firebase_models.dart';
 
 class AddTransactionPage extends StatefulWidget {
   const AddTransactionPage({super.key});
@@ -24,29 +27,11 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   String? _selectedCategory;
   DateTime? _selectedDate;
   bool _isSaving = false;
-
-  // Kategori listeleri
-  final Map<String, List<Map<String, dynamic>>> _categories = {
-    'income': [
-      {'name': 'Maaş', 'icon': Icons.work_outline, 'color': Color(0xFF10B981)},
-      {'name': 'Freelance', 'icon': Icons.computer_outlined, 'color': Color(0xFF3B82F6)},
-      {'name': 'Yatırım', 'icon': Icons.trending_up_outlined, 'color': Color(0xFF8B5CF6)},
-      {'name': 'Kira Geliri', 'icon': Icons.home_outlined, 'color': Color(0xFF06B6D4)},
-      {'name': 'Satış', 'icon': Icons.sell_outlined, 'color': Color(0xFFF59E0B)},
-      {'name': 'Diğer', 'icon': Icons.more_horiz, 'color': Color(0xFF64748B)},
-    ],
-    'expense': [
-      {'name': 'Yemek & İçecek', 'icon': Icons.restaurant_outlined, 'color': Color(0xFFEF4444)},
-      {'name': 'Ulaşım', 'icon': Icons.directions_car_outlined, 'color': Color(0xFF3B82F6)},
-      {'name': 'Alışveriş', 'icon': Icons.shopping_bag_outlined, 'color': Color(0xFF8B5CF6)},
-      {'name': 'Eğlence', 'icon': Icons.movie_outlined, 'color': Color(0xFFEC4899)},
-      {'name': 'Sağlık', 'icon': Icons.local_hospital_outlined, 'color': Color(0xFF10B981)},
-      {'name': 'Faturalar', 'icon': Icons.receipt_outlined, 'color': Color(0xFFF59E0B)},
-      {'name': 'Eğitim', 'icon': Icons.school_outlined, 'color': Color(0xFF06B6D4)},
-      {'name': 'Giyim', 'icon': Icons.checkroom_outlined, 'color': Color(0xFFEC4899)},
-      {'name': 'Diğer', 'icon': Icons.more_horiz, 'color': Color(0xFF64748B)},
-    ]
-  };
+  bool _isLoading = true;
+  
+  // Firebase kategorileri
+  List<FirebaseCategoryModel> _incomeCategories = [];
+  List<FirebaseCategoryModel> _expenseCategories = [];
 
   @override
   void initState() {
@@ -80,6 +65,38 @@ class _AddTransactionPageState extends State<AddTransactionPage>
 
     _fadeController.forward();
     _slideController.forward();
+    
+    _loadCategories();
+  }
+  
+  Future<void> _loadCategories() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        final incomeCategories = await CategoryService.getCategories(
+          userId, 
+          type: 'income',
+          isActive: true,
+        );
+        final expenseCategories = await CategoryService.getCategories(
+          userId, 
+          type: 'expense',
+          isActive: true,
+        );
+        
+        setState(() {
+          _incomeCategories = incomeCategories;
+          _expenseCategories = expenseCategories;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading categories: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      _showSnackBar('Kategoriler yüklenirken hata oluştu', isError: true);
+    }
   }
 
   @override
@@ -97,20 +114,64 @@ class _AddTransactionPageState extends State<AddTransactionPage>
       _showSnackBar('Lütfen kategori seçiniz', isError: true);
       return;
     }
+    if (_selectedDate == null) {
+      _showSnackBar('Lütfen tarih seçiniz', isError: true);
+      return;
+    }
+
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      _showSnackBar('Kullanıcı oturumu bulunamadı', isError: true);
+      return;
+    }
 
     setState(() {
       _isSaving = true;
     });
 
-    // Simulated save
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Find selected category details
+      final currentCategories = _isIncome ? _incomeCategories : _expenseCategories;
+      final selectedCategoryModel = currentCategories.firstWhere(
+        (cat) => cat.name == _selectedCategory,
+      );
 
-    setState(() {
-      _isSaving = false;
-    });
+      // Create FirebaseTransaction object
+      final transaction = FirebaseTransaction(
+        id: '', // Will be set by Firestore
+        userId: userId,
+        amount: double.parse(_amountController.text.replaceAll(',', '.')),
+        isIncome: _isIncome,
+        categoryId: selectedCategoryModel.id,
+        categoryName: selectedCategoryModel.name,
+        description: _descriptionController.text.trim().isEmpty 
+            ? null 
+            : _descriptionController.text.trim(),
+        date: _selectedDate!,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
 
-    _showSnackBar('İşlem başarıyla kaydedildi! 🎉');
-    _resetForm();
+      // Save to Firebase
+      final transactionId = await TransactionService.createTransaction(transaction);
+      
+      setState(() {
+        _isSaving = false;
+      });
+
+      _showSnackBar('İşlem başarıyla kaydedildi! 🎉');
+      _resetForm();
+      
+      // Navigate back to show updated list
+      Navigator.of(context).pop(true);
+      
+    } catch (e) {
+      setState(() {
+        _isSaving = false;
+      });
+      debugPrint('Error saving transaction: $e');
+      _showSnackBar('İşlem kaydedilirken hata oluştu', isError: true);
+    }
   }
 
   void _resetForm() {
@@ -148,62 +209,68 @@ class _AddTransactionPageState extends State<AddTransactionPage>
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: CustomScrollView(
-            slivers: [
-              // Custom App Bar
-              _buildCustomAppBar(),
-              
-              // Content
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          // Income/Expense Toggle
-                          _buildIncomeExpenseToggle(),
-                          
-                          const SizedBox(height: 32),
-                          
-                          // Amount Input
-                          _buildAmountInput(),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Category Selection
-                          _buildCategorySection(),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Date and Description
-                          Row(
-                            children: [
-                              Expanded(child: _buildDatePicker()),
-                              const SizedBox(width: 16),
-                              Expanded(child: _buildDescriptionInput()),
-                            ],
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+                ),
+              )
+            : FadeTransition(
+                opacity: _fadeAnimation,
+                child: CustomScrollView(
+                  slivers: [
+                    // Custom App Bar
+                    _buildCustomAppBar(),
+                    
+                    // Content
+                    SliverToBoxAdapter(
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                // Income/Expense Toggle
+                                _buildIncomeExpenseToggle(),
+                                
+                                const SizedBox(height: 32),
+                                
+                                // Amount Input
+                                _buildAmountInput(),
+                                
+                                const SizedBox(height: 24),
+                                
+                                // Category Selection
+                                _buildCategorySection(),
+                                
+                                const SizedBox(height: 24),
+                                
+                                // Date and Description
+                                Row(
+                                  children: [
+                                    Expanded(child: _buildDatePicker()),
+                                    const SizedBox(width: 16),
+                                    Expanded(child: _buildDescriptionInput()),
+                                  ],
+                                ),
+                                
+                                const SizedBox(height: 40),
+                                
+                                // Save Button
+                                _buildSaveButton(),
+                                
+                                const SizedBox(height: 24),
+                              ],
+                            ),
                           ),
-                          
-                          const SizedBox(height: 40),
-                          
-                          // Save Button
-                          _buildSaveButton(),
-                          
-                          const SizedBox(height: 24),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -413,7 +480,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   }
 
   Widget _buildCategorySection() {
-    final currentCategories = _categories[_isIncome ? 'income' : 'expense']!;
+    final currentCategories = _isIncome ? _incomeCategories : _expenseCategories;
     
     return Container(
       padding: const EdgeInsets.all(24),
@@ -452,12 +519,12 @@ class _AddTransactionPageState extends State<AddTransactionPage>
             itemCount: currentCategories.length,
             itemBuilder: (context, index) {
               final category = currentCategories[index];
-              final isSelected = _selectedCategory == category['name'];
+              final isSelected = _selectedCategory == category.name;
               
               return GestureDetector(
                 onTap: () {
                   setState(() {
-                    _selectedCategory = category['name'];
+                    _selectedCategory = category.name;
                   });
                 },
                 child: AnimatedContainer(
@@ -465,12 +532,12 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isSelected 
-                        ? category['color'].withOpacity(0.1) 
+                        ? category.color.withOpacity(0.1) 
                         : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isSelected 
-                          ? category['color'] 
+                          ? category.color 
                           : const Color(0xFFE2E8F0),
                       width: isSelected ? 2 : 1,
                     ),
@@ -479,19 +546,19 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        category['icon'],
+                        category.icon,
                         color: isSelected 
-                            ? category['color'] 
+                            ? category.color 
                             : const Color(0xFF64748B),
                         size: 24,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        category['name'],
+                        category.name,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           color: isSelected 
-                              ? category['color'] 
+                              ? category.color 
                               : const Color(0xFF64748B),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
