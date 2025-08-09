@@ -632,16 +632,20 @@ class CardService {
   // ➤ GET CARDS
   static Future<List<FirebaseCard>> getCards(String userId, {bool? isActive}) async {
     return await FirebaseService._handleErrors(() async {
-      Query query = _getCardsCollection(userId).orderBy('createdAt', descending: true);
+      Query query = _getCardsCollection(userId);
 
       if (isActive != null) {
         query = query.where('isActive', isEqualTo: isActive);
       }
 
       final snapshot = await query.get();
-      return snapshot.docs
+      final cards = snapshot.docs
           .map((doc) => FirebaseCard.fromFirestore(doc, userId))
           .toList();
+      
+      // Sort in memory to avoid index requirement
+      cards.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return cards;
     }) ?? [];
   }
 
@@ -649,16 +653,16 @@ class CardService {
   static Stream<List<FirebaseCard>> getCardsStream(String userId) {
     debugPrint('🔍 CardService - Getting cards stream for user: $userId');
     
+    // Temporary fix: Remove orderBy to avoid index requirement
     return _getCardsCollection(userId)
         .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .handleError((error) {
           debugPrint('❌ CardService - Stream error: $error');
         })
         .map((snapshot) {
           debugPrint('📊 CardService - Got ${snapshot.docs.length} cards');
-          return snapshot.docs
+          final cards = snapshot.docs
               .map((doc) {
                 try {
                   return FirebaseCard.fromFirestore(doc, userId);
@@ -668,6 +672,10 @@ class CardService {
                 }
               })
               .toList();
+          
+          // Sort in memory (temporary solution)
+          cards.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return cards;
         });
   }
 
