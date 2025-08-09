@@ -165,6 +165,19 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
+  String _getInitials(String? name) {
+    if (name == null || name.trim().isEmpty) return 'U';
+    
+    final parts = name.trim().split(' ').where((part) => part.isNotEmpty).toList();
+    if (parts.isEmpty) return 'U';
+    
+    if (parts.length == 1) {
+      return parts.first[0].toUpperCase();
+    } else {
+      return (parts.first[0] + parts.last[0]).toUpperCase();
+    }
+  }
+
   void _showEditProfile() {
     showModalBottomSheet(
       context: context,
@@ -274,14 +287,14 @@ class _ProfilePageState extends State<ProfilePage>
                                     ],
                                   ),
                                   child: Center(
-                                    child: Text(
-                                      _userProfile?.name.split(' ').map((e) => e[0]).join() ?? '',
-                                      style: GoogleFonts.inter(
-                                        color: Colors.white,
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
+                                                                         child: Text(
+                                       _getInitials(_userProfile?.name),
+                                       style: GoogleFonts.inter(
+                                         color: Colors.white,
+                                         fontSize: 32,
+                                         fontWeight: FontWeight.w700,
+                                       ),
+                                     ),
                                   ),
                                 ),
                                 Positioned(
@@ -690,16 +703,16 @@ class _ProfilePageState extends State<ProfilePage>
                       ),
                     ],
                   ),
-                  child: Center(
-                    child: Text(
-                                                             _userProfile?.name.split(' ').map((e) => e[0]).join() ?? '',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
+                                      child: Center(
+                      child: Text(
+                        _getInitials(_userProfile?.name),
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
                 ),
                 const SizedBox(width: 20),
                 Expanded(
