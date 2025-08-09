@@ -647,13 +647,28 @@ class CardService {
 
   // ➤ GET CARDS STREAM (Real-time)
   static Stream<List<FirebaseCard>> getCardsStream(String userId) {
+    debugPrint('🔍 CardService - Getting cards stream for user: $userId');
+    
     return _getCardsCollection(userId)
         .where('isActive', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => FirebaseCard.fromFirestore(doc, userId))
-            .toList());
+        .handleError((error) {
+          debugPrint('❌ CardService - Stream error: $error');
+        })
+        .map((snapshot) {
+          debugPrint('📊 CardService - Got ${snapshot.docs.length} cards');
+          return snapshot.docs
+              .map((doc) {
+                try {
+                  return FirebaseCard.fromFirestore(doc, userId);
+                } catch (e) {
+                  debugPrint('❌ CardService - Error parsing card ${doc.id}: $e');
+                  rethrow;
+                }
+              })
+              .toList();
+        });
   }
 
   // ➤ UPDATE CARD

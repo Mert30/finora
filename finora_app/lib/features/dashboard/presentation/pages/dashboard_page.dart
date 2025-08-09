@@ -2201,16 +2201,28 @@ class _DashboardPageState extends State<DashboardPage>
 
   Widget _buildCardsStreamList() {
     final userId = FirebaseAuth.instance.currentUser?.uid;
+    print('🔍 DEBUG - User ID: $userId');
+    
     if (userId == null) {
+      print('❌ DEBUG - User not logged in');
       return const Center(
         child: Text('Kullanıcı oturum açmamış'),
       );
     }
 
+    print('✅ DEBUG - Starting cards stream for user: $userId');
     return StreamBuilder<List<FirebaseCard>>(
       stream: CardService.getCardsStream(userId),
       builder: (context, snapshot) {
+        print('🔍 DEBUG - Stream state: ${snapshot.connectionState}');
+        print('🔍 DEBUG - Has error: ${snapshot.hasError}');
+        if (snapshot.hasError) {
+          print('❌ DEBUG - Error details: ${snapshot.error}');
+          print('❌ DEBUG - Error stack: ${snapshot.stackTrace}');
+        }
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
+          print('⏳ DEBUG - Loading cards...');
           return const Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
@@ -2219,6 +2231,7 @@ class _DashboardPageState extends State<DashboardPage>
         }
 
         if (snapshot.hasError) {
+          print('❌ DEBUG - Showing error to user: ${snapshot.error}');
           return Center(
             child: Text(
               'Kartlar yüklenirken hata oluştu\n${snapshot.error}',
