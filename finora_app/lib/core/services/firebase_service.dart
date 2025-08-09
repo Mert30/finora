@@ -470,7 +470,8 @@ class CategoryService {
     bool? isActive,
   }) async {
     final result = await FirebaseService._handleErrors(() async {
-      Query query = _getCategoriesCollection(userId).orderBy('sortOrder');
+      debugPrint('🔍 Getting categories for user: $userId, type: $type, isActive: $isActive');
+      Query query = _getCategoriesCollection(userId);
 
       if (type != null) {
         query = query.where('type', isEqualTo: type);
@@ -480,26 +481,39 @@ class CategoryService {
       }
 
       final snapshot = await query.get();
-      return snapshot.docs
+      debugPrint('📋 Found ${snapshot.docs.length} categories in Firestore');
+      
+      final categories = snapshot.docs
           .map((doc) => FirebaseCategoryModel.fromFirestore(doc, userId))
           .toList();
+      
+      // Sort in memory to avoid index requirement
+      categories.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      debugPrint('✅ Categories sorted by sortOrder');
+      
+      return categories;
     });
     return result ?? [];
   }
 
   // ➤ GET CATEGORIES STREAM (Real-time)
   static Stream<List<FirebaseCategoryModel>> getCategoriesStream(String userId, {String? type}) {
-    Query query = _getCategoriesCollection(userId)
-        .where('isActive', isEqualTo: true)
-        .orderBy('sortOrder');
+    Query query = _getCategoriesCollection(userId);
 
     if (type != null) {
       query = query.where('type', isEqualTo: type);
     }
 
-    return query.snapshots().map((snapshot) => snapshot.docs
-        .map((doc) => FirebaseCategoryModel.fromFirestore(doc, userId))
-        .toList());
+    return query.snapshots().map((snapshot) {
+      final categories = snapshot.docs
+          .map((doc) => FirebaseCategoryModel.fromFirestore(doc, userId))
+          .where((category) => category.isActive) // Filter active in memory
+          .toList();
+      
+      // Sort in memory
+      categories.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      return categories;
+    });
   }
 
   // ➤ UPDATE CATEGORY
