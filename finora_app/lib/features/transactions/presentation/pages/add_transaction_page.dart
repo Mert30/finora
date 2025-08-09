@@ -140,14 +140,19 @@ class _AddTransactionPageState extends State<AddTransactionPage>
       final transaction = FirebaseTransaction(
         id: '', // Will be set by Firestore
         userId: userId,
+        title: _descriptionController.text.trim().isEmpty 
+            ? '${_isIncome ? 'Gelir' : 'Gider'} - ${selectedCategoryModel.name}'
+            : _descriptionController.text.trim(),
+        category: selectedCategoryModel.name,
         amount: double.parse(_amountController.text.replaceAll(',', '.')),
         isIncome: _isIncome,
-        categoryId: selectedCategoryModel.id,
-        categoryName: selectedCategoryModel.name,
+        iconName: selectedCategoryModel.iconName,
+        colorHex: selectedCategoryModel.colorHex,
         description: _descriptionController.text.trim().isEmpty 
             ? null 
             : _descriptionController.text.trim(),
         date: _selectedDate!,
+        categoryId: selectedCategoryModel.id,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
