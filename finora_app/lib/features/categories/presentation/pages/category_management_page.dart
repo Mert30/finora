@@ -516,14 +516,15 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
   }
 
   Widget _buildCategoriesList() {
-    debugPrint('🎨 Building categories list. Loading: $_isLoading');
+    debugPrint('🔄 Building categories list...');
     debugPrint('📊 Income categories: ${_incomeCategories.length}, Expense categories: ${_expenseCategories.length}');
     debugPrint('🔄 Show income: $_showIncomeCategories');
     
     if (_isLoading) {
       debugPrint('⏳ Showing loading indicator');
-      return const SliverFillRemaining(
-        child: Center(
+      return Container(
+        height: 200,
+        child: const Center(
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
           ),
@@ -535,8 +536,8 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     debugPrint('📋 Current categories count: ${categories.length}');
     debugPrint('📋 Categories type: ${categories.runtimeType}');
     
-    if (_currentCategories.isEmpty) 
-      Container(
+    if (_currentCategories.isEmpty) {
+      return Container(
         padding: const EdgeInsets.all(32),
         child: Column(
           children: [
@@ -622,41 +623,15 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
             ),
           ],
         ),
-      )
-    else
+      );
+    }
     
     debugPrint('📋 Showing ${categories.length} categories');
-    return SliverPadding(
-      padding: const EdgeInsets.all(24.0),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            if (index == 0) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${categories.length} kategori bulundu',
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF6B7280),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildCategoryCard(categories[index]),
-                ],
-              );
-            }
-            
-            return Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: _buildCategoryCard(categories[index]),
-            );
-          },
-          childCount: categories.length,
-        ),
-      ),
+    return Column(
+      children: categories.map((category) {
+        debugPrint('📋 Building card for: ${category.name}');
+        return _buildCategoryCard(category);
+      }).toList(),
     );
   }
 
