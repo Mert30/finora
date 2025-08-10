@@ -822,3 +822,149 @@ class SettingsService {
     });
   }
 }
+
+// ===== FEEDBACK SERVICE =====
+class FeedbackService extends FirebaseService {
+  static const String _collection = 'feedbacks';
+
+  // Create new feedback
+  static Future<String?> createFeedback(FirebaseFeedback feedback) async {
+    return _handleErrors(() async {
+      debugPrint('📝 Creating feedback: ${feedback.title}');
+      
+      final docRef = await _firestore.collection(_collection).add(feedback.toFirestore());
+      
+      debugPrint('✅ Feedback created successfully: ${docRef.id}');
+      return docRef.id;
+    });
+  }
+
+  // Get all feedbacks (for admin)
+  static Future<List<FirebaseFeedback>?> getAllFeedbacks({
+    int limit = 50,
+    bool onlyUnresolved = false,
+  }) async {
+    return _handleErrors(() async {
+      debugPrint('📋 Getting all feedbacks...');
+      
+      Query query = _firestore.collection(_collection);
+      
+      if (onlyUnresolved) {
+        query = query.where('isResolved', isEqualTo: false);
+      }
+      
+      query = query.orderBy('createdAt', descending: true).limit(limit);
+      
+      final snapshot = await query.get();
+      final feedbacks = snapshot.docs.map((doc) => FirebaseFeedback.fromFirestore(doc)).toList();
+      
+      debugPrint('✅ Retrieved ${feedbacks.length} feedbacks');
+      return feedbacks;
+    });
+  }
+
+  // Get feedbacks by user
+  static Future<List<FirebaseFeedback>?> getUserFeedbacks(String userId) async {
+    return _handleErrors(() async {
+      debugPrint('👤 Getting feedbacks for user: $userId');
+      
+      final snapshot = await _firestore
+          .collection(_collection)
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .get();
+      
+      final feedbacks = snapshot.docs.map((doc) => FirebaseFeedback.fromFirestore(doc)).toList();
+      
+      debugPrint('✅ Retrieved ${feedbacks.length} user feedbacks');
+      return feedbacks;
+    });
+  }
+
+  // Update feedback (for admin responses)
+  static Future<bool?> updateFeedback(String feedbackId, {
+    bool? isResolved,
+    String? adminResponse,
+  }) async {
+    return _handleErrors(() async {
+      debugPrint('📝 Updating feedback: $feedbackId');
+      
+      final updates = <String, dynamic>{};
+      
+      if (isResolved != null) {
+        updates['isResolved'] = isResolved;
+      }
+      
+      if (adminResponse != null) {
+        updates['adminResponse'] = adminResponse;
+        updates['respondedAt'] = FieldValue.serverTimestamp();
+      }
+      
+      updates['updatedAt'] = FieldValue.serverTimestamp();
+      
+      await _firestore.collection(_collection).doc(feedbackId).update(updates);
+      
+      debugPrint('✅ Feedback updated successfully');
+      return true;
+    });
+  }
+
+  // Delete feedback
+  static Future<bool?> deleteFeedback(String feedbackId) async {
+    return _handleErrors(() async {
+      debugPrint('🗑️ Deleting feedback: $feedbackId');
+      
+      await _firestore.collection(_collection).doc(feedbackId).delete();
+      
+      debugPrint('✅ Feedback deleted successfully');
+      return true;
+    });
+  }
+
+  // Get feedback statistics
+  static Future<Map<String, dynamic>?> getFeedbackStats() async {
+    return _handleErrors(() async {
+      debugPrint('📊 Getting feedback statistics...');
+      
+      final snapshot = await _firestore.collection(_collection).get();
+      final feedbacks = snapshot.docs.map((doc) => FirebaseFeedback.fromFirestore(doc)).toList();
+      
+      final stats = {
+        'total': feedbacks.length,
+        'resolved': feedbacks.where((f) => f.isResolved).length,
+        'unresolved': feedbacks.where((f) => !f.isResolved).length,
+        'averageRating': feedbacks.isEmpty ? 0.0 : 
+            feedbacks.map((f) => f.rating).reduce((a, b) => a + b) / feedbacks.length,
+        'typeBreakdown': <String, int>{},
+        'ratingBreakdown': <int, int>{},
+      };
+      
+      // Calculate feedback type breakdown
+      for (final feedback in feedbacks) {
+        final type = feedback.feedbackType;
+        stats['typeBreakdown'][type] = (stats['typeBreakdown'][type] ?? 0) + 1;
+      }
+      
+      // Calculate rating breakdown
+      for (final feedback in feedbacks) {
+        final rating = feedback.rating;
+        stats['ratingBreakdown'][rating] = (stats['ratingBreakdown'][rating] ?? 0) + 1;
+      }
+      
+      debugPrint('✅ Feedback stats calculated: ${stats['total']} total feedbacks');
+      return stats;
+    });
+  }
+
+  // Get device info helper
+  static String getDeviceInfo() {
+    // In a real app, you'd use device_info_plus package
+    return 'Flutter App - ${DateTime.now().toString().split(' ')[0]}';
+  }
+
+  // Get app version helper  
+  static String getAppVersion() {
+    // In a real app, you'd use package_info_plus package
+    return '1.0.0';
+  }
+}
