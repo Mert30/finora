@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:async';
+import '../../../markets/data/market_api_service.dart';
 
 class LiveMarketsPage extends StatefulWidget {
   const LiveMarketsPage({super.key});
@@ -15,7 +17,15 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
   late Animation<Offset> _slideAnimation;
 
   String _selectedCategory = 'Döviz';
-  final List<String> _categories = ['Döviz', 'Altın & Kıymetli', 'Kripto', 'Borsa'];
+  final List<String> _categories = ['Döviz', 'Kripto', 'Altın & Kıymetli', 'Borsa'];
+
+  // API Data Management
+  Map<String, List<MarketItem>> _marketData = {};
+  bool _isLoading = false;
+  bool _isRefreshing = false;
+  DateTime? _lastUpdate;
+  Timer? _autoRefreshTimer;
+  final Duration _autoRefreshInterval = const Duration(seconds: 30);
 
   @override
   void initState() {
@@ -42,12 +52,134 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
     ));
 
     _animationController.forward();
+    
+    // Load initial data
+    _loadMarketData();
+    
+    // Start auto-refresh timer
+    _startAutoRefresh();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _autoRefreshTimer?.cancel();
     super.dispose();
+  }
+
+  // ➤ LOAD MARKET DATA FROM API
+  Future<void> _loadMarketData() async {
+    if (_isLoading) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      debugPrint('🔄 Loading market data...');
+      final data = await MarketApiService.getAllMarketData();
+      
+      setState(() {
+        _marketData = data;
+        _lastUpdate = DateTime.now();
+        _isLoading = false;
+      });
+      
+      debugPrint('✅ Market data loaded successfully');
+    } catch (e) {
+      debugPrint('💥 Error loading market data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // ➤ REFRESH MARKET DATA
+  Future<void> _refreshMarketData() async {
+    if (_isRefreshing) return;
+    
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      debugPrint('🔄 Refreshing market data...');
+      final data = await MarketApiService.getAllMarketData();
+      
+      setState(() {
+        _marketData = data;
+        _lastUpdate = DateTime.now();
+        _isRefreshing = false;
+      });
+      
+      debugPrint('✅ Market data refreshed successfully');
+      
+      // Show success feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.refresh, color: Colors.white, size: 16),
+              const SizedBox(width: 8),
+              Text('Piyasa verileri güncellendi'),
+            ],
+          ),
+          backgroundColor: const Color(0xFF10B981),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      debugPrint('💥 Error refreshing market data: $e');
+      setState(() {
+        _isRefreshing = false;
+      });
+      
+      // Show error feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error, color: Colors.white, size: 16),
+              const SizedBox(width: 8),
+              Text('Veriler güncellenirken hata oluştu'),
+            ],
+          ),
+          backgroundColor: const Color(0xFFEF4444),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  // ➤ START AUTO REFRESH
+  void _startAutoRefresh() {
+    _autoRefreshTimer = Timer.periodic(_autoRefreshInterval, (timer) {
+      if (mounted) {
+        _refreshMarketData();
+      }
+    });
+  }
+
+  // ➤ STOP AUTO REFRESH
+  void _stopAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+  }
+
+  String _formatLastUpdate(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} gün önce';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} saat önce';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} dakika önce';
+    } else {
+      return 'Az önce';
+    }
   }
 
   @override
@@ -129,19 +261,21 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
               ],
             ),
             child: IconButton(
-              icon: const Icon(
-                Icons.refresh_outlined,
-                color: Color(0xFF64748B),
-                size: 24,
-              ),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('📈 Piyasa verileri yenileniyor...'),
-                    backgroundColor: const Color(0xFF059669),
-                  ),
-                );
-              },
+              icon: _isRefreshing 
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF64748B)),
+                      ),
+                    )
+                  : const Icon(
+                      Icons.refresh_outlined,
+                      color: Color(0xFF64748B),
+                      size: 24,
+                    ),
+              onPressed: _isRefreshing ? null : _refreshMarketData,
             ),
           ),
         ),
@@ -193,7 +327,11 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
                             ),
                           ),
                           Text(
-                            'Gerçek zamanlı piyasa verileri',
+                            _isLoading 
+                                ? 'Veriler yükleniyor...'
+                                : _lastUpdate != null 
+                                    ? 'Son güncelleme: ${_formatLastUpdate(_lastUpdate!)}'
+                                    : 'Gerçek zamanlı piyasa verileri',
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -411,73 +549,154 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
   }
 
   Widget _buildMarketList() {
-    final marketData = _getMarketData();
+    final marketData = _marketData[_selectedCategory] ?? [];
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                '$_selectedCategory Piyasası',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1F2937),
+          if (_isLoading && marketData.isEmpty) ...[
+            // Loading skeleton
+            ...List.generate(4, (index) => _buildLoadingSkeleton()),
+          ] else if (marketData.isEmpty) ...[
+            // Empty state
+            _buildEmptyState(),
+          ] else ...[
+            // Market data list
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: marketData.length,
+              itemBuilder: (context, index) {
+                final item = marketData[index];
+                return _buildMarketCard(item);
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingSkeleton() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 80,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-              ),
-              const Spacer(),
+                const SizedBox(height: 8),
+                Container(
+                  width: 120,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                width: 60,
+                height: 16,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF059669).withOpacity(0.1),
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  '${marketData.length} Öğe',
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF059669),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 80,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: marketData.length,
-            itemBuilder: (context, index) {
-              final item = marketData[index];
-              return _buildMarketCard(
-                symbol: item['symbol'],
-                name: item['name'],
-                price: item['price'],
-                change: item['change'],
-                changePercent: item['changePercent'],
-                isPositive: item['isPositive'],
-                icon: item['icon'],
-              );
-            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMarketCard({
-    required String symbol,
-    required String name,
-    required String price,
-    required String change,
-    required String changePercent,
-    required bool isPositive,
-    required IconData icon,
-  }) {
+  Widget _buildEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          Icon(
+            Icons.signal_wifi_connected_no_internet_4_outlined,
+            size: 64,
+            color: Colors.grey.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Veri Bulunamadı',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Piyasa verileri şu anda mevcut değil.\nLütfen tekrar deneyin.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: const Color(0xFF94A3B8),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _refreshMarketData,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: Text('Yenile'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMarketCard(MarketItem item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
@@ -490,7 +709,7 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
@@ -500,12 +719,12 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444)).withOpacity(0.1),
+              color: item.changeColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              icon,
-              color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+              _getIconForSymbol(item.symbol, item.category),
+              color: item.changeColor,
               size: 24,
             ),
           ),
@@ -515,19 +734,19 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  symbol,
+                  item.symbol,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF1F2937),
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E293B),
                   ),
                 ),
                 Text(
-                  name,
+                  item.name,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280),
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
+                    color: const Color(0xFF64748B),
                   ),
                 ),
               ],
@@ -537,29 +756,28 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                price,
+                item.formattedPrice,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF1F2937),
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1E293B),
                 ),
               ),
-              const SizedBox(height: 2),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                    color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                    size: 12,
+                    item.isPositive ? Icons.trending_up : Icons.trending_down,
+                    color: item.changeColor,
+                    size: 16,
                   ),
-                  const SizedBox(width: 2),
+                  const SizedBox(width: 4),
                   Text(
-                    '$change ($changePercent)',
+                    '${item.formattedChange} (${item.formattedChangePercent})',
                     style: GoogleFonts.inter(
-                      color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
+                      color: item.changeColor,
                     ),
                   ),
                 ],
@@ -571,166 +789,28 @@ class _LiveMarketsPageState extends State<LiveMarketsPage>
     );
   }
 
-  List<Map<String, dynamic>> _getMarketData() {
-    switch (_selectedCategory) {
-      case 'Döviz':
-        return [
-          {
-            'symbol': 'USD/TRY',
-            'name': 'Amerikan Doları',
-            'price': '33.85 ₺',
-            'change': '+0.12',
-            'changePercent': '+0.35%',
-            'isPositive': true,
-            'icon': Icons.attach_money_outlined,
-          },
-          {
-            'symbol': 'EUR/TRY',
-            'name': 'Euro',
-            'price': '36.92 ₺',
-            'change': '-0.08',
-            'changePercent': '-0.22%',
-            'isPositive': false,
-            'icon': Icons.euro_outlined,
-          },
-          {
-            'symbol': 'GBP/TRY',
-            'name': 'İngiliz Sterlini',
-            'price': '42.15 ₺',
-            'change': '+0.25',
-            'changePercent': '+0.59%',
-            'isPositive': true,
-            'icon': Icons.currency_pound_outlined,
-          },
-          {
-            'symbol': 'CHF/TRY',
-            'name': 'İsviçre Frangı',
-            'price': '37.68 ₺',
-            'change': '+0.15',
-            'changePercent': '+0.40%',
-            'isPositive': true,
-            'icon': Icons.currency_exchange_outlined,
-          },
-        ];
-      case 'Altın & Kıymetli':
-        return [
-          {
-            'symbol': 'XAU/USD',
-            'name': 'Altın (Ons)',
-            'price': '2,048.50 \$',
-            'change': '+12.50',
-            'changePercent': '+0.61%',
-            'isPositive': true,
-            'icon': Icons.diamond_outlined,
-          },
-          {
-            'symbol': 'XAG/USD',
-            'name': 'Gümüş (Ons)',
-            'price': '24.85 \$',
-            'change': '-0.35',
-            'changePercent': '-1.39%',
-            'isPositive': false,
-            'icon': Icons.circle_outlined,
-          },
-          {
-            'symbol': 'XPT/USD',
-            'name': 'Platin (Ons)',
-            'price': '912.40 \$',
-            'change': '+8.20',
-            'changePercent': '+0.91%',
-            'isPositive': true,
-            'icon': Icons.star_outline,
-          },
-          {
-            'symbol': 'XPD/USD',
-            'name': 'Paladyum (Ons)',
-            'price': '1,245.80 \$',
-            'change': '-15.60',
-            'changePercent': '-1.24%',
-            'isPositive': false,
-            'icon': Icons.hexagon_outlined,
-          },
-        ];
-      case 'Kripto':
-        return [
-          {
-            'symbol': 'BTC/USD',
-            'name': 'Bitcoin',
-            'price': '43,250.00 \$',
-            'change': '+1,250.00',
-            'changePercent': '+2.98%',
-            'isPositive': true,
-            'icon': Icons.currency_bitcoin_outlined,
-          },
-          {
-            'symbol': 'ETH/USD',
-            'name': 'Ethereum',
-            'price': '2,685.50 \$',
-            'change': '-45.20',
-            'changePercent': '-1.66%',
-            'isPositive': false,
-            'icon': Icons.currency_exchange_outlined,
-          },
-          {
-            'symbol': 'BNB/USD',
-            'name': 'Binance Coin',
-            'price': '315.80 \$',
-            'change': '+8.40',
-            'changePercent': '+2.73%',
-            'isPositive': true,
-            'icon': Icons.token_outlined,
-          },
-          {
-            'symbol': 'ADA/USD',
-            'name': 'Cardano',
-            'price': '0.485 \$',
-            'change': '-0.012',
-            'changePercent': '-2.41%',
-            'isPositive': false,
-            'icon': Icons.account_balance_outlined,
-          },
-        ];
-      case 'Borsa':
-        return [
-          {
-            'symbol': 'BIST100',
-            'name': 'Borsa İstanbul 100',
-            'price': '8,945.67',
-            'change': '+125.43',
-            'changePercent': '+1.42%',
-            'isPositive': true,
-            'icon': Icons.trending_up_outlined,
-          },
-          {
-            'symbol': 'THYAO',
-            'name': 'Türk Hava Yolları',
-            'price': '285.50 ₺',
-            'change': '-5.20',
-            'changePercent': '-1.79%',
-            'isPositive': false,
-            'icon': Icons.flight_outlined,
-          },
-          {
-            'symbol': 'AKBNK',
-            'name': 'Akbank',
-            'price': '45.80 ₺',
-            'change': '+1.15',
-            'changePercent': '+2.57%',
-            'isPositive': true,
-            'icon': Icons.account_balance_outlined,
-          },
-          {
-            'symbol': 'PETKM',
-            'name': 'Petkim',
-            'price': '12.65 ₺',
-            'change': '+0.35',
-            'changePercent': '+2.85%',
-            'isPositive': true,
-            'icon': Icons.local_gas_station_outlined,
-          },
-        ];
-      default:
-        return [];
+  IconData _getIconForSymbol(String symbol, String category) {
+    // Category-based icons
+    if (category == 'Döviz') {
+      if (symbol.contains('USD')) return Icons.attach_money_outlined;
+      if (symbol.contains('EUR')) return Icons.euro_outlined;
+      if (symbol.contains('GBP')) return Icons.currency_pound_outlined;
+      return Icons.currency_exchange_outlined;
+    } else if (category == 'Kripto') {
+      if (symbol.contains('BTC') || symbol.toLowerCase().contains('bitcoin')) return Icons.currency_bitcoin_outlined;
+      return Icons.token_outlined;
+    } else if (category == 'Altın & Kıymetli') {
+      if (symbol.contains('XAU') || symbol.toLowerCase().contains('altın')) return Icons.diamond_outlined;
+      if (symbol.contains('XAG') || symbol.toLowerCase().contains('gümüş')) return Icons.circle_outlined;
+      if (symbol.contains('XPT') || symbol.toLowerCase().contains('platin')) return Icons.star_outline;
+      return Icons.hexagon_outlined;
+    } else if (category == 'Borsa') {
+      if (symbol.contains('THYAO')) return Icons.flight_outlined;
+      if (symbol.contains('AKBNK')) return Icons.account_balance_outlined;
+      if (symbol.contains('BIMAS')) return Icons.store_outlined;
+      return Icons.trending_up_outlined;
     }
+    
+    return Icons.show_chart_outlined;
   }
 }
