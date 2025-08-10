@@ -20,9 +20,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Finora',
-      debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const AuthWrapper(),
+      home: const WelcomePage(), // Temporarily bypass AuthWrapper
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -33,50 +33,100 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('🔐 AuthWrapper: Starting auth check...');
+    
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
+        debugPrint('🔐 AuthWrapper: Connection state: ${snapshot.connectionState}');
+        debugPrint('🔐 AuthWrapper: Has data: ${snapshot.hasData}');
+        debugPrint('🔐 AuthWrapper: Data: ${snapshot.data?.uid}');
+        
         // Show loading while checking auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
+          debugPrint('🔐 AuthWrapper: Showing auth loading...');
           return const Scaffold(
             backgroundColor: Color(0xFFF8FAFC),
             body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Giriş durumu kontrol ediliyor...',
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
               ),
             ),
           );
         }
-        
+
         // User is logged in
         if (snapshot.hasData && snapshot.data != null) {
+          debugPrint('🔐 AuthWrapper: User logged in, checking profile...');
           return FutureBuilder<bool>(
             future: _checkUserProfile(snapshot.data!.uid),
             builder: (context, profileSnapshot) {
+              debugPrint('🔐 AuthWrapper: Profile check state: ${profileSnapshot.connectionState}');
+              debugPrint('🔐 AuthWrapper: Profile exists: ${profileSnapshot.data}');
+              
               if (profileSnapshot.connectionState == ConnectionState.waiting) {
+                debugPrint('🔐 AuthWrapper: Showing profile loading...');
                 return const Scaffold(
                   backgroundColor: Color(0xFFF8FAFC),
                   body: Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Profil bilgileri yükleniyor...',
+                          style: TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
               }
-              
+
+              // Handle timeout or error
+              if (profileSnapshot.hasError) {
+                debugPrint('🔐 AuthWrapper: Profile check error: ${profileSnapshot.error}');
+                // On error, go to welcome page
+                return const WelcomePage();
+              }
+
               // Profile exists, go to main screen
               if (profileSnapshot.data == true) {
+                debugPrint('🔐 AuthWrapper: Profile exists, going to MainScreen');
                 return const MainScreen();
               }
-              
+
               // Profile doesn't exist, sign out and go to welcome
-              FirebaseAuth.instance.signOut();
+              debugPrint('🔐 AuthWrapper: Profile missing, signing out...');
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                FirebaseAuth.instance.signOut();
+              });
               return const WelcomePage();
             },
           );
         }
-        
+
         // User is not logged in
+        debugPrint('🔐 AuthWrapper: No user, going to WelcomePage');
         return const WelcomePage();
       },
     );
@@ -84,10 +134,17 @@ class AuthWrapper extends StatelessWidget {
 
   Future<bool> _checkUserProfile(String userId) async {
     try {
-      final userProfile = await UserService.getUserProfile(userId);
-      return userProfile != null;
+      debugPrint('🔐 AuthWrapper: Checking profile for user: $userId');
+      
+      // Add timeout to prevent infinite loading
+      final userProfile = await UserService.getUserProfile(userId)
+          .timeout(const Duration(seconds: 10));
+      
+      final exists = userProfile != null;
+      debugPrint('🔐 AuthWrapper: Profile check result: $exists');
+      return exists;
     } catch (e) {
-      debugPrint('Error checking user profile: $e');
+      debugPrint('🔐 AuthWrapper: Error checking user profile: $e');
       return false;
     }
   }
