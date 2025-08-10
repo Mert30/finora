@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class CategoryModel {
   final String name;
@@ -171,7 +170,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
         background: Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Row(
                 children: [
@@ -219,25 +218,6 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.more_vert,
-                      color: Color(0xFF6B7280),
-                      size: 20,
                     ),
                   ),
                 ],

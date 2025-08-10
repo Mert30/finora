@@ -1,3 +1,4 @@
+import 'package:finora_app/features/about/presentation/about_page.dart';
 import 'package:finora_app/features/feedback/presentation/feedback_page.dart';
 import 'package:finora_app/features/help/presentation/help_center_page.dart';
 import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
@@ -216,6 +217,20 @@ class _SettingsPageState extends State<SettingsPage>
                               MaterialPageRoute(
                                 builder: (context) =>
                                     const CurrencySettingsPage(),
+                              ),
+                            ),
+                          },
+                        ),
+
+                        _buildSettingsTile(
+                          icon: Icons.info_outline,
+                          title: 'Hakkında',
+                          subtitle: 'Uygulama Hakkında Bilgiler',
+                          onTap: () => {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AboutPage(),
                               ),
                             ),
                           },

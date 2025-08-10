@@ -30,7 +30,7 @@ class _AddCardPageState extends State<AddCardPage>
 
   // Selected values
   String? _selectedBank;
-  String _selectedCardType = 'debit';
+  String _selectedCardType = 'Banka Kartı';
   Color _selectedColor = const Color(0xFF6366F1);
 
   // Card colors
@@ -350,7 +350,9 @@ class _AddCardPageState extends State<AddCardPage>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    _selectedCardType == 'debit' ? 'DEBIT' : 'CREDIT',
+                    _selectedCardType == 'Banka Kartı'
+                        ? 'Banka Kartı'
+                        : 'Kredi Kartı',
                     style: GoogleFonts.inter(
                       color: Colors.white,
                       fontSize: 12,
@@ -790,7 +792,7 @@ class _AddCardPageState extends State<AddCardPage>
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () => setState(() => _selectedCardType = 'debit'),
+                onTap: () => setState(() => _selectedCardType = 'Banka Kartı'),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -799,7 +801,7 @@ class _AddCardPageState extends State<AddCardPage>
                         : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _selectedCardType == 'debit'
+                      color: _selectedCardType == 'Banka Kartı'
                           ? const Color(0xFF6366F1)
                           : const Color(0xFFE5E7EB),
                       width: 2,
@@ -809,7 +811,7 @@ class _AddCardPageState extends State<AddCardPage>
                     children: [
                       Icon(
                         Icons.account_balance_wallet,
-                        color: _selectedCardType == 'debit'
+                        color: _selectedCardType == 'Banka Kartı'
                             ? const Color(0xFF6366F1)
                             : const Color(0xFF6B7280),
                       ),
@@ -817,7 +819,7 @@ class _AddCardPageState extends State<AddCardPage>
                       Text(
                         'Banka Kartı',
                         style: GoogleFonts.inter(
-                          color: _selectedCardType == 'debit'
+                          color: _selectedCardType == 'Banka Kartı'
                               ? const Color(0xFF6366F1)
                               : const Color(0xFF6B7280),
                           fontWeight: FontWeight.w600,
@@ -831,16 +833,16 @@ class _AddCardPageState extends State<AddCardPage>
             const SizedBox(width: 16),
             Expanded(
               child: GestureDetector(
-                onTap: () => setState(() => _selectedCardType = 'credit'),
+                onTap: () => setState(() => _selectedCardType = 'Kredi Kartı'),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: _selectedCardType == 'credit'
+                    color: _selectedCardType == 'Kredi Kartı'
                         ? const Color(0xFF6366F1).withOpacity(0.1)
                         : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _selectedCardType == 'credit'
+                      color: _selectedCardType == 'Kredi Kartı'
                           ? const Color(0xFF6366F1)
                           : const Color(0xFFE5E7EB),
                       width: 2,
@@ -850,7 +852,7 @@ class _AddCardPageState extends State<AddCardPage>
                     children: [
                       Icon(
                         Icons.credit_card,
-                        color: _selectedCardType == 'credit'
+                        color: _selectedCardType == 'Kredi Kartı'
                             ? const Color(0xFF6366F1)
                             : const Color(0xFF6B7280),
                       ),
@@ -858,7 +860,7 @@ class _AddCardPageState extends State<AddCardPage>
                       Text(
                         'Kredi Kartı',
                         style: GoogleFonts.inter(
-                          color: _selectedCardType == 'credit'
+                          color: _selectedCardType == 'Kredi Kartı'
                               ? const Color(0xFF6366F1)
                               : const Color(0xFF6B7280),
                           fontWeight: FontWeight.w600,

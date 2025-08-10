@@ -1,5 +1,6 @@
 import 'package:finora_app/features/legal/presentation/privacy_policy_page.dart';
 import 'package:finora_app/features/legal/presentation/terms_of_use_page.dart';
+import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -91,7 +92,12 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
             ],
           ),
           child: IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              ),
+            },
             icon: const Icon(
               Icons.arrow_back_ios_new,
               color: Color(0xFF1F2937),
@@ -195,8 +201,6 @@ class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
 
           // Footer
           _buildFooter(),
-
-          const SizedBox(height: 100),
         ],
       ),
     );
