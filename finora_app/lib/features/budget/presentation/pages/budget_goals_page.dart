@@ -1,34 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-class BudgetGoal {
-  final String id;
-  final String title;
-  final String category;
-  final double targetAmount;
-  final double currentAmount;
-  final DateTime deadline;
-  final IconData icon;
-  final Color color;
-  final String description;
-
-  BudgetGoal({
-    required this.id,
-    required this.title,
-    required this.category,
-    required this.targetAmount,
-    required this.currentAmount,
-    required this.deadline,
-    required this.icon,
-    required this.color,
-    required this.description,
-  });
-
-  double get progress => currentAmount / targetAmount;
-  bool get isCompleted => currentAmount >= targetAmount;
-  int get daysLeft => deadline.difference(DateTime.now()).inDays;
-}
+import 'package:firebase_auth/firebase_auth.dart';
+import '/core/services/firebase_service.dart';
+import '/core/models/firebase_models.dart';
+import 'add_goal_page.dart';
 
 class BudgetGoalsPage extends StatefulWidget {
   const BudgetGoalsPage({super.key});
@@ -42,53 +18,10 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
-  // Demo data
-  final List<BudgetGoal> _goals = [
-    BudgetGoal(
-      id: '1',
-      title: 'Acil Durum Fonu',
-      category: 'Tasarruf',
-      targetAmount: 5000.0,
-      currentAmount: 3200.0,
-      deadline: DateTime.now().add(const Duration(days: 45)),
-      icon: Icons.security_outlined,
-      color: const Color(0xFF10B981),
-      description: '3 aylık maaş kadar acil durum fonu',
-    ),
-    BudgetGoal(
-      id: '2',
-      title: 'Yeni Laptop',
-      category: 'Teknoloji',
-      targetAmount: 8000.0,
-      currentAmount: 2400.0,
-      deadline: DateTime.now().add(const Duration(days: 120)),
-      icon: Icons.laptop_mac_outlined,
-      color: const Color(0xFF3B82F6),
-      description: 'MacBook Pro M3 almak için',
-    ),
-    BudgetGoal(
-      id: '3',
-      title: 'Tatil',
-      category: 'Eğlence',
-      targetAmount: 3500.0,
-      currentAmount: 3500.0,
-      deadline: DateTime.now().add(const Duration(days: 30)),
-      icon: Icons.flight_outlined,
-      color: const Color(0xFFEC4899),
-      description: 'Antalya tatili için',
-    ),
-    BudgetGoal(
-      id: '4',
-      title: 'Yatırım',
-      category: 'Portföy',
-      targetAmount: 10000.0,
-      currentAmount: 4750.0,
-      deadline: DateTime.now().add(const Duration(days: 365)),
-      icon: Icons.trending_up_outlined,
-      color: const Color(0xFF8B5CF6),
-      description: 'Yıllık yatırım hedefi',
-    ),
-  ];
+  // Firebase data state
+  bool _isLoading = true;
+  List<FirebaseBudgetGoal> _goals = [];
+  String? _userId;
 
   @override
   void initState() {
@@ -105,6 +38,34 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
       curve: Curves.easeInOut,
     ));
     _fadeController.forward();
+    
+    // Load Firebase data
+    _loadGoals();
+  }
+
+  Future<void> _loadGoals() async {
+    try {
+      _userId = FirebaseAuth.instance.currentUser?.uid;
+      if (_userId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      debugPrint('🎯 Loading goals for user: $_userId');
+
+      final goals = await GoalService.getGoals(_userId!);
+      debugPrint('📋 Retrieved ${goals.length} goals');
+
+      setState(() {
+        _goals = goals;
+        _isLoading = false;
+      });
+
+      debugPrint('✅ Goals loaded successfully');
+    } catch (e) {
+      debugPrint('💥 Error loading goals: $e');
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -193,9 +154,81 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
   }
 
   Widget _buildSummarySection() {
+    if (_isLoading) {
+      return Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Container(
+          height: 200,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_goals.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.flag_outlined,
+                size: 64,
+                color: Colors.grey.withOpacity(0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Henüz hedef belirlemediniz',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'İlk bütçe hedefinizi ekleyerek başlayın',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: const Color(0xFF94A3B8),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final totalTargetAmount = _goals.fold(0.0, (sum, goal) => sum + goal.targetAmount);
     final totalCurrentAmount = _goals.fold(0.0, (sum, goal) => sum + goal.currentAmount);
-    final totalProgress = totalCurrentAmount / totalTargetAmount;
+    final totalProgress = totalTargetAmount > 0 ? totalCurrentAmount / totalTargetAmount : 0.0;
     final completedGoals = _goals.where((goal) => goal.isCompleted).length;
 
     return Padding(
@@ -370,6 +403,66 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
   }
 
   Widget _buildGoalsList() {
+    if (_isLoading) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: List.generate(3, (index) => 
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_goals.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(48.0),
+          child: Column(
+            children: [
+              Icon(
+                Icons.flag_outlined,
+                size: 80,
+                color: Colors.grey.withOpacity(0.5),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Henüz hedef eklemediniz',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'İlk hedefinizi ekleyerek tasarruf yolculuğunuza başlayın',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  color: const Color(0xFF94A3B8),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       sliver: SliverList(
@@ -386,7 +479,12 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
     );
   }
 
-  Widget _buildGoalCard(BudgetGoal goal) {
+  Widget _buildGoalCard(FirebaseBudgetGoal goal) {
+    final icon = _getIconFromString(goal.iconName);
+    final color = _getColorFromString(goal.colorHex);
+    final progress = goal.targetAmount > 0 ? goal.currentAmount / goal.targetAmount : 0.0;
+    final daysLeft = goal.deadline.difference(DateTime.now()).inDays;
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -408,12 +506,12 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: goal.color.withOpacity(0.1),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
-                  goal.icon,
-                  color: goal.color,
+                  icon,
+                  color: color,
                   size: 24,
                 ),
               ),
@@ -447,33 +545,20 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.check,
-                        color: Color(0xFF10B981),
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Tamamlandı',
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF10B981),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'Tamamlandı',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF10B981),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],
           ),
-          
           const SizedBox(height: 16),
-          
           Text(
             goal.description,
             style: GoogleFonts.inter(
@@ -482,22 +567,36 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
               fontWeight: FontWeight.w400,
             ),
           ),
-          
           const SizedBox(height: 16),
-          
           Row(
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      'İlerleme',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF6B7280),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: Colors.grey.withOpacity(0.2),
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                      minHeight: 8,
+                    ),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           '₺${goal.currentAmount.toStringAsFixed(0)}',
                           style: GoogleFonts.inter(
-                            color: goal.color,
+                            color: color,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
@@ -512,40 +611,28 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: goal.progress > 1.0 ? 1.0 : goal.progress,
-                      backgroundColor: const Color(0xFFE2E8F0),
-                      valueColor: AlwaysStoppedAnimation<Color>(goal.color),
-                      borderRadius: BorderRadius.circular(4),
-                      minHeight: 6,
-                    ),
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 24),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${(goal.progress * 100).toStringAsFixed(0)}%',
+                    daysLeft > 0 ? '$daysLeft gün' : 'Süre doldu',
                     style: GoogleFonts.inter(
-                      color: goal.color,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    goal.daysLeft > 0 
-                        ? '${goal.daysLeft} gün kaldı'
-                        : 'Süre doldu',
-                    style: GoogleFonts.inter(
-                      color: goal.daysLeft > 0 
-                          ? const Color(0xFF6B7280)
-                          : const Color(0xFFEF4444),
+                      color: daysLeft > 0 ? const Color(0xFF6B7280) : const Color(0xFFEF4444),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '%${(progress * 100).toStringAsFixed(0)}',
+                    style: GoogleFonts.inter(
+                      color: color,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -555,6 +642,47 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
         ],
       ),
     );
+  }
+
+  IconData _getIconFromString(String iconName) {
+    switch (iconName) {
+      case 'savings':
+        return Icons.savings_outlined;
+      case 'laptop':
+        return Icons.laptop_mac_outlined;
+      case 'flight':
+        return Icons.flight_outlined;
+      case 'trending_up':
+        return Icons.trending_up_outlined;
+      case 'home':
+        return Icons.home_outlined;
+      case 'car':
+        return Icons.directions_car_outlined;
+      case 'security':
+        return Icons.security_outlined;
+      case 'school':
+        return Icons.school_outlined;
+      case 'medical':
+        return Icons.medical_services_outlined;
+      case 'shopping':
+        return Icons.shopping_bag_outlined;
+      default:
+        return Icons.flag_outlined;
+    }
+  }
+
+  Color _getColorFromString(String colorHex) {
+    try {
+      if (colorHex.startsWith('#')) {
+        return Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+      } else if (colorHex.startsWith('0x')) {
+        return Color(int.parse(colorHex));
+      } else {
+        return Color(int.parse('0xFF$colorHex'));
+      }
+    } catch (e) {
+      return const Color(0xFF3B82F6);
+    }
   }
 
   Widget _buildAddGoalButton() {
@@ -583,22 +711,23 @@ class _BudgetGoalsPageState extends State<BudgetGoalsPage>
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(28),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Yeni hedef ekleme özelliği yakında! 🚀',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddGoalPage(
+                    userId: _userId,
+                    onGoalAdded: () {
+                      _loadGoals();
+                    },
                   ),
-                  backgroundColor: const Color(0xFF3B82F6),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  margin: const EdgeInsets.all(16),
                 ),
               );
+              
+              // Reload goals if a goal was added
+              if (result == true) {
+                _loadGoals();
+              }
             },
             child: Center(
               child: Row(
