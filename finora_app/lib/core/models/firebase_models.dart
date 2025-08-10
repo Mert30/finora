@@ -112,7 +112,7 @@ class FirebaseUserProfile {
       memberSince: personalInfo['memberSince'] ?? '',
       profileImageUrl: personalInfo['profileImageUrl'] ?? '',
       isVerified: personalInfo['isVerified'] ?? false,
-      accountType: personalInfo['accountType'] ?? 'free',
+      accountType: personalInfo['accountType'] ?? 'Standart',
       fullName: personalInfo['fullName'],
       dateOfBirth: personalInfo['dateOfBirth'],
       gender: personalInfo['gender'],

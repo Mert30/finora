@@ -1,6 +1,8 @@
-import 'package:finora_app/features/main_screen/presentation/pages/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '/core/services/firebase_service.dart';
+import '/core/models/firebase_models.dart';
 
 class MoneyTransferPage extends StatefulWidget {
   const MoneyTransferPage({super.key});
@@ -24,11 +26,20 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
   final TextEditingController _descriptionController = TextEditingController();
 
   // Form states
-  String _selectedTransferType = 'IBAN';
-  String? _selectedFromCard;
+  String _selectedTransferType =
+      'Telefon'; // Changed to Telefon for user search
+  FirebaseCard? _selectedFromCard;
   bool _isLoading = false;
 
-  final List<String> _transferTypes = ['IBAN', 'Telefon', 'QR Kod'];
+  // Firebase data
+  List<FirebaseCard> _userCards = [];
+  List<FirebaseUserProfile> _searchResults = [];
+  FirebaseUserProfile? _selectedRecipient;
+  String? _currentUserId;
+  bool _isLoadingCards = true;
+  bool _isSearching = false;
+
+  final List<String> _transferTypes = ['Telefon', 'IBAN', 'QR Kod'];
 
   @override
   void initState() {
@@ -48,6 +59,73 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
         );
 
     _animationController.forward();
+
+    // Load Firebase data
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      if (_currentUserId == null) {
+        setState(() => _isLoadingCards = false);
+        return;
+      }
+
+      debugPrint('💳 Loading user cards for: $_currentUserId');
+
+      final cards = await CardService.getCards(_currentUserId!);
+      debugPrint('📋 Retrieved ${cards.length} cards');
+
+      setState(() {
+        _userCards = cards;
+        if (_userCards.isNotEmpty) {
+          _selectedFromCard = _userCards.first;
+        }
+        _isLoadingCards = false;
+      });
+
+      debugPrint('✅ User cards loaded successfully');
+    } catch (e) {
+      debugPrint('💥 Error loading user data: $e');
+      setState(() => _isLoadingCards = false);
+    }
+  }
+
+  Future<void> _searchUsers(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _selectedRecipient = null;
+      });
+      return;
+    }
+
+    setState(() => _isSearching = true);
+
+    try {
+      debugPrint('🔍 Searching users with query: $query');
+
+      // Search users by name, email, or phone
+      final users = await UserService.searchUsers(query);
+      debugPrint('👥 Found ${users.length} users');
+
+      // Remove current user from results
+      final filteredUsers = users
+          .where((user) => user.userId != _currentUserId)
+          .toList();
+
+      setState(() {
+        _searchResults = filteredUsers;
+        _isSearching = false;
+      });
+    } catch (e) {
+      debugPrint('💥 Error searching users: $e');
+      setState(() {
+        _searchResults = [];
+        _isSearching = false;
+      });
+    }
   }
 
   @override
@@ -128,12 +206,7 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
               color: Color(0xFF64748B),
               size: 20,
             ),
-            onPressed: () => {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const MainScreen()),
-              ),
-            },
+            onPressed: () => Navigator.pop(context),
           ),
         ),
       ),
@@ -290,7 +363,71 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
   }
 
   Widget _buildCardSelector() {
-    final cards = _getMyCards();
+    if (_isLoadingCards) {
+      return Container(
+        height: 120,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+          ),
+        ),
+      );
+    }
+
+    if (_userCards.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.credit_card_off,
+              size: 48,
+              color: Colors.grey.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Henüz kartınız yok',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Para göndermek için önce bir kart eklemelisiniz',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: const Color(0xFF94A3B8),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -305,16 +442,16 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
         ],
       ),
       child: Column(
-        children: cards.asMap().entries.map((entry) {
+        children: _userCards.asMap().entries.map((entry) {
           final index = entry.key;
           final card = entry.value;
-          final isSelected = _selectedFromCard == card['id'];
-          final isLast = index == cards.length - 1;
+          final isSelected = _selectedFromCard?.id == card.id;
+          final isLast = index == _userCards.length - 1;
 
           return GestureDetector(
             onTap: () {
               setState(() {
-                _selectedFromCard = card['id'];
+                _selectedFromCard = card;
               });
             },
             child: Container(
@@ -334,15 +471,18 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 60,
+                    height: 38,
                     decoration: BoxDecoration(
-                      color: card['color'].withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: card.color,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      Icons.credit_card_outlined,
-                      color: card['color'],
-                      size: 24,
+                    child: const Center(
+                      child: Icon(
+                        Icons.credit_card,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -350,58 +490,68 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          card['bankName'],
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF1F2937),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              card.bankName,
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF1F2937),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (card.isDefault)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'VARSAYILAN',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        Text(
-                          card['cardNumber'],
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF6B7280),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Text(
+                              card.cardNumber,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                color: const Color(0xFF6B7280),
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              card.formattedBalance,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        card['balance'],
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF1F2937),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (isSelected)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF10B981),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'SEÇİLDİ',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                  if (isSelected)
+                    const Icon(
+                      Icons.check_circle,
+                      color: Color(0xFF10B981),
+                      size: 24,
+                    ),
                 ],
               ),
             ),
@@ -606,104 +756,316 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
           ),
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildTextField(
-                controller: _recipientNameController,
-                label: 'Alıcı Adı Soyadı',
-                hint: 'Tam ad giriniz',
-                icon: Icons.person_outlined,
-              ),
-              const SizedBox(height: 20),
-              if (_selectedTransferType == 'IBAN')
-                _buildTextField(
-                  controller: _ibanController,
-                  label: 'IBAN',
-                  hint: 'TR00 0000 0000 0000 0000 0000 00',
-                  icon: Icons.account_balance_outlined,
+
+        // User search for Telefon transfer type
+        if (_selectedTransferType == 'Telefon') ...[
+          _buildUserSearchSection(),
+        ] else ...[
+          // Traditional IBAN/QR input
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
                 ),
-              if (_selectedTransferType == 'Telefon')
+              ],
+            ),
+            child: Column(
+              children: [
                 _buildTextField(
-                  controller: _phoneController,
-                  label: 'Telefon Numarası',
-                  hint: '+90 5XX XXX XX XX',
-                  icon: Icons.phone_outlined,
+                  controller: _recipientNameController,
+                  label: 'Alıcı Adı Soyadı',
+                  hint: 'Tam ad giriniz',
+                  icon: Icons.person_outlined,
                 ),
-              if (_selectedTransferType == 'QR Kod')
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFFE5E7EB),
-                      style: BorderStyle.solid,
+                const SizedBox(height: 20),
+                if (_selectedTransferType == 'IBAN')
+                  _buildTextField(
+                    controller: _ibanController,
+                    label: 'IBAN',
+                    hint: 'TR00 0000 0000 0000 0000 0000 00',
+                    icon: Icons.account_balance_outlined,
+                  ),
+                if (_selectedTransferType == 'QR Kod')
+                  Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFE5E7EB),
+                        width: 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.qr_code_scanner,
+                            size: 40,
+                            color: Colors.grey.withOpacity(0.6),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'QR Kod Tarayıcı',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: Colors.grey.withOpacity(0.7),
+                            ),
+                          ),
+                          Text(
+                            '(Yakında)',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: Colors.grey.withOpacity(0.5),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.qr_code_scanner_outlined,
-                          color: Color(0xFF10B981),
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'QR Kod Tara',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1F2937),
-                              ),
-                            ),
-                            Text(
-                              'Alıcının QR kodunu tarayın',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF6B7280),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Color(0xFF10B981),
-                        size: 16,
-                      ),
-                    ],
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
+  }
+
+  Widget _buildUserSearchSection() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Kullanıcı Ara',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            onChanged: (value) {
+              _searchUsers(value);
+            },
+            decoration: InputDecoration(
+              hintText: 'İsim, e-posta veya telefon numarası',
+              hintStyle: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 14,
+              ),
+              prefixIcon: _isSearching
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF6B7280),
+                          ),
+                        ),
+                      ),
+                    )
+                  : const Icon(Icons.search, color: Color(0xFF6B7280)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF10B981),
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF9FAFB),
+              contentPadding: const EdgeInsets.all(16),
+            ),
+          ),
+
+          // Selected user display
+          if (_selectedRecipient != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF10B981), width: 2),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: const Color(0xFF10B981),
+                    child: Text(
+                      _getInitials(_selectedRecipient!.name),
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _selectedRecipient!.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                        if (_selectedRecipient!.email.isNotEmpty)
+                          Text(
+                            _selectedRecipient!.email,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: const Color(0xFF6B7280),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.check_circle,
+                    color: const Color(0xFF10B981),
+                    size: 24,
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Search results
+          if (_searchResults.isNotEmpty && _selectedRecipient == null) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Arama Sonuçları',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF6B7280),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _searchResults.length,
+                itemBuilder: (context, index) {
+                  final user = _searchResults[index];
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedRecipient = user;
+                        _recipientNameController.text = user.name;
+                        _searchResults = [];
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: const Color(0xFF6B7280),
+                            child: Text(
+                              _getInitials(user.name),
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.name,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1F2937),
+                                  ),
+                                ),
+                                if (user.email.isNotEmpty)
+                                  Text(
+                                    user.email,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'U';
+    final parts = name.trim().split(' ');
+    if (parts.length == 1) {
+      return parts[0][0].toUpperCase();
+    }
+    return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
   }
 
   Widget _buildDescriptionSection() {
@@ -873,32 +1235,6 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
     }
   }
 
-  List<Map<String, dynamic>> _getMyCards() {
-    return [
-      {
-        'id': 'card_1',
-        'bankName': 'İş Bankası',
-        'cardNumber': '**** **** **** 1234',
-        'balance': '15.750,00 ₺',
-        'color': const Color(0xFF1E40AF),
-      },
-      {
-        'id': 'card_2',
-        'bankName': 'Akbank',
-        'cardNumber': '**** **** **** 5678',
-        'balance': '8.450,00 ₺',
-        'color': const Color(0xFFDC2626),
-      },
-      {
-        'id': 'card_3',
-        'bankName': 'Garanti BBVA',
-        'cardNumber': '**** **** **** 9012',
-        'balance': '22.100,00 ₺',
-        'color': const Color(0xFF059669),
-      },
-    ];
-  }
-
   void _showTransferConfirmation() {
     showModalBottomSheet(
       context: context,
@@ -1007,7 +1343,7 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
-                    onPressed: _processTransfer,
+                    onPressed: _isLoading ? null : _processTransfer,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF10B981),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1015,14 +1351,25 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text(
-                      'Onayla ve Gönder',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Onayla ve Gönder',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -1066,31 +1413,243 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
     );
   }
 
-  void _processTransfer() {
+  Future<void> _processTransfer() async {
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate transfer process
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.pop(context); // Close confirmation modal
-        Navigator.pop(context); // Go back to previous screen
+    try {
+      // Validation
+      if (_selectedFromCard == null) {
+        _showErrorMessage('Lütfen gönderen kartı seçin');
+        return;
+      }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('Transfer başarıyla tamamlandı!'),
-              ],
-            ),
-            backgroundColor: const Color(0xFF10B981),
-            duration: const Duration(seconds: 3),
-          ),
+      if (_selectedTransferType == 'Telefon' && _selectedRecipient == null) {
+        _showErrorMessage('Lütfen alıcı kullanıcıyı seçin');
+        return;
+      }
+
+      if (_selectedTransferType == 'IBAN' &&
+          (_recipientNameController.text.trim().isEmpty ||
+              _ibanController.text.trim().isEmpty)) {
+        _showErrorMessage('Lütfen alıcı adı ve IBAN bilgilerini girin');
+        return;
+      }
+
+      if (_amountController.text.trim().isEmpty) {
+        _showErrorMessage('Lütfen transfer tutarını girin');
+        return;
+      }
+
+      final transferAmount = double.tryParse(_amountController.text.trim());
+      if (transferAmount == null || transferAmount <= 0) {
+        _showErrorMessage('Geçerli bir tutar girin');
+        return;
+      }
+
+      // Check balance
+      if (_selectedFromCard!.balance < transferAmount) {
+        _showErrorMessage(
+          'Yetersiz bakiye. Kart bakiyesi: ${_selectedFromCard!.formattedBalance}',
+        );
+        return;
+      }
+
+      debugPrint('💸 Starting transfer process...');
+      debugPrint('💸 Amount: ₺$transferAmount');
+      debugPrint(
+        '📤 From: ${_selectedFromCard!.bankName} - ${_selectedFromCard!.cardNumber} (Balance: ₺${_selectedFromCard!.balance})',
+      );
+      debugPrint(
+        '📥 To: ${_selectedRecipient?.name ?? _recipientNameController.text.trim()}',
+      );
+      debugPrint('🔄 Method: $_selectedTransferType');
+
+      // STEP 1: Create sender transaction
+      debugPrint('🟡 STEP 1: Creating sender transaction...');
+      final senderTransaction = FirebaseTransaction(
+        id: '', // Will be set by Firestore
+        userId: _currentUserId!,
+        title: 'Para Transferi',
+        category: 'Transfer',
+        amount: transferAmount,
+        date: DateTime.now(),
+        isIncome: false, // Expense for sender
+        iconName: 'transfer',
+        colorHex: '#EF4444', // Red for expense
+        description: _descriptionController.text.trim().isEmpty
+            ? 'Para transferi - ${_selectedTransferType == 'Telefon'
+                  ? _selectedRecipient?.name ?? 'Kullanıcı'
+                  : _recipientNameController.text.trim().isEmpty
+                  ? 'Alıcı'
+                  : _recipientNameController.text.trim()}'
+            : _descriptionController.text.trim(),
+        categoryId: null,
+        cardId: _selectedFromCard!.id,
+        location: null,
+        tags: [],
+        isRecurring: false,
+        recurringPattern: null,
+        attachments: [],
+        status: 'completed',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      final senderTransactionId = await TransactionService.createTransaction(
+        senderTransaction,
+      );
+      if (senderTransactionId.isEmpty) {
+        throw Exception('Gönderen transaction oluşturulamadı');
+      }
+      debugPrint(
+        '✅ STEP 1 COMPLETED: Sender transaction created: $senderTransactionId',
+      );
+
+      // STEP 2: Update sender card balance
+      debugPrint('🟡 STEP 2: Updating sender card balance...');
+      final newSenderBalance = _selectedFromCard!.balance - transferAmount;
+      debugPrint(
+        '📊 Balance change: ${_selectedFromCard!.balance} - $transferAmount = $newSenderBalance',
+      );
+
+      // Update card balance with explicit parameters
+      await CardService.updateCardBalance(
+        _selectedFromCard!.id,
+        newSenderBalance,
+        _currentUserId,
+      );
+      debugPrint(
+        '✅ STEP 2 COMPLETED: Sender card balance updated to ₺$newSenderBalance',
+      );
+
+      // STEP 3: Create recipient transaction (if applicable)
+      if (_selectedRecipient != null) {
+        debugPrint('🟡 STEP 3: Creating recipient transaction...');
+        debugPrint(
+          '💰 Recipient: ${_selectedRecipient!.name} (ID: ${_selectedRecipient!.userId})',
+        );
+
+        final recipientTransaction = FirebaseTransaction(
+          id: '', // Will be set by Firestore
+          userId: _selectedRecipient!.userId,
+          title: 'Para Transferi Alındı',
+          category: 'Transfer',
+          amount: transferAmount,
+          date: DateTime.now(),
+          isIncome: true, // Income for recipient
+          iconName: 'transfer',
+          colorHex: '#10B981', // Green for income
+          description:
+              'Para transferi alındı - ${FirebaseAuth.instance.currentUser?.displayName ?? 'Kullanıcı'}',
+          categoryId: null,
+          cardId: null, // No specific card for incoming transfer
+          location: null,
+          tags: [],
+          isRecurring: false,
+          recurringPattern: null,
+          attachments: [],
+          status: 'completed',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        final recipientTransactionId =
+            await TransactionService.createTransaction(recipientTransaction);
+        if (recipientTransactionId.isEmpty) {
+          throw Exception('Alıcı transaction oluşturulamadı');
+        }
+        debugPrint(
+          '✅ STEP 3 COMPLETED: Recipient transaction created: $recipientTransactionId',
+        );
+      } else if (_selectedTransferType == 'IBAN') {
+        debugPrint(
+          '💰 IBAN transfer to: ${_recipientNameController.text.trim()} - ${_ibanController.text.trim()}',
+        );
+        debugPrint(
+          'ℹ️ STEP 3 SKIPPED: External IBAN transfer, no recipient transaction needed',
+        );
+      } else {
+        debugPrint(
+          '⚠️ STEP 3 WARNING: No recipient selected for user transfer',
         );
       }
-    });
+
+      debugPrint('🎉 ALL STEPS COMPLETED SUCCESSFULLY!');
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Close confirmation modal and go back
+      Navigator.pop(context); // Close confirmation modal
+      Navigator.pop(context); // Go back to previous screen
+
+      // Show detailed success message
+      final recipientName = _selectedTransferType == 'Telefon'
+          ? _selectedRecipient?.name ?? 'Kullanıcı'
+          : _recipientNameController.text.trim();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Transfer Başarılı!',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('₺${transferAmount.toStringAsFixed(2)} → $recipientName'),
+              if (_selectedTransferType == 'IBAN')
+                Text(
+                  'IBAN: ${_ibanController.text.trim()}',
+                  style: TextStyle(fontSize: 12, color: Colors.white70),
+                ),
+              Text(
+                'Yeni bakiye: ₺${newSenderBalance.toStringAsFixed(2)}',
+                style: TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF10B981),
+          duration: const Duration(seconds: 6),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      debugPrint('💥 TRANSFER FAILED: $e');
+      debugPrint('📍 Error occurred during transfer process');
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      _showErrorMessage('Transfer işlemi başarısız: ${e.toString()}');
+    }
+  }
+
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: const Color(0xFFEF4444),
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 }

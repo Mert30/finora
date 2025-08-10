@@ -1439,9 +1439,6 @@ class _DashboardPageState extends State<DashboardPage>
               amount: _isLoading ? null : '₺${_totalIncome.toStringAsFixed(0)}',
               icon: FontAwesomeIcons.arrowTrendUp,
               color: const Color(0xFF10B981),
-              subtitle: _isLoading
-                  ? null
-                  : '${_getIncomeTransactionCount()} işlem',
               showTrend: true,
               isPositive: true,
             ),
@@ -1455,9 +1452,6 @@ class _DashboardPageState extends State<DashboardPage>
                   : '₺${_totalExpense.toStringAsFixed(0)}',
               icon: FontAwesomeIcons.arrowTrendDown,
               color: const Color(0xFFEF4444),
-              subtitle: _isLoading
-                  ? null
-                  : '${_getExpenseTransactionCount()} işlem',
               showTrend: true,
               isPositive: false,
             ),
@@ -1465,16 +1459,6 @@ class _DashboardPageState extends State<DashboardPage>
         ],
       ),
     );
-  }
-
-  int _getIncomeTransactionCount() {
-    if (_allTransactions.isEmpty) return 0;
-    return _allTransactions.where((t) => t.isIncome).length;
-  }
-
-  int _getExpenseTransactionCount() {
-    if (_allTransactions.isEmpty) return 0;
-    return _allTransactions.where((t) => !t.isIncome).length;
   }
 
   Widget _buildSummaryCard({
