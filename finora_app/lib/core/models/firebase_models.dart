@@ -907,7 +907,7 @@ class FirebaseFeedback {
   final String? adminResponse;
   final DateTime? respondedAt;
 
-  const FirebaseFeedback({
+  FirebaseFeedback({
     required this.id,
     required this.userId,
     this.userEmail,
