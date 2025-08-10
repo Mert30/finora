@@ -468,6 +468,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
             value: '₺${totalAmount.toStringAsFixed(0)}',
             icon: FontAwesomeIcons.coins,
             color: _showIncomeCategories ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+            isFullWidth: true,
           ),
         ],
       ),
@@ -479,9 +480,10 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     required String value,
     required IconData icon,
     required Color color,
+    bool isFullWidth = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isFullWidth ? 20 : 16),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
@@ -493,23 +495,23 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
           Icon(
             icon,
             color: color,
-            size: 18,
+            size: isFullWidth ? 24 : 18,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: isFullWidth ? 12 : 8),
           Text(
             title,
             style: GoogleFonts.inter(
               color: const Color(0xFF6B7280),
-              fontSize: 12,
+              fontSize: isFullWidth ? 14 : 12,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: isFullWidth ? 8 : 4),
           Text(
             value,
             style: GoogleFonts.inter(
               color: color,
-              fontSize: 18,
+              fontSize: isFullWidth ? 24 : 18,
               fontWeight: FontWeight.w700,
             ),
           ),
