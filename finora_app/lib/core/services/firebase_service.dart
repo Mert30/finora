@@ -119,6 +119,60 @@ class UserService {
       debugPrint('✅ User profile deleted: $userId');
     });
   }
+
+  // ➤ SEARCH USERS (for money transfer)
+  static Future<List<FirebaseUserProfile>> searchUsers(String query) async {
+    final result = await FirebaseService._handleErrors(() async {
+      if (query.trim().isEmpty) return <FirebaseUserProfile>[];
+
+      final String searchQuery = query.toLowerCase().trim();
+      debugPrint('🔍 Searching users with query: $searchQuery');
+
+      // Search by name (personalInfo.fullName or personalInfo.name)
+      QuerySnapshot nameSnapshot = await _usersCollection
+          .where('personalInfo.fullName', isGreaterThanOrEqualTo: searchQuery)
+          .where('personalInfo.fullName', isLessThan: searchQuery + '\uf8ff')
+          .limit(10)
+          .get();
+
+      // Search by email
+      QuerySnapshot emailSnapshot = await _usersCollection
+          .where('personalInfo.email', isGreaterThanOrEqualTo: searchQuery)
+          .where('personalInfo.email', isLessThan: searchQuery + '\uf8ff')
+          .limit(10)
+          .get();
+
+      // Search by phone
+      QuerySnapshot phoneSnapshot = await _usersCollection
+          .where('personalInfo.phone', isGreaterThanOrEqualTo: searchQuery)
+          .where('personalInfo.phone', isLessThan: searchQuery + '\uf8ff')
+          .limit(10)
+          .get();
+
+      // Combine results and remove duplicates
+      Set<String> seenUserIds = {};
+      List<FirebaseUserProfile> users = [];
+
+      // Process all snapshots
+      for (QuerySnapshot snapshot in [nameSnapshot, emailSnapshot, phoneSnapshot]) {
+        for (QueryDocumentSnapshot doc in snapshot.docs) {
+          if (!seenUserIds.contains(doc.id)) {
+            seenUserIds.add(doc.id);
+            try {
+              users.add(FirebaseUserProfile.fromFirestore(doc));
+            } catch (e) {
+              debugPrint('⚠️ Error parsing user ${doc.id}: $e');
+            }
+          }
+        }
+      }
+
+      debugPrint('✅ Found ${users.length} unique users');
+      return users;
+    });
+
+    return result ?? [];
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -737,14 +791,21 @@ class CardService {
   }
 
   // ➤ UPDATE CARD BALANCE
-  static Future<void> updateCardBalance(String userId, String cardId, double newBalance) async {
+  static Future<void> updateCardBalance(String cardId, double newBalance) async {
     await FirebaseService._handleErrors(() async {
-      await _getCardsCollection(userId).doc(cardId).update({
-        'balance': newBalance,
-        'lastUsed': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      debugPrint('✅ Card balance updated: $cardId');
+      // Get userId from card document first, or use a simpler approach
+      final cardDoc = await FirebaseService._firestore.collectionGroup('cards').where(FieldPath.documentId, isEqualTo: cardId).get();
+      
+      if (cardDoc.docs.isNotEmpty) {
+        await cardDoc.docs.first.reference.update({
+          'balance': newBalance,
+          'lastUsed': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        debugPrint('✅ Card balance updated: $cardId -> ₺$newBalance');
+      } else {
+        throw Exception('Card not found: $cardId');
+      }
     });
   }
 
