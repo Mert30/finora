@@ -1495,7 +1495,12 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
       final newSenderBalance = _selectedFromCard!.balance - transferAmount;
       debugPrint('📊 Balance change: ${_selectedFromCard!.balance} - $transferAmount = $newSenderBalance');
       
-      await CardService.updateCardBalance(_selectedFromCard!.id, newSenderBalance, _currentUserId);
+      // Update card balance with explicit parameters
+      await CardService.updateCardBalance(
+        _selectedFromCard!.id, 
+        newSenderBalance, 
+        _currentUserId
+      );
       debugPrint('✅ STEP 2 COMPLETED: Sender card balance updated to ₺$newSenderBalance');
 
       // STEP 3: Create recipient transaction (if applicable)

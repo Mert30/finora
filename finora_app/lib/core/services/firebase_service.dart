@@ -791,7 +791,11 @@ class CardService {
   }
 
   // ➤ UPDATE CARD BALANCE
-  static Future<void> updateCardBalance(String cardId, double newBalance, [String? userId]) async {
+  static Future<void> updateCardBalance(
+    String cardId, 
+    double newBalance, 
+    [String? userId]
+  ) async {
     await FirebaseService._handleErrors(() async {
       debugPrint('💳 Updating card balance: $cardId -> ₺$newBalance');
       
