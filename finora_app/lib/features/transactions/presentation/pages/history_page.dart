@@ -1,34 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-class Transaction {
-  final String id;
-  final String title;
-  final String category;
-  final double amount;
-  final DateTime date;
-  final bool isIncome;
-  final IconData icon;
-  final Color color;
-  final String? description;
-
-  Transaction({
-    required this.id,
-    required this.title,
-    required this.category,
-    required this.amount,
-    required this.date,
-    required this.isIncome,
-    required this.icon,
-    required this.color,
-    this.description,
-  });
-}
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '/core/services/firebase_service.dart';
+import '/core/models/firebase_models.dart';
 
 class HistoryPage extends StatefulWidget {
-  final List<Transaction> transactions;
-
-  const HistoryPage({super.key, required this.transactions});
+  const HistoryPage({super.key});
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -37,146 +15,150 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
+  late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   String _selectedFilter = 'Tümü';
-  String _selectedSort = 'Tarih';
+  String _selectedSort = 'En Yeni';
+  bool _isLoading = true;
 
-  // Demo data
-  final List<Transaction> _demoTransactions = [
-    Transaction(
-      id: '1',
-      title: 'Market Alışverişi',
-      category: 'Yemek & İçecek',
-      amount: 124.50,
-      date: DateTime.now().subtract(const Duration(hours: 2)),
-      isIncome: false,
-      icon: Icons.restaurant_outlined,
-      color: const Color(0xFFEF4444),
-      description: 'Migros - haftalık alışveriş',
-    ),
-    Transaction(
-      id: '2',
-      title: 'Maaş Ödemesi',
-      category: 'Maaş',
-      amount: 3000.00,
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      isIncome: true,
-      icon: Icons.work_outline,
-      color: const Color(0xFF10B981),
-      description: 'ABC Şirketi',
-    ),
-    Transaction(
-      id: '3',
-      title: 'Netflix Abonelik',
-      category: 'Eğlence',
-      amount: 63.99,
-      date: DateTime.now().subtract(const Duration(days: 2)),
-      isIncome: false,
-      icon: Icons.movie_outlined,
-      color: const Color(0xFFEC4899),
-    ),
-    Transaction(
-      id: '4',
-      title: 'Uber Ulaşım',
-      category: 'Ulaşım',
-      amount: 35.00,
-      date: DateTime.now().subtract(const Duration(days: 3)),
-      isIncome: false,
-      icon: Icons.directions_car_outlined,
-      color: const Color(0xFF3B82F6),
-    ),
-    Transaction(
-      id: '5',
-      title: 'Freelance Proje',
-      category: 'Freelance',
-      amount: 850.00,
-      date: DateTime.now().subtract(const Duration(days: 4)),
-      isIncome: true,
-      icon: Icons.computer_outlined,
-      color: const Color(0xFF8B5CF6),
-    ),
-    Transaction(
-      id: '6',
-      title: 'Kahve & Atıştırmalık',
-      category: 'Yemek & İçecek',
-      amount: 42.50,
-      date: DateTime.now().subtract(const Duration(days: 5)),
-      isIncome: false,
-      icon: Icons.restaurant_outlined,
-      color: const Color(0xFFEF4444),
-    ),
-    Transaction(
-      id: '7',
-      title: 'Online Kurs',
-      category: 'Eğitim',
-      amount: 199.00,
-      date: DateTime.now().subtract(const Duration(days: 6)),
-      isIncome: false,
-      icon: Icons.school_outlined,
-      color: const Color(0xFF06B6D4),
-    ),
-    Transaction(
-      id: '8',
-      title: 'Yatırım Getirisi',
-      category: 'Yatırım',
-      amount: 450.00,
-      date: DateTime.now().subtract(const Duration(days: 7)),
-      isIncome: true,
-      icon: Icons.trending_up_outlined,
-      color: const Color(0xFF10B981),
-    ),
-  ];
+  // Firebase transaction'ları
+  List<FirebaseTransaction> _transactions = [];
+  List<FirebaseTransaction> _filteredTransactions = [];
 
   @override
   void initState() {
     super.initState();
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
     );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut));
+
     _fadeController.forward();
+    _slideController.forward();
+
+    _loadTransactions();
+  }
+
+  Future<void> _loadTransactions() async {
+    try {
+      debugPrint('🔄 Loading transactions from Firebase...');
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      debugPrint('👤 User ID: $userId');
+
+      if (userId != null) {
+        debugPrint('🔥 Calling TransactionService.getTransactions...');
+        final transactions = await TransactionService.getTransactions(userId);
+        debugPrint('✅ Loaded ${transactions.length} transactions');
+
+        // Debug: Print each transaction
+        for (int i = 0; i < transactions.length && i < 3; i++) {
+          final t = transactions[i];
+          debugPrint(
+            '📋 Transaction ${i + 1}: ${t.title} - ${t.category} - ₺${t.amount}',
+          );
+        }
+
+        setState(() {
+          _transactions = transactions;
+          _isLoading = false;
+        });
+
+        debugPrint('🔄 Applying filters...');
+        _applyFilters();
+        debugPrint(
+          '✅ Filters applied. Filtered count: ${_filteredTransactions.length}',
+        );
+      } else {
+        debugPrint('❌ No user ID found');
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('💥 Error loading transactions: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _applyFilters() {
+    List<FirebaseTransaction> filtered = List.from(_transactions);
+
+    // Apply filter
+    switch (_selectedFilter) {
+      case 'Gelir':
+        filtered = filtered.where((t) => t.isIncome).toList();
+        break;
+      case 'Gider':
+        filtered = filtered.where((t) => !t.isIncome).toList();
+        break;
+      case 'Bu Ay':
+        final now = DateTime.now();
+        final thisMonth = DateTime(now.year, now.month);
+        filtered = filtered.where((t) => t.date.isAfter(thisMonth)).toList();
+        break;
+      case 'Bu Hafta':
+        final now = DateTime.now();
+        final thisWeek = now.subtract(Duration(days: now.weekday - 1));
+        filtered = filtered.where((t) => t.date.isAfter(thisWeek)).toList();
+        break;
+    }
+
+    // Apply sorting
+    switch (_selectedSort) {
+      case 'En Yeni':
+        filtered.sort((a, b) => b.date.compareTo(a.date));
+        break;
+      case 'En Eski':
+        filtered.sort((a, b) => a.date.compareTo(b.date));
+        break;
+      case 'Tutar (Yüksek)':
+        filtered.sort((a, b) => b.amount.compareTo(a.amount));
+        break;
+      case 'Tutar (Düşük)':
+        filtered.sort((a, b) => a.amount.compareTo(b.amount));
+        break;
+    }
+
+    setState(() {
+      _filteredTransactions = filtered;
+    });
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
+    _slideController.dispose();
     super.dispose();
   }
 
-  List<Transaction> get _filteredTransactions {
-    List<Transaction> filtered = List.from(_demoTransactions);
-
-    // Filter
-    if (_selectedFilter == 'Gelir') {
-      filtered = filtered.where((t) => t.isIncome).toList();
-    } else if (_selectedFilter == 'Gider') {
-      filtered = filtered.where((t) => !t.isIncome).toList();
-    }
-
-    // Sort
-    if (_selectedSort == 'Tarih') {
-      filtered.sort((a, b) => b.date.compareTo(a.date));
-    } else if (_selectedSort == 'Tutar') {
-      filtered.sort((a, b) => b.amount.compareTo(a.amount));
-    } else if (_selectedSort == 'Kategori') {
-      filtered.sort((a, b) => a.category.compareTo(b.category));
-    }
-
-    return filtered;
-  }
-
   double get _totalIncome {
-    return _demoTransactions
+    return _filteredTransactions
         .where((t) => t.isIncome)
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
   double get _totalExpense {
-    return _demoTransactions
+    return _filteredTransactions
         .where((t) => !t.isIncome)
         .fold(0.0, (sum, t) => sum + t.amount);
   }
@@ -317,7 +299,7 @@ class _HistoryPageState extends State<HistoryPage>
               ),
               const Spacer(),
               Text(
-                '${_demoTransactions.where((t) => t.isIncome == (color == const Color(0xFF10B981))).length}',
+                '${_filteredTransactions.where((t) => t.isIncome == (color == const Color(0xFF10B981))).length}',
                 style: GoogleFonts.inter(
                   color: color,
                   fontSize: 12,
@@ -386,13 +368,16 @@ class _HistoryPageState extends State<HistoryPage>
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
-          items: ['Tümü', 'Gelir', 'Gider'].map((String value) {
+          items: ['Tümü', 'Gelir', 'Gider', 'Bu Ay', 'Bu Hafta'].map((
+            String value,
+          ) {
             return DropdownMenuItem<String>(value: value, child: Text(value));
           }).toList(),
           onChanged: (String? newValue) {
             setState(() {
               _selectedFilter = newValue!;
             });
+            _applyFilters();
           },
         ),
       ),
@@ -423,13 +408,16 @@ class _HistoryPageState extends State<HistoryPage>
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
-          items: ['Tarih', 'Tutar', 'Kategori'].map((String value) {
+          items: ['En Yeni', 'En Eski', 'Tutar (Yüksek)', 'Tutar (Düşük)'].map((
+            String value,
+          ) {
             return DropdownMenuItem<String>(value: value, child: Text(value));
           }).toList(),
           onChanged: (String? newValue) {
             setState(() {
               _selectedSort = newValue!;
             });
+            _applyFilters();
           },
         ),
       ),
@@ -437,45 +425,42 @@ class _HistoryPageState extends State<HistoryPage>
   }
 
   Widget _buildTransactionsList() {
-    final filteredTransactions = _filteredTransactions;
+    debugPrint(
+      '🎨 Building transactions list. Loading: $_isLoading, Filtered count: ${_filteredTransactions.length}',
+    );
 
-    if (filteredTransactions.isEmpty) {
+    if (_isLoading) {
+      debugPrint('⏳ Showing loading indicator');
+      return const SliverFillRemaining(
+        child: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+          ),
+        ),
+      );
+    }
+
+    if (_filteredTransactions.isEmpty) {
+      debugPrint('📭 Showing empty state');
       return SliverFillRemaining(child: _buildEmptyState());
     }
 
+    debugPrint('📋 Showing ${_filteredTransactions.length} transactions');
     return SliverPadding(
       padding: const EdgeInsets.all(24.0),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
-          if (index == 0) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
-                Text(
-                  '${filteredTransactions.length} işlem bulundu',
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF64748B),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildTransactionCard(filteredTransactions[index]),
-              ],
-            );
-          }
-
+          final transaction = _filteredTransactions[index];
           return Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: _buildTransactionCard(filteredTransactions[index]),
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _buildTransactionCard(transaction),
           );
-        }, childCount: filteredTransactions.length),
+        }, childCount: _filteredTransactions.length),
       ),
     );
   }
 
-  Widget _buildTransactionCard(Transaction transaction) {
+  Widget _buildTransactionCard(FirebaseTransaction transaction) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -497,7 +482,7 @@ class _HistoryPageState extends State<HistoryPage>
               color: transaction.color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(transaction.icon, color: transaction.color, size: 20),
+            child: Icon(transaction.icon, color: transaction.color, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -512,34 +497,21 @@ class _HistoryPageState extends State<HistoryPage>
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Text(
-                      transaction.category,
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF64748B),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    const Text(' • '),
-                    Text(
-                      _formatDate(transaction.date),
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF64748B),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                Text(
+                  transaction.category,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF64748B),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 if (transaction.description != null) ...[
                   const SizedBox(height: 4),
                   Text(
                     transaction.description!,
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF94A3B8),
+                      color: const Color(0xFF9CA3AF),
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                     ),
@@ -548,11 +520,12 @@ class _HistoryPageState extends State<HistoryPage>
               ],
             ),
           ),
+          const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${transaction.isIncome ? '+' : '-'}₺${transaction.amount.toStringAsFixed(2)}',
+                '${transaction.isIncome ? '+' : '-'} ₺${transaction.amount.toStringAsFixed(2)}',
                 style: GoogleFonts.inter(
                   color: transaction.isIncome
                       ? const Color(0xFF10B981)
@@ -562,23 +535,12 @@ class _HistoryPageState extends State<HistoryPage>
                 ),
               ),
               const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: transaction.isIncome
-                      ? const Color(0xFF10B981).withOpacity(0.1)
-                      : const Color(0xFFEF4444).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  transaction.isIncome ? 'Gelir' : 'Gider',
-                  style: GoogleFonts.inter(
-                    color: transaction.isIncome
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFEF4444),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+              Text(
+                _formatDate(transaction.date),
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],

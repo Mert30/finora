@@ -24,8 +24,7 @@ class FirebaseUserProfile {
   final ProfileStats stats;
 
   // Additional fields for Firebase
-  final String? firstName;
-  final String? lastName;
+  final String? fullName; // firstName/lastName yerine fullName kullanıyoruz
   final String? dateOfBirth;
   final String? gender;
   final String? nationalId;
@@ -43,21 +42,35 @@ class FirebaseUserProfile {
     required this.createdAt,
     required this.updatedAt,
     required this.stats,
-    this.firstName,
-    this.lastName,
+    this.fullName,
     this.dateOfBirth,
     this.gender,
     this.nationalId,
     this.address,
   });
 
+  // Getter for personalInfo to maintain compatibility
+  Map<String, dynamic> get personalInfo => {
+    'fullName': fullName ?? name,
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'memberSince': memberSince,
+    'profileImageUrl': profileImageUrl,
+    'isVerified': isVerified,
+    'accountType': accountType,
+    'dateOfBirth': dateOfBirth,
+    'gender': gender,
+    'nationalId': nationalId,
+    'address': address?.toMap(),
+  };
+
   // Firestore'a kaydetmek için
   Map<String, dynamic> toFirestore() {
     return {
       'personalInfo': {
         'name': name,
-        'firstName': firstName,
-        'lastName': lastName,
+        'fullName': fullName ?? name,
         'email': email,
         'phone': phone,
         'dateOfBirth': dateOfBirth,
@@ -100,8 +113,7 @@ class FirebaseUserProfile {
       profileImageUrl: personalInfo['profileImageUrl'] ?? '',
       isVerified: personalInfo['isVerified'] ?? false,
       accountType: personalInfo['accountType'] ?? 'free',
-      firstName: personalInfo['firstName'],
-      lastName: personalInfo['lastName'],
+      fullName: personalInfo['fullName'],
       dateOfBirth: personalInfo['dateOfBirth'],
       gender: personalInfo['gender'],
       nationalId: personalInfo['nationalId'],

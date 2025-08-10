@@ -1,26 +1,10 @@
-import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-class UserProfile {
-  final String name;
-  final String email;
-  final String phone;
-  final String memberSince;
-  final String profileImageUrl;
-  final bool isVerified;
-  final String accountType;
-
-  UserProfile({
-    required this.name,
-    required this.email,
-    required this.phone,
-    required this.memberSince,
-    required this.profileImageUrl,
-    required this.isVerified,
-    required this.accountType,
-  });
-}
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
+import '/core/models/firebase_models.dart';
+import '/core/services/firebase_service.dart';
 
 class ProfileStats {
   final int totalTransactions;
@@ -47,92 +31,498 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage>
     with TickerProviderStateMixin {
-  late AnimationController _controller;
+  late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
 
-  // Demo data
-  final UserProfile _userProfile = UserProfile(
-    name: 'Ahmet Yılmaz',
-    email: 'ahmet.yilmaz@email.com',
-    phone: '+90 555 123 45 67',
-    memberSince: '15 Ocak 2024',
-    profileImageUrl: '',
-    isVerified: true,
-    accountType: 'Premium',
-  );
+  // Firebase data
+  FirebaseUserProfile? _userProfile;
+  ProfileStats? _profileStats;
+  bool _isLoading = true;
+  bool _isEditing = false;
 
-  final ProfileStats _stats = ProfileStats(
-    totalTransactions: 127,
-    totalIncome: 85000,
-    totalExpense: 42000,
-    activeGoals: 5,
-    categoriesUsed: 12,
-  );
+  // Edit controllers
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _dateOfBirthController = TextEditingController();
+  final TextEditingController _nationalIdController = TextEditingController();
+  final TextEditingController _streetController = TextEditingController();
+  final TextEditingController _districtController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _postalCodeController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController();
+
+  String? _selectedGender;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-
-    _controller.forward();
+    _loadUserProfile();
+    _fadeController.forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _fadeController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _dateOfBirthController.dispose();
+    _nationalIdController.dispose();
+    _streetController.dispose();
+    _districtController.dispose();
+    _cityController.dispose();
+    _postalCodeController.dispose();
+    _countryController.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: CustomScrollView(
-            slivers: [
-              // Custom App Bar
-              _buildCustomAppBar(),
+  Future<void> _loadUserProfile() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        final profile = await UserService.getUserProfile(userId);
+        if (profile != null) {
+          // Get user stats from all services
+          final transactions = await TransactionService.getTransactions(userId);
+          final goals = await GoalService.getGoals(userId);
+          final categories = await CategoryService.getCategories(userId);
 
-              // Profile Header
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildProfileHeader(),
+          // Calculate stats
+          final totalIncome = transactions
+              .where((t) => t.isIncome)
+              .fold(0.0, (sum, t) => sum + t.amount);
+          final totalExpense = transactions
+              .where((t) => !t.isIncome)
+              .fold(0.0, (sum, t) => sum + t.amount);
+          final activeGoals = goals.where((g) => !g.isCompleted).length;
+
+          setState(() {
+            _userProfile = profile;
+            _profileStats = ProfileStats(
+              totalTransactions: transactions.length,
+              totalIncome: totalIncome,
+              totalExpense: totalExpense,
+              activeGoals: activeGoals,
+              categoriesUsed: categories.length,
+            );
+            _isLoading = false;
+
+            // Set initial values for edit mode
+            _nameController.text = profile.fullName ?? '';
+            _phoneController.text = profile.phone ?? '';
+            _dateOfBirthController.text = profile.dateOfBirth ?? '';
+            _nationalIdController.text = profile.nationalId ?? '';
+            _selectedGender = profile.gender;
+
+            // Address fields
+            if (profile.address != null) {
+              _streetController.text = profile.address!.street;
+              _districtController.text = profile.address!.district;
+              _cityController.text = profile.address!.city;
+              _postalCodeController.text = profile.address!.postalCode;
+              _countryController.text = profile.address!.country;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading user profile: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveProfileChanges() async {
+    if (_userProfile == null) return;
+
+    try {
+      setState(() => _isLoading = true);
+
+      // Update user profile with all personal info
+      final updateData = <String, dynamic>{
+        'personalInfo.name': _nameController.text.trim(),
+        'personalInfo.fullName': _nameController.text.trim(),
+        'personalInfo.phone': _phoneController.text.trim(),
+        'personalInfo.dateOfBirth': _dateOfBirthController.text.trim(),
+        'personalInfo.gender': _selectedGender,
+        'personalInfo.nationalId': _nationalIdController.text.trim(),
+        'personalInfo.address': {
+          'street': _streetController.text.trim(),
+          'district': _districtController.text.trim(),
+          'city': _cityController.text.trim(),
+          'postalCode': _postalCodeController.text.trim(),
+          'country': _countryController.text.trim(),
+        },
+        'metadata.updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      await UserService.updateUserProfile(_userProfile!.userId, updateData);
+
+      // Reload profile data
+      await _loadUserProfile();
+
+      setState(() {
+        _isEditing = false;
+        _isLoading = false;
+      });
+
+      _showSnackBar('Profil başarıyla güncellendi! ✅', Colors.green);
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Profil güncellenirken hata oluştu: $e', Colors.red);
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  String _getInitials(String? name) {
+    if (name == null || name.trim().isEmpty) return 'U';
+
+    final parts = name
+        .trim()
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return 'U';
+
+    if (parts.length == 1) {
+      return parts.first[0].toUpperCase();
+    } else {
+      return (parts.first[0] + parts.last[0]).toUpperCase();
+    }
+  }
+
+  void _showEditProfile() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: 24,
+            left: 24,
+            right: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E7EB),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Color(0xFF6366F1),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Profili Düzenle',
+                          style: GoogleFonts.inter(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                        Text(
+                          'Tüm kişisel bilgilerinizi düzenleyin',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Color(0xFF6B7280)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile Photo Section
+                      Center(
+                        child: Column(
+                          children: [
+                            Stack(
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF667EEA),
+                                        Color(0xFF764BA2),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(50),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF667EEA,
+                                        ).withOpacity(0.3),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      _getInitials(
+                                        _userProfile?.fullName ??
+                                            _userProfile?.fullName,
+                                      ),
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white,
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF6366F1),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Profil Fotoğrafı Değiştir',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF6366F1),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Personal Information Section
+                      _buildSectionHeader('Kişisel Bilgiler'),
+                      const SizedBox(height: 16),
+
+                      _buildEditField(
+                        label: 'Ad Soyad',
+                        controller: _nameController,
+                        icon: Icons.person_outline,
+                        hint: 'Adınızı ve soyadınızı girin',
+                      ),
+                      const SizedBox(height: 20),
+
+                      _buildEditField(
+                        label: 'Telefon Numarası',
+                        controller: _phoneController,
+                        icon: Icons.phone_outlined,
+                        hint: '+90 555 123 45 67',
+                        keyboardType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 20),
+
+                      _buildDateField(
+                        label: 'Doğum Tarihi',
+                        controller: _dateOfBirthController,
+                        icon: Icons.cake_outlined,
+                        hint: 'GG/AA/YYYY',
+                      ),
+                      const SizedBox(height: 20),
+
+                      _buildGenderField(),
+                      const SizedBox(height: 20),
+
+                      _buildEditField(
+                        label: 'TC Kimlik No',
+                        controller: _nationalIdController,
+                        icon: Icons.credit_card_outlined,
+                        hint: '12345678901',
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Address Section
+                      _buildSectionHeader('Adres Bilgileri'),
+                      const SizedBox(height: 16),
+
+                      _buildEditField(
+                        label: 'Sokak/Mahalle',
+                        controller: _streetController,
+                        icon: Icons.home_outlined,
+                        hint: 'Sokak adı ve numara',
+                      ),
+                      const SizedBox(height: 20),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildEditField(
+                              label: 'İlçe',
+                              controller: _districtController,
+                              icon: Icons.location_city_outlined,
+                              hint: 'İlçe',
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildEditField(
+                              label: 'İl',
+                              controller: _cityController,
+                              icon: Icons.location_on_outlined,
+                              hint: 'İl',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildEditField(
+                              label: 'Posta Kodu',
+                              controller: _postalCodeController,
+                              icon: Icons.local_post_office_outlined,
+                              hint: '34000',
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildEditField(
+                              label: 'Ülke',
+                              controller: _countryController,
+                              icon: Icons.public_outlined,
+                              hint: 'Türkiye',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Contact Information Section (Read-only)
+                      _buildSectionHeader('İletişim Bilgileri'),
+                      const SizedBox(height: 16),
+
+                      _buildReadOnlyField(
+                        label: 'E-posta',
+                        value: _userProfile?.email ?? '',
+                        icon: Icons.email_outlined,
+                        subtitle: 'E-posta adresi değiştirilemez',
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
-              // Stats Section
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildStatsSection(),
-                ),
-              ),
+              const SizedBox(height: 24),
 
-              // Quick Actions
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildQuickActions(),
+              // Save Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _saveProfileChanges();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Değişiklikleri Kaydet',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 50)),
             ],
           ),
         ),
@@ -140,9 +530,376 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
+  Widget _buildEditField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    required String hint,
+    TextInputType? keyboardType,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1F2937),
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF9CA3AF),
+              ),
+              prefixIcon: Icon(icon, color: const Color(0xFF6B7280), size: 20),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReadOnlyField({
+    required String label,
+    required String value,
+    required IconData icon,
+    required String subtitle,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: const Color(0xFF9CA3AF), size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF6B7280),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 20,
+          decoration: BoxDecoration(
+            color: const Color(0xFF6366F1),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    required String hint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: TextField(
+            controller: controller,
+            readOnly: true,
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now().subtract(
+                  const Duration(days: 6570),
+                ), // 18 yaş
+                firstDate: DateTime(1950),
+                lastDate: DateTime.now(),
+                builder: (context, child) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.light(
+                        primary: Color(0xFF6366F1),
+                        onPrimary: Colors.white,
+                        surface: Colors.white,
+                        onSurface: Color(0xFF1F2937),
+                      ),
+                    ),
+                    child: child!,
+                  );
+                },
+              );
+              if (date != null) {
+                controller.text =
+                    '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+              }
+            },
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1F2937),
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF9CA3AF),
+              ),
+              prefixIcon: Icon(icon, color: const Color(0xFF6B7280), size: 20),
+              suffixIcon: const Icon(
+                Icons.calendar_today_outlined,
+                color: Color(0xFF6B7280),
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenderField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Cinsiyet',
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedGender,
+              hint: Row(
+                children: [
+                  const Icon(
+                    Icons.person_outline,
+                    color: Color(0xFF6B7280),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Cinsiyet seçiniz',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ],
+              ),
+              isExpanded: true,
+              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF6B7280)),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF1F2937),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'Erkek',
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.male,
+                        color: Color(0xFF3B82F6),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text('Erkek'),
+                    ],
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'Kadın',
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.female,
+                        color: Color(0xFFEC4899),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text('Kadın'),
+                    ],
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'Diğer',
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.transgender,
+                        color: Color(0xFF8B5CF6),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text('Diğer'),
+                    ],
+                  ),
+                ),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _selectedGender = value;
+                });
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+              ),
+            )
+          : SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: CustomScrollView(
+                  slivers: [
+                    _buildCustomAppBar(),
+                    SliverToBoxAdapter(
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 10),
+                          _buildProfileHeader(),
+                          const SizedBox(height: 24),
+                          if (_userProfile?.phone != null &&
+                              _userProfile!.phone.isNotEmpty)
+                            _buildContactInfo(),
+                          if (_userProfile?.phone != null &&
+                              _userProfile!.phone.isNotEmpty)
+                            const SizedBox(height: 24),
+                          if (_profileStats != null) _buildStatsSection(),
+                          if (_profileStats != null) const SizedBox(height: 24),
+                          _buildQuickActions(),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
   Widget _buildCustomAppBar() {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 110,
       floating: false,
       pinned: true,
       backgroundColor: const Color(0xFFF8FAFC),
@@ -163,10 +920,12 @@ class _ProfilePageState extends State<ProfilePage>
             ],
           ),
           child: IconButton(
-            onPressed: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsPage()),
-            ),
+            onPressed: () => {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              ),
+            },
             icon: const Icon(
               Icons.arrow_back_ios_new,
               color: Color(0xFF1F2937),
@@ -211,7 +970,7 @@ class _ProfilePageState extends State<ProfilePage>
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 40, 24, 16),
+            padding: const EdgeInsets.fromLTRB(24, 30, 24, 16),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -219,15 +978,16 @@ class _ProfilePageState extends State<ProfilePage>
                 Text(
                   'Profil 👤',
                   style: GoogleFonts.inter(
-                    fontSize: 28,
+                    fontSize: 25,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1F2937),
                   ),
                 ),
+
                 Text(
                   'Hesap bilgilerinizi yönetin',
                   style: GoogleFonts.inter(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF6B7280),
                   ),
@@ -256,115 +1016,107 @@ class _ProfilePageState extends State<ProfilePage>
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           children: [
-            // Profile Picture & Basic Info
-            Row(
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF667EEA).withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF667EEA).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
-                  child: Center(
-                    child: Text(
-                      _userProfile.name.split(' ').map((e) => e[0]).join(),
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  _getInitials(
+                    _userProfile?.fullName ?? _userProfile?.fullName,
+                  ),
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _userProfile.name,
-                              style: GoogleFonts.inter(
-                                color: const Color(0xFF1F2937),
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          if (_userProfile.isVerified)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.verified,
-                                    color: Color(0xFF10B981),
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Doğrulandı',
-                                    style: GoogleFonts.inter(
-                                      color: const Color(0xFF10B981),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _userProfile.accountType,
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF8B5CF6),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Üye: ${_userProfile.memberSince}',
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF6B7280),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
-
-            const SizedBox(height: 24),
-
-            // Contact Information
-            _buildContactInfo(),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _userProfile?.fullName ?? '',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF1F2937),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (_userProfile?.isVerified == true)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.verified,
+                                color: Color(0xFF10B981),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Doğrulandı',
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF10B981),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _userProfile?.accountType ?? '',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF8B5CF6),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Üye: ${_userProfile?.memberSince ?? ''}',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -372,22 +1124,49 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildContactInfo() {
-    return Column(
-      children: [
-        _buildContactItem(
-          icon: Icons.email_outlined,
-          label: 'E-posta',
-          value: _userProfile.email,
-          color: const Color(0xFF3B82F6),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
-        _buildContactItem(
-          icon: Icons.phone_outlined,
-          label: 'Telefon',
-          value: _userProfile.phone,
-          color: const Color(0xFF10B981),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'İletişim Bilgileri',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF1F2937),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildContactItem(
+              icon: Icons.email_outlined,
+              label: 'E-posta',
+              value: _userProfile?.email ?? '',
+              color: const Color(0xFF3B82F6),
+            ),
+            const SizedBox(height: 16),
+            _buildContactItem(
+              icon: Icons.phone_outlined,
+              label: 'Telefon',
+              value: _userProfile?.phone ?? '',
+              color: const Color(0xFF10B981),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -464,7 +1243,7 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildStatCard(
                   title: 'Toplam İşlem',
-                  value: _stats.totalTransactions.toString(),
+                  value: _profileStats?.totalTransactions.toString() ?? '0',
                   icon: Icons.receipt_long_outlined,
                   color: const Color(0xFF3B82F6),
                 ),
@@ -473,7 +1252,7 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildStatCard(
                   title: 'Aktif Hedef',
-                  value: _stats.activeGoals.toString(),
+                  value: _profileStats?.activeGoals.toString() ?? '0',
                   icon: Icons.flag_outlined,
                   color: const Color(0xFF8B5CF6),
                 ),
@@ -486,7 +1265,8 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildStatCard(
                   title: 'Toplam Gelir',
-                  value: '₺${_stats.totalIncome.toStringAsFixed(0)}',
+                  value:
+                      '₺${_profileStats?.totalIncome.toStringAsFixed(0) ?? '0'}',
                   icon: Icons.trending_up_outlined,
                   color: const Color(0xFF10B981),
                 ),
@@ -495,7 +1275,8 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildStatCard(
                   title: 'Toplam Gider',
-                  value: '₺${_stats.totalExpense.toStringAsFixed(0)}',
+                  value:
+                      '₺${_profileStats?.totalExpense.toStringAsFixed(0) ?? '0'}',
                   icon: Icons.trending_down_outlined,
                   color: const Color(0xFFEF4444),
                 ),
@@ -735,10 +1516,6 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  void _showEditProfile() {
-    _showComingSoon('Profil düzenleme');
-  }
-
   void _showLogoutConfirmation() {
     print('🚨 _showLogoutConfirmation çağrıldı!'); // Debug için
 
@@ -854,221 +1631,6 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showNotificationSettings() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.75,
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Header
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.notifications_active,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Bildirim Ayarları',
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF1F2937),
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          'Akıllı bildirimlerinizi yönetin',
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF6B7280),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF3F4F6),
-                        foregroundColor: const Color(0xFF6B7280),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'İptal',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Bildirim ayarları kaydedildi! ✅',
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            backgroundColor: const Color(0xFF10B981),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            margin: const EdgeInsets.all(16),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B5CF6),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'Kaydet',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNotificationSettingCard(
-    String title,
-    String description,
-    IconData icon,
-    Color color,
-    bool isEnabled,
-    Function(bool) onChanged,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isEnabled ? color.withOpacity(0.1) : const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isEnabled ? color.withOpacity(0.3) : const Color(0xFFE5E7EB),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF1F2937),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Switch(
-            value: isEnabled,
-            onChanged: onChanged,
-            activeColor: color,
-            inactiveThumbColor: const Color(0xFFD1D5DB),
-            inactiveTrackColor: const Color(0xFFF3F4F6),
           ),
         ],
       ),

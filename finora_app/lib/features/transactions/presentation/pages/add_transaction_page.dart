@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '/core/services/firebase_service.dart';
+import '/core/models/firebase_models.dart';
 
 class AddTransactionPage extends StatefulWidget {
   const AddTransactionPage({super.key});
@@ -23,8 +26,9 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   String? _selectedCategory;
   DateTime? _selectedDate;
   bool _isSaving = false;
+  bool _isLoading = false; // No need for loading anymore
 
-  // Kategori listeleri
+  // Sabit kategoriler - kullanıcı bunlardan seçer
   final Map<String, List<Map<String, dynamic>>> _categories = {
     'income': [
       {'name': 'Maaş', 'icon': Icons.work_outline, 'color': Color(0xFF10B981)},
@@ -137,20 +141,107 @@ class _AddTransactionPageState extends State<AddTransactionPage>
       _showSnackBar('Lütfen kategori seçiniz', isError: true);
       return;
     }
+    if (_selectedDate == null) {
+      _showSnackBar('Lütfen tarih seçiniz', isError: true);
+      return;
+    }
+
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      _showSnackBar('Kullanıcı oturumu bulunamadı', isError: true);
+      return;
+    }
 
     setState(() {
       _isSaving = true;
     });
 
-    // Simulated save
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Find selected category details
+      final currentCategories = _categories[_isIncome ? 'income' : 'expense']!;
+      final selectedCategoryModel = currentCategories.firstWhere(
+        (cat) => cat['name'] == _selectedCategory,
+      );
 
-    setState(() {
-      _isSaving = false;
-    });
+      // Convert icon to iconName string
+      final IconData icon = selectedCategoryModel['icon'];
+      String iconName = 'category'; // default
+      if (icon == Icons.work_outline)
+        iconName = 'work_outlined';
+      else if (icon == Icons.computer_outlined)
+        iconName = 'laptop_outlined';
+      else if (icon == Icons.trending_up_outlined)
+        iconName = 'trending_up_outlined';
+      else if (icon == Icons.home_outlined)
+        iconName = 'home_outlined';
+      else if (icon == Icons.sell_outlined)
+        iconName = 'sell_outlined';
+      else if (icon == Icons.more_horiz)
+        iconName = 'more_horiz';
+      else if (icon == Icons.restaurant_outlined)
+        iconName = 'restaurant_outlined';
+      else if (icon == Icons.directions_car_outlined)
+        iconName = 'directions_car_outlined';
+      else if (icon == Icons.shopping_bag_outlined)
+        iconName = 'shopping_bag_outlined';
+      else if (icon == Icons.movie_outlined)
+        iconName = 'movie_outlined';
+      else if (icon == Icons.local_hospital_outlined)
+        iconName = 'local_hospital_outlined';
+      else if (icon == Icons.receipt_outlined)
+        iconName = 'receipt_outlined';
+      else if (icon == Icons.school_outlined)
+        iconName = 'school_outlined';
+      else if (icon == Icons.checkroom_outlined)
+        iconName = 'checkroom_outlined';
 
-    _showSnackBar('İşlem başarıyla kaydedildi! 🎉');
-    _resetForm();
+      // Convert color to hex string
+      final Color color = selectedCategoryModel['color'];
+      final String colorHex =
+          '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
+
+      // Create FirebaseTransaction object
+      final transaction = FirebaseTransaction(
+        id: '', // Will be set by Firestore
+        userId: userId,
+        title: _descriptionController.text.trim().isEmpty
+            ? '${_isIncome ? 'Gelir' : 'Gider'} - ${selectedCategoryModel['name']}'
+            : _descriptionController.text.trim(),
+        category: selectedCategoryModel['name'],
+        amount: double.parse(_amountController.text.replaceAll(',', '.')),
+        isIncome: _isIncome,
+        iconName: iconName,
+        colorHex: colorHex,
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        date: _selectedDate!,
+        categoryId: '', // No categoryId needed for hardcoded categories
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Save to Firebase
+      final transactionId = await TransactionService.createTransaction(
+        transaction,
+      );
+
+      setState(() {
+        _isSaving = false;
+      });
+
+      _showSnackBar('İşlem başarıyla kaydedildi! 🎉');
+      _resetForm();
+
+      // Navigate back to show updated list
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      setState(() {
+        _isSaving = false;
+      });
+      debugPrint('Error saving transaction: $e');
+      _showSnackBar('İşlem kaydedilirken hata oluştu', isError: true);
+    }
   }
 
   void _resetForm() {
@@ -450,7 +541,12 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   }
 
   Widget _buildCategorySection() {
-    final currentCategories = _categories[_isIncome ? 'income' : 'expense']!;
+    final currentCategories = _isIncome
+        ? _categories['income']
+        : _categories['expense'];
+    debugPrint(
+      '🎨 Building category section: ${currentCategories?.length} categories, isIncome: $_isIncome',
+    );
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -469,7 +565,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Kategori',
+            'Kategori (${currentCategories?.length})',
             style: GoogleFonts.inter(
               color: const Color(0xFF1E293B),
               fontSize: 16,
@@ -477,69 +573,82 @@ class _AddTransactionPageState extends State<AddTransactionPage>
             ),
           ),
           const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1.0,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: currentCategories.length,
-            itemBuilder: (context, index) {
-              final category = currentCategories[index];
-              final isSelected = _selectedCategory == category['name'];
+          if (currentCategories!.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Kategori bulunamadı. Lütfen bekleyin...',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF64748B),
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 1.0,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: currentCategories.length,
+              itemBuilder: (context, index) {
+                final category = currentCategories[index];
+                final isSelected = _selectedCategory == category['name'];
 
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedCategory = category['name'];
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? category['color'].withOpacity(0.1)
-                        : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = category['name'];
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
                       color: isSelected
-                          ? category['color']
-                          : const Color(0xFFE2E8F0),
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        category['icon'],
+                          ? category['color'].withOpacity(0.1)
+                          : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
                         color: isSelected
                             ? category['color']
-                            : const Color(0xFF64748B),
-                        size: 24,
+                            : const Color(0xFFE2E8F0),
+                        width: isSelected ? 2 : 1,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        category['name'],
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          category['icon'],
                           color: isSelected
                               ? category['color']
                               : const Color(0xFF64748B),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          size: 24,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Text(
+                          category['name'],
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            color: isSelected
+                                ? category['color']
+                                : const Color(0xFF64748B),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
         ],
       ),
     );

@@ -73,10 +73,24 @@ class UserService {
   }
 
   // ➤ UPDATE USER PROFILE
-  static Future<void> updateUserProfile(FirebaseUserProfile profile) async {
+  static Future<void> updateUserProfile(
+    String userId,
+    Map<String, dynamic> updates,
+  ) async {
+    await FirebaseService._handleErrors(() async {
+      await _usersCollection.doc(userId).update({
+        ...updates,
+        'metadata.updatedAt': FieldValue.serverTimestamp(),
+      });
+      debugPrint('✅ User profile updated: $userId');
+    });
+  }
+
+  // ➤ UPDATE FULL USER PROFILE (with object)
+  static Future<void> updateFullUserProfile(FirebaseUserProfile profile) async {
     await FirebaseService._handleErrors(() async {
       await _usersCollection.doc(profile.userId).update(profile.toFirestore());
-      debugPrint('✅ User profile updated: ${profile.userId}');
+      debugPrint('✅ User profile fully updated: ${profile.userId}');
     });
   }
 
@@ -126,19 +140,19 @@ class TransactionService {
   static Future<String> createTransaction(
     FirebaseTransaction transaction,
   ) async {
-    return await FirebaseService._handleErrors(() async {
-          final docRef = await _getTransactionsCollection(
-            transaction.userId,
-          ).add(transaction.toFirestore());
+    final result = await FirebaseService._handleErrors(() async {
+      final docRef = await _getTransactionsCollection(
+        transaction.userId,
+      ).add(transaction.toFirestore());
 
-          debugPrint('✅ Transaction created: ${docRef.id}');
+      debugPrint('✅ Transaction created: ${docRef.id}');
 
-          // Update user stats
-          await _updateUserStatsAfterTransaction(transaction);
+      // Update user stats
+      await _updateUserStatsAfterTransaction(transaction);
 
-          return docRef.id;
-        }) ??
-        '';
+      return docRef.id;
+    });
+    return result ?? '';
   }
 
   // ➤ GET TRANSACTIONS
@@ -150,40 +164,40 @@ class TransactionService {
     bool? isIncome,
     String? categoryId,
   }) async {
-    return await FirebaseService._handleErrors(() async {
-          Query query = _getTransactionsCollection(
-            userId,
-          ).orderBy('date', descending: true);
+    final result = await FirebaseService._handleErrors(() async {
+      Query query = _getTransactionsCollection(
+        userId,
+      ).orderBy('date', descending: true);
 
-          // Apply filters
-          if (startDate != null) {
-            query = query.where(
-              'date',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
-            );
-          }
-          if (endDate != null) {
-            query = query.where(
-              'date',
-              isLessThanOrEqualTo: Timestamp.fromDate(endDate),
-            );
-          }
-          if (isIncome != null) {
-            query = query.where('isIncome', isEqualTo: isIncome);
-          }
-          if (categoryId != null) {
-            query = query.where('categoryId', isEqualTo: categoryId);
-          }
-          if (limit != null) {
-            query = query.limit(limit);
-          }
+      // Apply filters
+      if (startDate != null) {
+        query = query.where(
+          'date',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+        );
+      }
+      if (endDate != null) {
+        query = query.where(
+          'date',
+          isLessThanOrEqualTo: Timestamp.fromDate(endDate),
+        );
+      }
+      if (isIncome != null) {
+        query = query.where('isIncome', isEqualTo: isIncome);
+      }
+      if (categoryId != null) {
+        query = query.where('categoryId', isEqualTo: categoryId);
+      }
+      if (limit != null) {
+        query = query.limit(limit);
+      }
 
-          final snapshot = await query.get();
-          return snapshot.docs
-              .map((doc) => FirebaseTransaction.fromFirestore(doc, userId))
-              .toList();
-        }) ??
-        [];
+      final snapshot = await query.get();
+      return snapshot.docs
+          .map((doc) => FirebaseTransaction.fromFirestore(doc, userId))
+          .toList();
+    });
+    return result ?? [];
   }
 
   // ➤ GET TRANSACTIONS STREAM (Real-time)
@@ -253,34 +267,34 @@ class TransactionService {
     String userId,
     DateTime month,
   ) async {
-    return await FirebaseService._handleErrors(() async {
-          final startOfMonth = DateTime(month.year, month.month, 1);
-          final endOfMonth = DateTime(month.year, month.month + 1, 0);
+    final result = await FirebaseService._handleErrors(() async {
+      final startOfMonth = DateTime(month.year, month.month, 1);
+      final endOfMonth = DateTime(month.year, month.month + 1, 0);
 
-          final transactions = await getTransactions(
-            userId,
-            startDate: startOfMonth,
-            endDate: endOfMonth,
-          );
+      final transactions = await getTransactions(
+        userId,
+        startDate: startOfMonth,
+        endDate: endOfMonth,
+      );
 
-          double totalIncome = 0;
-          double totalExpense = 0;
+      double totalIncome = 0;
+      double totalExpense = 0;
 
-          for (final transaction in transactions) {
-            if (transaction.isIncome) {
-              totalIncome += transaction.amount;
-            } else {
-              totalExpense += transaction.amount;
-            }
-          }
+      for (final transaction in transactions) {
+        if (transaction.isIncome) {
+          totalIncome += transaction.amount;
+        } else {
+          totalExpense += transaction.amount;
+        }
+      }
 
-          return {
-            'income': totalIncome,
-            'expense': totalExpense,
-            'balance': totalIncome - totalExpense,
-          };
-        }) ??
-        {'income': 0, 'expense': 0, 'balance': 0};
+      return {
+        'income': totalIncome,
+        'expense': totalExpense,
+        'balance': totalIncome - totalExpense,
+      };
+    });
+    return result ?? {'income': 0, 'expense': 0, 'balance': 0};
   }
 
   // ➤ Private: Update user stats after transaction
@@ -352,18 +366,18 @@ class GoalService {
 
   // ➤ CREATE GOAL
   static Future<String> createGoal(FirebaseBudgetGoal goal) async {
-    return await FirebaseService._handleErrors(() async {
-          final docRef = await _getGoalsCollection(
-            goal.userId,
-          ).add(goal.toFirestore());
-          debugPrint('✅ Goal created: ${docRef.id}');
+    final result = await FirebaseService._handleErrors(() async {
+      final docRef = await _getGoalsCollection(
+        goal.userId,
+      ).add(goal.toFirestore());
+      debugPrint('✅ Goal created: ${docRef.id}');
 
-          // Update user stats
-          await _updateActiveGoalsCount(goal.userId);
+      // Update user stats
+      await _updateActiveGoalsCount(goal.userId);
 
-          return docRef.id;
-        }) ??
-        '';
+      return docRef.id;
+    });
+    return result ?? '';
   }
 
   // ➤ GET GOALS
@@ -372,24 +386,24 @@ class GoalService {
     bool? isActive,
     bool? isCompleted,
   }) async {
-    return await FirebaseService._handleErrors(() async {
-          Query query = _getGoalsCollection(
-            userId,
-          ).orderBy('createdAt', descending: true);
+    final result = await FirebaseService._handleErrors(() async {
+      Query query = _getGoalsCollection(
+        userId,
+      ).orderBy('createdAt', descending: true);
 
-          if (isActive != null) {
-            query = query.where('isActive', isEqualTo: isActive);
-          }
-          if (isCompleted != null) {
-            query = query.where('isCompleted', isEqualTo: isCompleted);
-          }
+      if (isActive != null) {
+        query = query.where('isActive', isEqualTo: isActive);
+      }
+      if (isCompleted != null) {
+        query = query.where('isCompleted', isEqualTo: isCompleted);
+      }
 
-          final snapshot = await query.get();
-          return snapshot.docs
-              .map((doc) => FirebaseBudgetGoal.fromFirestore(doc, userId))
-              .toList();
-        }) ??
-        [];
+      final snapshot = await query.get();
+      return snapshot.docs
+          .map((doc) => FirebaseBudgetGoal.fromFirestore(doc, userId))
+          .toList();
+    });
+    return result ?? [];
   }
 
   // ➤ GET GOALS STREAM (Real-time)
@@ -486,14 +500,14 @@ class CategoryService {
 
   // ➤ CREATE CATEGORY
   static Future<String> createCategory(FirebaseCategoryModel category) async {
-    return await FirebaseService._handleErrors(() async {
-          final docRef = await _getCategoriesCollection(
-            category.userId,
-          ).add(category.toFirestore());
-          debugPrint('✅ Category created: ${docRef.id}');
-          return docRef.id;
-        }) ??
-        '';
+    final result = await FirebaseService._handleErrors(() async {
+      final docRef = await _getCategoriesCollection(
+        category.userId,
+      ).add(category.toFirestore());
+      debugPrint('✅ Category created: ${docRef.id}');
+      return docRef.id;
+    });
+    return result ?? '';
   }
 
   // ➤ GET CATEGORIES
@@ -502,22 +516,22 @@ class CategoryService {
     String? type, // 'income' or 'expense'
     bool? isActive,
   }) async {
-    return await FirebaseService._handleErrors(() async {
-          Query query = _getCategoriesCollection(userId).orderBy('sortOrder');
+    final result = await FirebaseService._handleErrors(() async {
+      Query query = _getCategoriesCollection(userId).orderBy('sortOrder');
 
-          if (type != null) {
-            query = query.where('type', isEqualTo: type);
-          }
-          if (isActive != null) {
-            query = query.where('isActive', isEqualTo: isActive);
-          }
+      if (type != null) {
+        query = query.where('type', isEqualTo: type);
+      }
+      if (isActive != null) {
+        query = query.where('isActive', isEqualTo: isActive);
+      }
 
-          final snapshot = await query.get();
-          return snapshot.docs
-              .map((doc) => FirebaseCategoryModel.fromFirestore(doc, userId))
-              .toList();
-        }) ??
-        [];
+      final snapshot = await query.get();
+      return snapshot.docs
+          .map((doc) => FirebaseCategoryModel.fromFirestore(doc, userId))
+          .toList();
+    });
+    return result ?? [];
   }
 
   // ➤ GET CATEGORIES STREAM (Real-time)
@@ -669,14 +683,14 @@ class CardService {
 
   // ➤ CREATE CARD
   static Future<String> createCard(FirebaseCard card) async {
-    return await FirebaseService._handleErrors(() async {
-          final docRef = await _getCardsCollection(
-            card.userId,
-          ).add(card.toFirestore());
-          debugPrint('✅ Card created: ${docRef.id}');
-          return docRef.id;
-        }) ??
-        '';
+    final result = await FirebaseService._handleErrors(() async {
+      final docRef = await _getCardsCollection(
+        card.userId,
+      ).add(card.toFirestore());
+      debugPrint('✅ Card created: ${docRef.id}');
+      return docRef.id;
+    });
+    return result ?? '';
   }
 
   // ➤ GET CARDS
@@ -684,34 +698,51 @@ class CardService {
     String userId, {
     bool? isActive,
   }) async {
-    return await FirebaseService._handleErrors(() async {
-          Query query = _getCardsCollection(
-            userId,
-          ).orderBy('createdAt', descending: true);
+    final result = await FirebaseService._handleErrors(() async {
+      Query query = _getCardsCollection(userId);
 
-          if (isActive != null) {
-            query = query.where('isActive', isEqualTo: isActive);
-          }
+      if (isActive != null) {
+        query = query.where('isActive', isEqualTo: isActive);
+      }
 
-          final snapshot = await query.get();
-          return snapshot.docs
-              .map((doc) => FirebaseCard.fromFirestore(doc, userId))
-              .toList();
-        }) ??
-        [];
+      final snapshot = await query.get();
+      final cards = snapshot.docs
+          .map((doc) => FirebaseCard.fromFirestore(doc, userId))
+          .toList();
+
+      // Sort in memory to avoid index requirement
+      cards.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return cards;
+    });
+    return result ?? [];
   }
 
   // ➤ GET CARDS STREAM (Real-time)
   static Stream<List<FirebaseCard>> getCardsStream(String userId) {
+    debugPrint('🔍 CardService - Getting cards stream for user: $userId');
+
+    // Temporary fix: Remove orderBy to avoid index requirement
     return _getCardsCollection(userId)
         .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => FirebaseCard.fromFirestore(doc, userId))
-              .toList(),
-        );
+        .handleError((error) {
+          debugPrint('❌ CardService - Stream error: $error');
+        })
+        .map((snapshot) {
+          debugPrint('📊 CardService - Got ${snapshot.docs.length} cards');
+          final cards = snapshot.docs.map((doc) {
+            try {
+              return FirebaseCard.fromFirestore(doc, userId);
+            } catch (e) {
+              debugPrint('❌ CardService - Error parsing card ${doc.id}: $e');
+              rethrow;
+            }
+          }).toList();
+
+          // Sort in memory (temporary solution)
+          cards.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return cards;
+        });
   }
 
   // ➤ UPDATE CARD
