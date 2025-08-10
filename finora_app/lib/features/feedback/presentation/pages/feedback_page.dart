@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '/core/services/firebase_service.dart';
+import '/core/services/firebase_service.dart' show FeedbackService, UserService;
 import '/core/models/firebase_models.dart';
 
 
