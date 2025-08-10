@@ -118,6 +118,7 @@ class _DashboardPageState extends State<DashboardPage>
   double _totalIncome = 0.0;
   double _totalExpense = 0.0;
   List<FirebaseTransaction> _recentTransactions = [];
+  List<FirebaseTransaction> _allTransactions = [];
   String? _userId;
 
   @override
@@ -183,6 +184,7 @@ class _DashboardPageState extends State<DashboardPage>
         _totalIncome = income;
         _totalExpense = expense;
         _recentTransactions = recentTransactions;
+        _allTransactions = transactions;
         _isLoading = false;
       });
 
@@ -1518,21 +1520,25 @@ class _DashboardPageState extends State<DashboardPage>
         children: [
           Expanded(
             child: _buildSummaryCard(
-              title: 'Gelir',
+              title: 'Toplam Gelir',
               amount: _isLoading ? null : '₺${_totalIncome.toStringAsFixed(0)}',
               icon: FontAwesomeIcons.arrowTrendUp,
               color: const Color(0xFF10B981),
-              percentage: _isLoading ? null : '+${_totalIncome > 0 ? '100' : '0'}%',
+              subtitle: _isLoading ? null : '${_getIncomeTransactionCount()} işlem',
+              showTrend: true,
+              isPositive: true,
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: _buildSummaryCard(
-              title: 'Gider',
+              title: 'Toplam Gider',
               amount: _isLoading ? null : '₺${_totalExpense.toStringAsFixed(0)}',
               icon: FontAwesomeIcons.arrowTrendDown,
               color: const Color(0xFFEF4444),
-              percentage: _isLoading ? null : '-${_totalExpense > 0 ? '100' : '0'}%',
+              subtitle: _isLoading ? null : '${_getExpenseTransactionCount()} işlem',
+              showTrend: true,
+              isPositive: false,
             ),
           ),
         ],
@@ -1540,12 +1546,22 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
+  int _getIncomeTransactionCount() {
+    return _allTransactions.where((t) => t.isIncome).length;
+  }
+
+  int _getExpenseTransactionCount() {
+    return _allTransactions.where((t) => !t.isIncome).length;
+  }
+
   Widget _buildSummaryCard({
     required String title,
     String? amount,
     required IconData icon,
     required Color color,
-    String? percentage,
+    String? subtitle,
+    bool showTrend = false,
+    bool isPositive = true,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1574,30 +1590,34 @@ class _DashboardPageState extends State<DashboardPage>
                 child: FaIcon(icon, color: color, size: 16),
               ),
               const Spacer(),
-              percentage != null
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+              if (showTrend)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isPositive ? Icons.trending_up : Icons.trending_down,
+                        color: color,
+                        size: 12,
                       ),
-                      child: Text(
-                        percentage,
+                      const SizedBox(width: 2),
+                      Text(
+                        isPositive ? 'GELİR' : 'GİDER',
                         style: GoogleFonts.inter(
                           color: color,
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                    )
-                  : Container(
-                      width: 50,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                    ],
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 16),
@@ -1605,28 +1625,59 @@ class _DashboardPageState extends State<DashboardPage>
             title,
             style: GoogleFonts.inter(
               color: const Color(0xFF64748B),
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           amount != null
               ? Text(
                   amount,
                   style: GoogleFonts.inter(
                     color: const Color(0xFF1E293B),
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                   ),
                 )
               : Container(
                   width: 80,
-                  height: 24,
+                  height: 22,
                   decoration: BoxDecoration(
                     color: Colors.grey.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  color: const Color(0xFF94A3B8),
+                  size: 14,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF94A3B8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ] else if (_isLoading) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: 60,
+              height: 12,
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ],
         ],
       ),
     );
