@@ -791,20 +791,35 @@ class CardService {
   }
 
   // ➤ UPDATE CARD BALANCE
-  static Future<void> updateCardBalance(String cardId, double newBalance) async {
+  static Future<void> updateCardBalance(String cardId, double newBalance, [String? userId]) async {
     await FirebaseService._handleErrors(() async {
-      // Get userId from card document first, or use a simpler approach
-      final cardDoc = await FirebaseService._firestore.collectionGroup('cards').where(FieldPath.documentId, isEqualTo: cardId).get();
+      debugPrint('💳 Updating card balance: $cardId -> ₺$newBalance');
       
-      if (cardDoc.docs.isNotEmpty) {
-        await cardDoc.docs.first.reference.update({
+      if (userId != null) {
+        // Direct approach if userId is provided
+        await _getCardsCollection(userId).doc(cardId).update({
           'balance': newBalance,
           'lastUsed': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        debugPrint('✅ Card balance updated: $cardId -> ₺$newBalance');
+        debugPrint('✅ Card balance updated (direct): $cardId -> ₺$newBalance');
       } else {
-        throw Exception('Card not found: $cardId');
+        // Fallback to collectionGroup approach
+        final cardDoc = await FirebaseService._firestore.collectionGroup('cards')
+            .where(FieldPath.documentId, isEqualTo: cardId)
+            .get();
+        
+        if (cardDoc.docs.isNotEmpty) {
+          await cardDoc.docs.first.reference.update({
+            'balance': newBalance,
+            'lastUsed': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          debugPrint('✅ Card balance updated (collectionGroup): $cardId -> ₺$newBalance');
+        } else {
+          debugPrint('❌ Card not found: $cardId');
+          throw Exception('Card not found: $cardId');
+        }
       }
     });
   }

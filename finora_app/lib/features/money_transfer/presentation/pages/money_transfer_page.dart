@@ -1451,11 +1451,14 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
         return;
       }
 
-      debugPrint('💸 Processing transfer: ₺$transferAmount');
-      debugPrint('📤 From: ${_selectedFromCard!.bankName} - ${_selectedFromCard!.maskedCardNumber}');
-      debugPrint('📥 To: ${_selectedRecipient?.name ?? 'External'}');
+      debugPrint('💸 Starting transfer process...');
+      debugPrint('💸 Amount: ₺$transferAmount');
+      debugPrint('📤 From: ${_selectedFromCard!.bankName} - ${_selectedFromCard!.maskedCardNumber} (Balance: ₺${_selectedFromCard!.balance})');
+      debugPrint('📥 To: ${_selectedRecipient?.name ?? _recipientNameController.text.trim()}');
+      debugPrint('🔄 Method: $_selectedTransferType');
 
-      // Create transaction for sender (expense)
+      // STEP 1: Create sender transaction
+      debugPrint('🟡 STEP 1: Creating sender transaction...');
       final senderTransaction = FirebaseTransaction(
         id: '', // Will be set by Firestore
         userId: _currentUserId!,
@@ -1471,22 +1474,34 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
             : _descriptionController.text.trim(),
         categoryId: null,
         cardId: _selectedFromCard!.id,
+        location: null,
+        tags: [],
+        isRecurring: false,
+        recurringPattern: null,
+        attachments: [],
+        status: 'completed',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
-      // Save sender transaction
       final senderTransactionId = await TransactionService.createTransaction(senderTransaction);
-      debugPrint('✅ Sender transaction created: $senderTransactionId');
+      if (senderTransactionId.isEmpty) {
+        throw Exception('Gönderen transaction oluşturulamadı');
+      }
+      debugPrint('✅ STEP 1 COMPLETED: Sender transaction created: $senderTransactionId');
 
-      // Update sender card balance
+      // STEP 2: Update sender card balance
+      debugPrint('🟡 STEP 2: Updating sender card balance...');
       final newSenderBalance = _selectedFromCard!.balance - transferAmount;
-      await CardService.updateCardBalance(_selectedFromCard!.id, newSenderBalance);
-      debugPrint('✅ Sender card balance updated: ₺$newSenderBalance');
+      debugPrint('📊 Balance change: ${_selectedFromCard!.balance} - $transferAmount = $newSenderBalance');
+      
+      await CardService.updateCardBalance(_selectedFromCard!.id, newSenderBalance, _currentUserId);
+      debugPrint('✅ STEP 2 COMPLETED: Sender card balance updated to ₺$newSenderBalance');
 
-      // If recipient is a registered user, create income transaction for them
+      // STEP 3: Create recipient transaction (if applicable)
       if (_selectedRecipient != null) {
-        debugPrint('💰 Creating recipient transaction for: ${_selectedRecipient!.name} (ID: ${_selectedRecipient!.userId})');
+        debugPrint('🟡 STEP 3: Creating recipient transaction...');
+        debugPrint('💰 Recipient: ${_selectedRecipient!.name} (ID: ${_selectedRecipient!.userId})');
         
         final recipientTransaction = FirebaseTransaction(
           id: '', // Will be set by Firestore
@@ -1501,27 +1516,29 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
           description: 'Para transferi alındı - ${FirebaseAuth.instance.currentUser?.displayName ?? 'Kullanıcı'}',
           categoryId: null,
           cardId: null, // No specific card for incoming transfer
+          location: null,
+          tags: [],
+          isRecurring: false,
+          recurringPattern: null,
+          attachments: [],
+          status: 'completed',
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
 
-        debugPrint('📝 Recipient transaction data: ${recipientTransaction.toString()}');
-        
         final recipientTransactionId = await TransactionService.createTransaction(recipientTransaction);
-        debugPrint('✅ Recipient transaction created with ID: $recipientTransactionId');
-        
-        if (recipientTransactionId != null) {
-          debugPrint('🎉 Recipient transaction successfully saved!');
-        } else {
-          debugPrint('❌ Failed to save recipient transaction');
+        if (recipientTransactionId.isEmpty) {
+          throw Exception('Alıcı transaction oluşturulamadı');
         }
+        debugPrint('✅ STEP 3 COMPLETED: Recipient transaction created: $recipientTransactionId');
       } else if (_selectedTransferType == 'IBAN') {
         debugPrint('💰 IBAN transfer to: ${_recipientNameController.text.trim()} - ${_ibanController.text.trim()}');
-        // For IBAN transfers, we could log to a separate external transfers collection if needed
-        // For now, we just log the sender transaction
+        debugPrint('ℹ️ STEP 3 SKIPPED: External IBAN transfer, no recipient transaction needed');
       } else {
-        debugPrint('⚠️ No recipient selected for user transfer');
+        debugPrint('⚠️ STEP 3 WARNING: No recipient selected for user transfer');
       }
+
+      debugPrint('🎉 ALL STEPS COMPLETED SUCCESSFULLY!');
 
       setState(() {
         _isLoading = false;
@@ -1560,22 +1577,25 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
               if (_selectedTransferType == 'IBAN')
                 Text('IBAN: ${_ibanController.text.trim()}', 
                      style: TextStyle(fontSize: 12, color: Colors.white70)),
+              Text('Yeni bakiye: ₺${newSenderBalance.toStringAsFixed(2)}', 
+                   style: TextStyle(fontSize: 12, color: Colors.white70)),
             ],
           ),
           backgroundColor: const Color(0xFF10B981),
-          duration: const Duration(seconds: 5),
+          duration: const Duration(seconds: 6),
           behavior: SnackBarBehavior.floating,
         ),
       );
 
-      debugPrint('🎉 Transfer completed successfully!');
-
     } catch (e) {
-      debugPrint('💥 Error processing transfer: $e');
+      debugPrint('💥 TRANSFER FAILED: $e');
+      debugPrint('📍 Error occurred during transfer process');
+      
       setState(() {
         _isLoading = false;
       });
-      _showErrorMessage('Transfer işlemi başarısız: $e');
+      
+      _showErrorMessage('Transfer işlemi başarısız: ${e.toString()}');
     }
   }
 
