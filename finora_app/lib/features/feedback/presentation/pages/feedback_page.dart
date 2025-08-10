@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '/core/services/firebase_service.dart';
 import '/core/models/firebase_models.dart';
 
+
 class FeedbackType {
   final String title;
   final String description;
@@ -96,6 +97,16 @@ class _FeedbackPageState extends State<FeedbackPage>
     ));
 
     _controller.forward();
+    
+    // Pre-fill email with user's current email if available
+    _initializeUserEmail();
+  }
+
+  void _initializeUserEmail() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && user.email != null && user.email!.isNotEmpty) {
+      _emailController.text = user.email!;
+    }
   }
 
   @override
@@ -649,7 +660,7 @@ class _FeedbackPageState extends State<FeedbackPage>
     }
 
     setState(() {
-      _isSubmitting = true;
+      _isLoading = true; // Changed from _isSubmitting to _isLoading
     });
 
     try {
@@ -684,8 +695,33 @@ class _FeedbackPageState extends State<FeedbackPage>
       if (feedbackId != null) {
         debugPrint('✅ Feedback submitted successfully: $feedbackId');
         
+        // If user provided an email and it's different from their current email, update their profile
+        final providedEmail = _emailController.text.trim();
+        bool emailUpdated = false;
+        
+        if (providedEmail.isNotEmpty && providedEmail != user.email) {
+          try {
+            debugPrint('📧 Updating user email in profile: $providedEmail');
+            await UserService.updateUserProfile(user.uid, {
+              'personalInfo.email': providedEmail,
+              'email': providedEmail, // Also update the top-level email field
+            });
+            debugPrint('✅ User email updated successfully');
+            emailUpdated = true;
+          } catch (e) {
+            debugPrint('⚠️ Failed to update user email: $e');
+            // Don't show error to user since feedback was successful
+          }
+        }
+        
+        String successMessage = 'Geri bildiriminiz başarıyla gönderildi! 🎉\nTeşekkür ederiz, en kısa sürede değerlendireceğiz.';
+        
+        if (emailUpdated) {
+          successMessage += '\n\n📧 E-posta adresiniz profilinizde güncellendi.';
+        }
+        
         _showSnackBar(
-          'Geri bildiriminiz başarıyla gönderildi! 🎉\nTeşekkür ederiz, en kısa sürede değerlendireceğiz.',
+          successMessage,
           isError: false,
         );
 
