@@ -184,7 +184,7 @@ class _DashboardPageState extends State<DashboardPage>
         _totalIncome = income;
         _totalExpense = expense;
         _recentTransactions = recentTransactions;
-        _allTransactions = transactions;
+        _allTransactions = List<FirebaseTransaction>.from(transactions);
         _isLoading = false;
       });
 
@@ -1547,10 +1547,12 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   int _getIncomeTransactionCount() {
+    if (_allTransactions.isEmpty) return 0;
     return _allTransactions.where((t) => t.isIncome).length;
   }
 
   int _getExpenseTransactionCount() {
+    if (_allTransactions.isEmpty) return 0;
     return _allTransactions.where((t) => !t.isIncome).length;
   }
 
