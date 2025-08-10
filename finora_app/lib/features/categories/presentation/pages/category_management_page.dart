@@ -436,6 +436,8 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
             ],
           ),
           const SizedBox(height: 16),
+          
+          // Üst satır: Kategori ve İşlem sayısı
           Row(
             children: [
               Expanded(
@@ -455,16 +457,17 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
                   color: const Color(0xFF8B5CF6),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildSummaryCard(
-                  title: 'Toplam Tutar',
-                  value: '₺${totalAmount.toStringAsFixed(0)}',
-                  icon: FontAwesomeIcons.coins,
-                  color: _showIncomeCategories ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                ),
-              ),
             ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Alt satır: Toplam tutar (tek başına, geniş)
+          _buildSummaryCard(
+            title: 'Toplam Tutar',
+            value: '₺${totalAmount.toStringAsFixed(0)}',
+            icon: FontAwesomeIcons.coins,
+            color: _showIncomeCategories ? const Color(0xFF10B981) : const Color(0xFFEF4444),
           ),
         ],
       ),
