@@ -217,6 +217,53 @@ class _AddTransactionPageState extends State<AddTransactionPage>
       final Color color = selectedCategoryModel['color'];
       final String colorHex = '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
 
+      // Create or get category in Firebase
+      String categoryId = '';
+      try {
+        // Check if category already exists
+        debugPrint('🔍 Checking if category exists: ${selectedCategoryModel['name']}');
+        final existingCategories = await CategoryService.getCategories(
+          userId, 
+          type: _isIncome ? 'income' : 'expense',
+        );
+        
+        final existingCategory = existingCategories.where(
+          (cat) => cat.name == selectedCategoryModel['name']
+        ).isNotEmpty 
+            ? existingCategories.where((cat) => cat.name == selectedCategoryModel['name']).first
+            : null;
+        
+        if (existingCategory != null) {
+          // Category exists, use its ID
+          categoryId = existingCategory.id;
+          debugPrint('✅ Using existing category: ${existingCategory.name} (${categoryId})');
+        } else {
+          // Category doesn't exist, create it
+          debugPrint('➕ Creating new category: ${selectedCategoryModel['name']}');
+          final newCategory = FirebaseCategoryModel(
+            id: '', // Will be set by Firestore
+            userId: userId,
+            name: selectedCategoryModel['name'],
+            iconName: iconName,
+            colorHex: colorHex,
+            type: _isIncome ? 'income' : 'expense',
+            transactionCount: 0, // Will be updated automatically
+            totalAmount: 0.0, // Will be updated automatically
+            isDefault: false,
+            isActive: true,
+            sortOrder: existingCategories.length + 1,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          
+          categoryId = await CategoryService.createCategory(newCategory);
+          debugPrint('✅ Created new category: ${selectedCategoryModel['name']} (${categoryId})');
+        }
+      } catch (e) {
+        debugPrint('💥 Error managing category: $e');
+        // Continue with empty categoryId if category creation fails
+      }
+
       // Create FirebaseTransaction object
       final transaction = FirebaseTransaction(
         id: '', // Will be set by Firestore
@@ -233,7 +280,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
             ? null 
             : _descriptionController.text.trim(),
         date: _selectedDate!,
-        categoryId: '', // No categoryId needed for hardcoded categories
+        categoryId: categoryId,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );

@@ -682,57 +682,435 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
   }
 
   void _showAddCategoryDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Kategori ekleme özelliği yakında! 🎨',
+    final nameController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(
+          'Yeni Kategori Ekle',
           style: GoogleFonts.inter(
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
+            color: const Color(0xFF1F2937),
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        backgroundColor: const Color(0xFF3B82F6),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+        content: TextField(
+          controller: nameController,
+          decoration: InputDecoration(
+            labelText: 'Kategori Adı',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF6366F1)),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'İptal',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6B7280),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.trim().isNotEmpty) {
+                try {
+                  final userId = FirebaseAuth.instance.currentUser?.uid;
+                  if (userId != null) {
+                    final newCategory = FirebaseCategoryModel(
+                      id: '', // Will be set by Firestore
+                      userId: userId,
+                      name: nameController.text.trim(),
+                      iconName: 'category',
+                      colorHex: _showIncomeCategories ? '#10B981' : '#EF4444',
+                      type: _showIncomeCategories ? 'income' : 'expense',
+                      transactionCount: 0,
+                      totalAmount: 0.0,
+                      isDefault: false,
+                      isActive: true,
+                      sortOrder: _currentCategories.length + 1,
+                      createdAt: DateTime.now(),
+                      updatedAt: DateTime.now(),
+                    );
+                    
+                    await CategoryService.createCategory(newCategory);
+                    
+                    Navigator.pop(context);
+                    _loadCategoryData(); // Refresh data
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Kategori başarıyla eklendi! ✅',
+                          style: GoogleFonts.inter(color: Colors.white),
+                        ),
+                        backgroundColor: const Color(0xFF10B981),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Hata oluştu: $e',
+                        style: GoogleFonts.inter(color: Colors.white),
+                      ),
+                      backgroundColor: const Color(0xFFEF4444),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Ekle',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildColorPicker(Color initialColor, Function(Color) onColorSelected) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Renk Seçin',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildColorOption(Colors.red, initialColor, onColorSelected),
+              _buildColorOption(Colors.orange, initialColor, onColorSelected),
+              _buildColorOption(Colors.yellow, initialColor, onColorSelected),
+              _buildColorOption(Colors.green, initialColor, onColorSelected),
+              _buildColorOption(Colors.blue, initialColor, onColorSelected),
+              _buildColorOption(Colors.purple, initialColor, onColorSelected),
+              _buildColorOption(Colors.brown, initialColor, onColorSelected),
+              _buildColorOption(Colors.grey, initialColor, onColorSelected),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildColorOption(Color color, Color initialColor, Function(Color) onColorSelected) {
+    return GestureDetector(
+      onTap: () => onColorSelected(color),
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color == initialColor ? Colors.black : Colors.transparent),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconPicker(FontAwesomeIcons icon, Function(FontAwesomeIcons) onIconSelected) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'İkon Seçin',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildIconOption(FontAwesomeIcons.solidFolder, icon, onIconSelected),
+              _buildIconOption(FontAwesomeIcons.solidChartBar, icon, onIconSelected),
+              _buildIconOption(FontAwesomeIcons.solidCreditCard, icon, onIconSelected),
+              _buildIconOption(FontAwesomeIcons.solidHandHoldingDollar, icon, onIconSelected),
+              _buildIconOption(FontAwesomeIcons.solidGift, icon, onIconSelected),
+              _buildIconOption(FontAwesomeIcons.solidShoppingBag, icon, onIconSelected),
+              _buildIconOption(FontAwesomeIcons.solidBars, icon, onIconSelected),
+              _buildIconOption(FontAwesomeIcons.solidCog, icon, onIconSelected),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconOption(FontAwesomeIcons icon, FontAwesomeIcons initialIcon, Function(FontAwesomeIcons) onIconSelected) {
+    return GestureDetector(
+      onTap: () => onIconSelected(icon),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: icon == initialIcon ? Colors.black : Colors.transparent),
+        ),
+        child: Icon(
+          icon,
+          color: Colors.black,
+          size: 20,
+        ),
       ),
     );
   }
 
   void _showEditCategoryDialog(FirebaseCategoryModel category) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${category.name} düzenleme özelliği yakında! ✏️',
+    final nameController = TextEditingController(text: category.name);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(
+          'Kategori Düzenle',
           style: GoogleFonts.inter(
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
+            color: const Color(0xFF1F2937),
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        backgroundColor: const Color(0xFF6366F1),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: 'Kategori Adı',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: category.color),
+                ),
+              ),
+            ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'İptal',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6B7280),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.trim().isNotEmpty) {
+                try {
+                  // Update category in Firebase
+                  final updatedCategory = FirebaseCategoryModel(
+                    id: category.id,
+                    userId: category.userId,
+                    name: nameController.text.trim(),
+                    iconName: category.iconName,
+                    colorHex: category.colorHex,
+                    type: category.type,
+                    transactionCount: category.transactionCount,
+                    totalAmount: category.totalAmount,
+                    monthlyBudget: category.monthlyBudget,
+                    currentSpent: category.currentSpent,
+                    currency: category.currency,
+                    isDefault: category.isDefault,
+                    isActive: category.isActive,
+                    parentCategoryId: category.parentCategoryId,
+                    sortOrder: category.sortOrder,
+                    createdAt: category.createdAt,
+                    updatedAt: DateTime.now(),
+                  );
+                  
+                  await CategoryService.updateCategory(updatedCategory);
+                  
+                  Navigator.pop(context);
+                  _loadCategoryData(); // Refresh data
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Kategori başarıyla güncellendi! ✅',
+                        style: GoogleFonts.inter(color: Colors.white),
+                      ),
+                      backgroundColor: const Color(0xFF10B981),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Hata oluştu: $e',
+                        style: GoogleFonts.inter(color: Colors.white),
+                      ),
+                      backgroundColor: const Color(0xFFEF4444),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: category.color,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Güncelle',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   void _showDeleteCategoryDialog(FirebaseCategoryModel category) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${category.name} silme özelliği yakında! 🗑️',
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(
+          'Kategori Sil',
           style: GoogleFonts.inter(
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
+            color: const Color(0xFF1F2937),
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        backgroundColor: const Color(0xFFEF4444),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+        content: Text(
+          '${category.name} kategorisini silmek istediğinizden emin misiniz?\n\nBu kategoriyle ilgili ${_categoryTransactionCounts[category.name] ?? 0} işlem etkilenecektir.',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF6B7280),
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+          ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'İptal',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6B7280),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await CategoryService.deleteCategory(category.userId, category.id);
+                
+                Navigator.pop(context);
+                _loadCategoryData(); // Refresh data
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${category.name} kategorisi silindi! 🗑️',
+                      style: GoogleFonts.inter(color: Colors.white),
+                    ),
+                    backgroundColor: const Color(0xFFEF4444),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } catch (e) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Hata oluştu: $e',
+                      style: GoogleFonts.inter(color: Colors.white),
+                    ),
+                    backgroundColor: const Color(0xFFEF4444),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Sil',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
