@@ -1755,8 +1755,8 @@ class _DashboardPageState extends State<DashboardPage>
 
   Widget _buildFirebaseTransactionItem(FirebaseTransaction transaction) {
     final timeAgo = _getTimeAgo(transaction.date);
-    final icon = _getIconFromString(transaction.icon);
-    final color = _getColorFromString(transaction.color);
+    final icon = _getIconFromTransaction(transaction);
+    final color = _getColorFromTransaction(transaction);
     
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1890,27 +1890,56 @@ class _DashboardPageState extends State<DashboardPage>
     }
   }
 
-  IconData _getIconFromString(String iconName) {
-    switch (iconName) {
-      case 'shopping_cart':
-        return Icons.shopping_cart_outlined;
-      case 'restaurant':
-        return Icons.restaurant_outlined;
-      case 'local_gas_station':
-        return Icons.local_gas_station_outlined;
-      case 'work':
-        return Icons.work_outline;
-      case 'laptop':
-        return Icons.laptop_outlined;
-      default:
-        return Icons.receipt_long_outlined;
+  IconData _getIconFromTransaction(FirebaseTransaction transaction) {
+    try {
+      // Use iconName field from FirebaseTransaction
+      final iconValue = transaction.iconName;
+      
+      switch (iconValue) {
+        case 'shopping_cart':
+          return Icons.shopping_cart_outlined;
+        case 'restaurant':
+          return Icons.restaurant_outlined;
+        case 'local_gas_station':
+          return Icons.local_gas_station_outlined;
+        case 'work':
+          return Icons.work_outline;
+        case 'laptop':
+          return Icons.laptop_outlined;
+        case 'home':
+          return Icons.home_outlined;
+        case 'car':
+          return Icons.directions_car_outlined;
+        case 'medical':
+          return Icons.medical_services_outlined;
+        case 'entertainment':
+          return Icons.movie_outlined;
+        case 'transport':
+          return Icons.directions_bus_outlined;
+        default:
+          return Icons.receipt_long_outlined;
+      }
+    } catch (e) {
+      debugPrint('🔥 Error parsing icon: $e');
+      return Icons.receipt_long_outlined;
     }
   }
 
-  Color _getColorFromString(String colorHex) {
+  Color _getColorFromTransaction(FirebaseTransaction transaction) {
     try {
-      return Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+      // Use colorHex field from FirebaseTransaction
+      final colorValue = transaction.colorHex;
+      
+      if (colorValue.startsWith('#')) {
+        return Color(int.parse(colorValue.replaceFirst('#', '0xFF')));
+      } else if (colorValue.startsWith('0x')) {
+        return Color(int.parse(colorValue));
+      } else {
+        // Try parsing as hex without prefix
+        return Color(int.parse('0xFF$colorValue'));
+      }
     } catch (e) {
+      debugPrint('🔥 Error parsing color: $e');
       return const Color(0xFF6B7280);
     }
   }
