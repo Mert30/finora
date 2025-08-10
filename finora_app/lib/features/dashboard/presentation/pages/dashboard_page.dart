@@ -113,6 +113,13 @@ class _DashboardPageState extends State<DashboardPage>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+  // Firebase data state
+  bool _isLoading = true;
+  double _totalIncome = 0.0;
+  double _totalExpense = 0.0;
+  List<FirebaseTransaction> _recentTransactions = [];
+  String? _userId;
+
   @override
   void initState() {
     super.initState();
@@ -128,14 +135,62 @@ class _DashboardPageState extends State<DashboardPage>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
-
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
-        );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
 
     _fadeController.forward();
     _slideController.forward();
+    
+    // Load Firebase data
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      _userId = FirebaseAuth.instance.currentUser?.uid;
+      if (_userId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      debugPrint('📊 Loading dashboard data for user: $_userId');
+
+      // Get all transactions
+      final transactions = await TransactionService.getTransactions(_userId!);
+      debugPrint('📋 Retrieved ${transactions.length} transactions');
+
+      // Calculate totals
+      double income = 0.0;
+      double expense = 0.0;
+      
+      for (final transaction in transactions) {
+        if (transaction.isIncome) {
+          income += transaction.amount;
+        } else {
+          expense += transaction.amount;
+        }
+      }
+
+      // Get recent transactions (last 5)
+      final recentTransactions = transactions.take(5).toList();
+
+      setState(() {
+        _totalIncome = income;
+        _totalExpense = expense;
+        _recentTransactions = recentTransactions;
+        _isLoading = false;
+      });
+
+      debugPrint('✅ Dashboard data loaded - Income: ₺$income, Expense: ₺$expense');
+    } catch (e) {
+      debugPrint('💥 Error loading dashboard data: $e');
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -325,6 +380,8 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _buildBalanceCard() {
+    final balance = _totalIncome - _totalExpense;
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(28),
@@ -371,7 +428,7 @@ class _DashboardPageState extends State<DashboardPage>
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Bu Ay',
+                  'Güncel',
                   style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 12,
@@ -391,48 +448,64 @@ class _DashboardPageState extends State<DashboardPage>
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                '₺12,340',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 36,
-                  fontWeight: FontWeight.w700,
+          _isLoading
+              ? Container(
+                  height: 45,
+                  child: const Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+                )
+              : Row(
+                  children: [
+                    Text(
+                      '₺${balance.toStringAsFixed(0)}',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      '.${(balance % 1 * 100).round().toString().padLeft(2, '0')}',
+                      style: GoogleFonts.inter(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Text(
-                '.00',
-                style: GoogleFonts.inter(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 16),
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.2),
+                  color: balance >= 0 
+                      ? const Color(0xFF10B981).withOpacity(0.2)
+                      : const Color(0xFFEF4444).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.trending_up,
-                      color: Color(0xFF10B981),
+                    Icon(
+                      balance >= 0 ? Icons.trending_up : Icons.trending_down,
+                      color: balance >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                       size: 16,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '+2.5%',
+                      balance >= 0 ? 'Pozitif' : 'Negatif',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF10B981),
+                        color: balance >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -442,7 +515,7 @@ class _DashboardPageState extends State<DashboardPage>
               ),
               const SizedBox(width: 8),
               Text(
-                'Geçen aya göre',
+                '${_recentTransactions.length} işlem',
                 style: GoogleFonts.inter(
                   color: Colors.white.withOpacity(0.7),
                   fontSize: 12,
@@ -1446,20 +1519,20 @@ class _DashboardPageState extends State<DashboardPage>
           Expanded(
             child: _buildSummaryCard(
               title: 'Gelir',
-              amount: '₺7,000',
+              amount: _isLoading ? null : '₺${_totalIncome.toStringAsFixed(0)}',
               icon: FontAwesomeIcons.arrowTrendUp,
               color: const Color(0xFF10B981),
-              percentage: '+12.5%',
+              percentage: _isLoading ? null : '+${_totalIncome > 0 ? '100' : '0'}%',
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: _buildSummaryCard(
               title: 'Gider',
-              amount: '₺4,300',
+              amount: _isLoading ? null : '₺${_totalExpense.toStringAsFixed(0)}',
               icon: FontAwesomeIcons.arrowTrendDown,
               color: const Color(0xFFEF4444),
-              percentage: '-5.2%',
+              percentage: _isLoading ? null : '-${_totalExpense > 0 ? '100' : '0'}%',
             ),
           ),
         ],
@@ -1469,10 +1542,10 @@ class _DashboardPageState extends State<DashboardPage>
 
   Widget _buildSummaryCard({
     required String title,
-    required String amount,
+    String? amount,
     required IconData icon,
     required Color color,
-    required String percentage,
+    String? percentage,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1501,21 +1574,30 @@ class _DashboardPageState extends State<DashboardPage>
                 child: FaIcon(icon, color: color, size: 16),
               ),
               const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  percentage,
-                  style: GoogleFonts.inter(
-                    color: color,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              percentage != null
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        percentage,
+                        style: GoogleFonts.inter(
+                          color: color,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      width: 50,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
             ],
           ),
           const SizedBox(height: 16),
@@ -1528,14 +1610,23 @@ class _DashboardPageState extends State<DashboardPage>
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            amount,
-            style: GoogleFonts.inter(
-              color: const Color(0xFF1E293B),
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          amount != null
+              ? Text(
+                  amount,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF1E293B),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                  ),
+                )
+              : Container(
+                  width: 80,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
         ],
       ),
     );
@@ -1571,7 +1662,28 @@ class _DashboardPageState extends State<DashboardPage>
               ),
               const Spacer(),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const HistoryPage(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        const begin = Offset(1.0, 0.0);
+                        const end = Offset.zero;
+                        const curve = Curves.ease;
+
+                        var tween = Tween(begin: begin, end: end).chain(
+                          CurveTween(curve: curve),
+                        );
+
+                        return SlideTransition(
+                          position: animation.drive(tween),
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                },
                 child: Text(
                   'Tümünü Gör',
                   style: GoogleFonts.inter(
@@ -1584,94 +1696,223 @@ class _DashboardPageState extends State<DashboardPage>
             ],
           ),
           const SizedBox(height: 20),
-          _buildTransactionItem(
-            title: 'Market Alışverişi',
-            subtitle: 'Migros - Bugün 14:30',
-            amount: '-₺120.50',
-            icon: Icons.shopping_cart_outlined,
-            color: const Color(0xFFEF4444),
+          _isLoading
+              ? Column(
+                  children: [
+                    _buildTransactionItemSkeleton(),
+                    const SizedBox(height: 16),
+                    _buildTransactionItemSkeleton(),
+                    const SizedBox(height: 16),
+                    _buildTransactionItemSkeleton(),
+                  ],
+                )
+              : _recentTransactions.isEmpty
+                  ? Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 48,
+                            color: Colors.grey.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Henüz işlem kaydı yok',
+                            style: GoogleFonts.inter(
+                              color: Colors.grey.withOpacity(0.7),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'İlk işleminizi ekleyerek başlayın',
+                            style: GoogleFonts.inter(
+                              color: Colors.grey.withOpacity(0.5),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      children: _recentTransactions.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final transaction = entry.value;
+                        return Column(
+                          children: [
+                            if (index > 0) const SizedBox(height: 16),
+                            _buildFirebaseTransactionItem(transaction),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFirebaseTransactionItem(FirebaseTransaction transaction) {
+    final timeAgo = _getTimeAgo(transaction.date);
+    final icon = _getIconFromString(transaction.icon);
+    final color = _getColorFromString(transaction.color);
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20,
+            ),
           ),
-          const SizedBox(height: 16),
-          _buildTransactionItem(
-            title: 'Maaş Ödemesi',
-            subtitle: 'ABC Şirketi - Dün 09:00',
-            amount: '+₺3,000.00',
-            icon: Icons.work_outline,
-            color: const Color(0xFF10B981),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  transaction.title,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF1E293B),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${transaction.category} • $timeAgo',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF64748B),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          _buildTransactionItem(
-            title: 'Netflix Abonelik',
-            subtitle: 'Netflix - 2 gün önce',
-            amount: '-₺63.99',
-            icon: Icons.tv_outlined,
-            color: const Color(0xFFEF4444),
-          ),
-          const SizedBox(height: 16),
-          _buildTransactionItem(
-            title: 'Freelance Geliri',
-            subtitle: 'Proje Ödemesi - 3 gün önce',
-            amount: '+₺850.00',
-            icon: Icons.computer_outlined,
-            color: const Color(0xFF10B981),
+          Text(
+            '${transaction.isIncome ? '+' : '-'}₺${transaction.amount.toStringAsFixed(2)}',
+            style: GoogleFonts.inter(
+              color: transaction.isIncome ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTransactionItem({
-    required String title,
-    required String subtitle,
-    required String amount,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(16),
+  Widget _buildTransactionItemSkeleton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF1E293B),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 120,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF64748B),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
+                const SizedBox(height: 4),
+                Container(
+                  width: 80,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        Text(
-          amount,
-          style: GoogleFonts.inter(
-            color: color,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
+          Container(
+            width: 60,
+            height: 16,
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+
+  String _getTimeAgo(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} gün önce';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} saat önce';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} dakika önce';
+    } else {
+      return 'Şimdi';
+    }
+  }
+
+  IconData _getIconFromString(String iconName) {
+    switch (iconName) {
+      case 'shopping_cart':
+        return Icons.shopping_cart_outlined;
+      case 'restaurant':
+        return Icons.restaurant_outlined;
+      case 'local_gas_station':
+        return Icons.local_gas_station_outlined;
+      case 'work':
+        return Icons.work_outline;
+      case 'laptop':
+        return Icons.laptop_outlined;
+      default:
+        return Icons.receipt_long_outlined;
+    }
+  }
+
+  Color _getColorFromString(String colorHex) {
+    try {
+      return Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+    } catch (e) {
+      return const Color(0xFF6B7280);
+    }
   }
 
   // 🎨 CUSTOM DRAWER WITH NEW FEATURES
