@@ -1,6 +1,10 @@
 import 'package:finora_app/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '/core/services/firebase_service.dart';
+import '/core/models/firebase_models.dart';
 
 class FeedbackType {
   final String title;
@@ -35,7 +39,7 @@ class _FeedbackPageState extends State<FeedbackPage>
 
   int _selectedRating = 0;
   FeedbackType? _selectedType;
-  bool _isSubmitting = false;
+  bool _isLoading = false;
 
   final List<FeedbackType> _feedbackTypes = [
     FeedbackType(
@@ -90,6 +94,16 @@ class _FeedbackPageState extends State<FeedbackPage>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.forward();
+
+    // Pre-fill email with user's current email if available
+    _initializeUserEmail();
+  }
+
+  void _initializeUserEmail() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && user.email != null && user.email!.isNotEmpty) {
+      _emailController.text = user.email!;
+    }
   }
 
   @override
@@ -155,39 +169,40 @@ class _FeedbackPageState extends State<FeedbackPage>
 
   Widget _buildCustomAppBar() {
     return SliverAppBar(
-      leading: Container(
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Color(0xFF64748B),
-            size: 20,
-          ),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsPage()),
-            );
-          },
-        ),
-      ),
       expandedHeight: 100,
       floating: false,
       pinned: true,
       backgroundColor: const Color(0xFFF8FAFC),
       elevation: 0,
-      automaticallyImplyLeading: true,
+      automaticallyImplyLeading: false,
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Color(0xFF64748B),
+              size: 20,
+            ),
+            onPressed: () => {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              ),
+            },
+          ),
+        ),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(
@@ -204,7 +219,7 @@ class _FeedbackPageState extends State<FeedbackPage>
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  'Geri Bildirim',
+                  'Geri Bildirim 💭',
                   style: GoogleFonts.inter(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
@@ -522,7 +537,7 @@ class _FeedbackPageState extends State<FeedbackPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'E-posta (Opsiyonel)',
+          'E-posta Adresi (İsteğe Bağlı)',
           style: GoogleFonts.inter(
             color: const Color(0xFF1F2937),
             fontSize: 16,
@@ -530,34 +545,58 @@ class _FeedbackPageState extends State<FeedbackPage>
           ),
         ),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
-            hintText: 'ornek@email.com',
-            hintStyle: GoogleFonts.inter(
-              color: const Color(0xFF6B7280),
-              fontSize: 14,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
-            ),
-            contentPadding: const EdgeInsets.all(16),
-          ),
+        Text(
+          'Size geri dönüş yapabilmemiz için e-posta adresinizi paylaşabilirsiniz',
           style: GoogleFonts.inter(
-            color: const Color(0xFF1F2937),
-            fontSize: 16,
+            color: const Color(0xFF6B7280),
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              hintText: 'ornek@email.com',
+              prefixIcon: const Icon(
+                Icons.email_outlined,
+                color: Color(0xFF6B7280),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(16),
+              hintStyle: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 16,
+              ),
+            ),
+            style: GoogleFonts.inter(
+              color: const Color(0xFF1F2937),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+            ),
+            validator: (value) {
+              // Email is optional, but if provided, it should be valid
+              if (value != null && value.trim().isNotEmpty) {
+                if (!value.contains('@') || !value.contains('.')) {
+                  return 'Geçerli bir e-posta adresi girin';
+                }
+              }
+              return null;
+            },
           ),
         ),
       ],
@@ -585,9 +624,9 @@ class _FeedbackPageState extends State<FeedbackPage>
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(28),
-          onTap: _isSubmitting ? null : _submitFeedback,
+          onTap: _isLoading ? null : _submitFeedback,
           child: Center(
-            child: _isSubmitting
+            child: _isLoading
                 ? const SizedBox(
                     width: 24,
                     height: 24,
@@ -646,28 +685,103 @@ class _FeedbackPageState extends State<FeedbackPage>
     }
 
     if (_selectedRating == 0) {
-      _showSnackBar('Lütfen bir değerlendirme seçin', Colors.red);
+      _showSnackBar('Lütfen bir değerlendirme puanı verin ⭐', isError: true);
       return;
     }
 
     if (_selectedType == null) {
-      _showSnackBar('Lütfen geri bildirim türü seçin', Colors.red);
+      _showSnackBar('Lütfen bir geri bildirim türü seçin 📝', isError: true);
       return;
     }
 
     setState(() {
-      _isSubmitting = true;
+      _isLoading = true; // Changed from _isSubmitting to _isLoading
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        _showSnackBar(
+          'Geri bildirim göndermek için giriş yapmanız gerekiyor 🔒',
+          isError: true,
+        );
+        return;
+      }
 
-    setState(() {
-      _isSubmitting = false;
-    });
+      debugPrint('📝 Submitting feedback...');
+      debugPrint('👤 User: ${user.uid}');
+      debugPrint('⭐ Rating: $_selectedRating');
+      debugPrint('📂 Type: ${_selectedType!.title}');
+      debugPrint('📧 Email: ${_emailController.text.trim()}');
 
-    _showSnackBar('Geri bildiriminiz başarıyla gönderildi! 🎉', Colors.green);
-    _resetForm();
+      final feedback = FirebaseFeedback(
+        id: '', // Will be set by Firestore
+        userId: user.uid,
+        userEmail: user.email,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        email: _emailController.text.trim().isEmpty
+            ? user.email ?? ''
+            : _emailController.text.trim(),
+        feedbackType: _selectedType!.title,
+        rating: _selectedRating,
+        deviceInfo: FeedbackService.getDeviceInfo(),
+        appVersion: FeedbackService.getAppVersion(),
+        createdAt: DateTime.now(),
+      );
+
+      final feedbackId = await FeedbackService.createFeedback(feedback);
+
+      if (feedbackId != null) {
+        debugPrint('✅ Feedback submitted successfully: $feedbackId');
+
+        // If user provided an email and it's different from their current email, update their profile
+        final providedEmail = _emailController.text.trim();
+        bool emailUpdated = false;
+
+        if (providedEmail.isNotEmpty && providedEmail != user.email) {
+          try {
+            debugPrint('📧 Updating user email in profile: $providedEmail');
+            await UserService.updateUserProfile(user.uid, {
+              'personalInfo.email': providedEmail,
+              'email': providedEmail, // Also update the top-level email field
+            });
+            debugPrint('✅ User email updated successfully');
+            emailUpdated = true;
+          } catch (e) {
+            debugPrint('⚠️ Failed to update user email: $e');
+            // Don't show error to user since feedback was successful
+          }
+        }
+
+        String successMessage =
+            'Geri bildiriminiz başarıyla gönderildi! 🎉\nTeşekkür ederiz, en kısa sürede değerlendireceğiz.';
+
+        if (emailUpdated) {
+          successMessage +=
+              '\n\n📧 E-posta adresiniz profilinizde güncellendi.';
+        }
+
+        _showSnackBar(successMessage, isError: false);
+
+        // Reset form
+        _resetForm();
+      } else {
+        _showSnackBar(
+          'Geri bildirim gönderilirken bir hata oluştu 😞',
+          isError: true,
+        );
+      }
+    } catch (e) {
+      debugPrint('💥 Error submitting feedback: $e');
+      _showSnackBar('Bir hata oluştu: ${e.toString()} 💥', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _resetForm() {
@@ -680,7 +794,7 @@ class _FeedbackPageState extends State<FeedbackPage>
     });
   }
 
-  void _showSnackBar(String message, Color color) {
+  void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -690,7 +804,7 @@ class _FeedbackPageState extends State<FeedbackPage>
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: color,
+        backgroundColor: isError ? Colors.red : const Color(0xFF3B82F6),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),

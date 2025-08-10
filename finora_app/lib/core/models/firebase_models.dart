@@ -665,7 +665,7 @@ class FirebaseCard {
     required this.balance,
     this.currency = 'TRY',
     required this.colorHex,
-    this.cardType = 'Banka Kartı',
+    this.cardType = 'debit',
     this.isDefault = false,
     this.isActive = true,
     required this.userId,
@@ -711,7 +711,7 @@ class FirebaseCard {
       balance: (data['balance'] ?? 0.0).toDouble(),
       currency: data['currency'] ?? 'TRY',
       colorHex: data['colorHex'] ?? '#6B7280',
-      cardType: data['cardType'] ?? 'Banka Kartı',
+      cardType: data['cardType'] ?? 'debit',
       isDefault: data['isDefault'] ?? false,
       isActive: data['isActive'] ?? true,
       lastUsed: (data['lastUsed'] as Timestamp).toDate(),
@@ -930,6 +930,118 @@ class PrivacySettings {
       shareAnalytics: map['shareAnalytics'] ?? true,
       personalizedAds: map['personalizedAds'] ?? false,
       dataCollection: map['dataCollection'] ?? true,
+    );
+  }
+}
+
+// Feedback Model for Firestore
+class FirebaseFeedback {
+  final String id;
+  final String userId;
+  final String? userEmail;
+  final String title;
+  final String description;
+  final String email; // User's contact email (optional)
+  final String feedbackType;
+  final int rating; // 1-5 stars
+  final String deviceInfo;
+  final String appVersion;
+  final DateTime createdAt;
+  final bool isResolved;
+  final String? adminResponse;
+  final DateTime? respondedAt;
+
+  FirebaseFeedback({
+    required this.id,
+    required this.userId,
+    this.userEmail,
+    required this.title,
+    required this.description,
+    required this.email,
+    required this.feedbackType,
+    required this.rating,
+    required this.deviceInfo,
+    required this.appVersion,
+    required this.createdAt,
+    this.isResolved = false,
+    this.adminResponse,
+    this.respondedAt,
+  });
+
+  // Convert to Firestore document
+  Map<String, dynamic> toFirestore() {
+    return {
+      'userId': userId,
+      'userEmail': userEmail,
+      'title': title,
+      'description': description,
+      'email': email,
+      'feedbackType': feedbackType,
+      'rating': rating,
+      'deviceInfo': deviceInfo,
+      'appVersion': appVersion,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'isResolved': isResolved,
+      'adminResponse': adminResponse,
+      'respondedAt': respondedAt != null
+          ? Timestamp.fromDate(respondedAt!)
+          : null,
+    };
+  }
+
+  // Create from Firestore document
+  factory FirebaseFeedback.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return FirebaseFeedback(
+      id: doc.id,
+      userId: data['userId'] ?? '',
+      userEmail: data['userEmail'],
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      email: data['email'] ?? '',
+      feedbackType: data['feedbackType'] ?? '',
+      rating: data['rating'] ?? 1,
+      deviceInfo: data['deviceInfo'] ?? '',
+      appVersion: data['appVersion'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      isResolved: data['isResolved'] ?? false,
+      adminResponse: data['adminResponse'],
+      respondedAt: (data['respondedAt'] as Timestamp?)?.toDate(),
+    );
+  }
+
+  // Copy with method for updates
+  FirebaseFeedback copyWith({
+    String? id,
+    String? userId,
+    String? userEmail,
+    String? title,
+    String? description,
+    String? email,
+    String? feedbackType,
+    int? rating,
+    String? deviceInfo,
+    String? appVersion,
+    DateTime? createdAt,
+    bool? isResolved,
+    String? adminResponse,
+    DateTime? respondedAt,
+  }) {
+    return FirebaseFeedback(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      userEmail: userEmail ?? this.userEmail,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      email: email ?? this.email,
+      feedbackType: feedbackType ?? this.feedbackType,
+      rating: rating ?? this.rating,
+      deviceInfo: deviceInfo ?? this.deviceInfo,
+      appVersion: appVersion ?? this.appVersion,
+      createdAt: createdAt ?? this.createdAt,
+      isResolved: isResolved ?? this.isResolved,
+      adminResponse: adminResponse ?? this.adminResponse,
+      respondedAt: respondedAt ?? this.respondedAt,
     );
   }
 }

@@ -63,12 +63,12 @@ class UserService {
 
   // ➤ GET USER PROFILE
   static Future<FirebaseUserProfile?> getUserProfile(String userId) async {
-    return await FirebaseService._handleErrors<FirebaseUserProfile?>(() async {
+    return await FirebaseService._handleErrors(() async {
       final doc = await _usersCollection.doc(userId).get();
       if (doc.exists) {
         return FirebaseUserProfile.fromFirestore(doc);
       }
-      return null;
+      return Future.value(null);
     });
   }
 
@@ -516,22 +516,53 @@ class CategoryService {
     String? type, // 'income' or 'expense'
     bool? isActive,
   }) async {
-    final result = await FirebaseService._handleErrors(() async {
-      Query query = _getCategoriesCollection(userId).orderBy('sortOrder');
+    try {
+      debugPrint(
+        '🔍 Getting categories for user: $userId, type: $type, isActive: $isActive',
+      );
+      Query query = _getCategoriesCollection(userId);
 
+      // Only use type filter to avoid composite index requirement
       if (type != null) {
         query = query.where('type', isEqualTo: type);
       }
-      if (isActive != null) {
-        query = query.where('isActive', isEqualTo: isActive);
+      // Remove isActive filter from query - will filter in memory
+
+      debugPrint('🔥 Executing Firestore query...');
+      final snapshot = await query.get();
+      debugPrint('📋 Found ${snapshot.docs.length} categories in Firestore');
+
+      final categories = <FirebaseCategoryModel>[];
+      for (int i = 0; i < snapshot.docs.length; i++) {
+        try {
+          final doc = snapshot.docs[i];
+          debugPrint('🔄 Processing category ${i + 1}: ${doc.id}');
+          final category = FirebaseCategoryModel.fromFirestore(doc, userId);
+
+          // Filter isActive in memory
+          if (isActive == null || category.isActive == isActive) {
+            categories.add(category);
+            debugPrint('✅ Successfully parsed category: ${category.name}');
+          } else {
+            debugPrint('⏭️ Skipped inactive category: ${category.name}');
+          }
+        } catch (e) {
+          debugPrint('💥 Error parsing category ${i + 1}: $e');
+          debugPrint('📄 Document data: ${snapshot.docs[i].data()}');
+        }
       }
 
-      final snapshot = await query.get();
-      return snapshot.docs
-          .map((doc) => FirebaseCategoryModel.fromFirestore(doc, userId))
-          .toList();
-    });
-    return result ?? [];
+      // Sort in memory to avoid index requirement
+      categories.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      debugPrint(
+        '✅ Categories sorted by sortOrder: ${categories.length} total',
+      );
+
+      return categories;
+    } catch (e) {
+      debugPrint('💥 Major error in getCategories: $e');
+      return [];
+    }
   }
 
   // ➤ GET CATEGORIES STREAM (Real-time)
@@ -539,19 +570,22 @@ class CategoryService {
     String userId, {
     String? type,
   }) {
-    Query query = _getCategoriesCollection(
-      userId,
-    ).where('isActive', isEqualTo: true).orderBy('sortOrder');
+    Query query = _getCategoriesCollection(userId);
 
     if (type != null) {
       query = query.where('type', isEqualTo: type);
     }
 
-    return query.snapshots().map(
-      (snapshot) => snapshot.docs
+    return query.snapshots().map((snapshot) {
+      final categories = snapshot.docs
           .map((doc) => FirebaseCategoryModel.fromFirestore(doc, userId))
-          .toList(),
-    );
+          .where((category) => category.isActive) // Filter active in memory
+          .toList();
+
+      // Sort in memory
+      categories.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      return categories;
+    });
   }
 
   // ➤ UPDATE CATEGORY
@@ -575,9 +609,14 @@ class CategoryService {
   // ➤ CREATE DEFAULT CATEGORIES FOR NEW USER
   static Future<void> createDefaultCategories(String userId) async {
     await FirebaseService._handleErrors(() async {
+      debugPrint('🏗️ Creating default categories for user: $userId');
       final defaultCategories = _getDefaultCategories(userId);
+      debugPrint(
+        '📋 Default categories to create: ${defaultCategories.length}',
+      );
 
       for (final category in defaultCategories) {
+        debugPrint('➕ Creating category: ${category.name} (${category.type})');
         await _getCategoriesCollection(userId).add(category.toFirestore());
       }
 
@@ -601,6 +640,7 @@ class CategoryService {
         transactionCount: 0,
         totalAmount: 0,
         isDefault: true,
+        isActive: true,
         sortOrder: 1,
         createdAt: now,
         updatedAt: now,
@@ -615,6 +655,7 @@ class CategoryService {
         transactionCount: 0,
         totalAmount: 0,
         isDefault: true,
+        isActive: true,
         sortOrder: 2,
         createdAt: now,
         updatedAt: now,
@@ -631,6 +672,7 @@ class CategoryService {
         transactionCount: 0,
         totalAmount: 0,
         isDefault: true,
+        isActive: true,
         sortOrder: 1,
         createdAt: now,
         updatedAt: now,
@@ -646,6 +688,7 @@ class CategoryService {
         transactionCount: 0,
         totalAmount: 0,
         isDefault: true,
+        isActive: true,
         sortOrder: 2,
         createdAt: now,
         updatedAt: now,
@@ -661,6 +704,7 @@ class CategoryService {
         transactionCount: 0,
         totalAmount: 0,
         isDefault: true,
+        isActive: true,
         sortOrder: 3,
         createdAt: now,
         updatedAt: now,
@@ -824,7 +868,7 @@ class SettingsService {
 
   // ➤ GET SETTINGS
   static Future<FirebaseUserSettings?> getSettings(String userId) async {
-    return await FirebaseService._handleErrors<FirebaseUserSettings?>(() async {
+    return await FirebaseService._handleErrors(() async {
       final doc = await _getSettingsDocument(userId).get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -832,7 +876,7 @@ class SettingsService {
           return FirebaseUserSettings.fromFirestore(doc);
         }
       }
-      return null;
+      return Future.value(null);
     });
   }
 
@@ -847,5 +891,175 @@ class SettingsService {
       }
       return null;
     });
+  }
+}
+
+// ===== FEEDBACK SERVICE =====
+class FeedbackService extends FirebaseService {
+  static const String _collection = 'feedbacks';
+
+  // Create new feedback
+  static Future<String?> createFeedback(FirebaseFeedback feedback) async {
+    return FirebaseService._handleErrors(() async {
+      debugPrint('📝 Creating feedback: ${feedback.title}');
+
+      final docRef = await FirebaseService._firestore
+          .collection(_collection)
+          .add(feedback.toFirestore());
+
+      debugPrint('✅ Feedback created successfully: ${docRef.id}');
+      return docRef.id;
+    });
+  }
+
+  // Get all feedbacks (for admin)
+  static Future<List<FirebaseFeedback>?> getAllFeedbacks({
+    int limit = 50,
+    bool onlyUnresolved = false,
+  }) async {
+    return FirebaseService._handleErrors(() async {
+      debugPrint('📋 Getting all feedbacks...');
+
+      Query query = FirebaseService._firestore.collection(_collection);
+
+      if (onlyUnresolved) {
+        query = query.where('isResolved', isEqualTo: false);
+      }
+
+      query = query.orderBy('createdAt', descending: true).limit(limit);
+
+      final snapshot = await query.get();
+      final feedbacks = snapshot.docs
+          .map((doc) => FirebaseFeedback.fromFirestore(doc))
+          .toList();
+
+      debugPrint('✅ Retrieved ${feedbacks.length} feedbacks');
+      return feedbacks;
+    });
+  }
+
+  // Get feedbacks by user
+  static Future<List<FirebaseFeedback>?> getUserFeedbacks(String userId) async {
+    return FirebaseService._handleErrors(() async {
+      debugPrint('👤 Getting feedbacks for user: $userId');
+
+      final snapshot = await FirebaseService._firestore
+          .collection(_collection)
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      final feedbacks = snapshot.docs
+          .map((doc) => FirebaseFeedback.fromFirestore(doc))
+          .toList();
+
+      debugPrint('✅ Retrieved ${feedbacks.length} user feedbacks');
+      return feedbacks;
+    });
+  }
+
+  // Update feedback (for admin responses)
+  static Future<bool?> updateFeedback(
+    String feedbackId, {
+    bool? isResolved,
+    String? adminResponse,
+  }) async {
+    return FirebaseService._handleErrors(() async {
+      debugPrint('📝 Updating feedback: $feedbackId');
+
+      final updates = <String, dynamic>{};
+
+      if (isResolved != null) {
+        updates['isResolved'] = isResolved;
+      }
+
+      if (adminResponse != null) {
+        updates['adminResponse'] = adminResponse;
+        updates['respondedAt'] = FieldValue.serverTimestamp();
+      }
+
+      updates['updatedAt'] = FieldValue.serverTimestamp();
+
+      await FirebaseService._firestore
+          .collection(_collection)
+          .doc(feedbackId)
+          .update(updates);
+
+      debugPrint('✅ Feedback updated successfully');
+      return true;
+    });
+  }
+
+  // Delete feedback
+  static Future<bool?> deleteFeedback(String feedbackId) async {
+    return FirebaseService._handleErrors(() async {
+      debugPrint('🗑️ Deleting feedback: $feedbackId');
+
+      await FirebaseService._firestore
+          .collection(_collection)
+          .doc(feedbackId)
+          .delete();
+
+      debugPrint('✅ Feedback deleted successfully');
+      return true;
+    });
+  }
+
+  // Get feedback statistics
+  static Future<Map<String, dynamic>?> getFeedbackStats() async {
+    return FirebaseService._handleErrors(() async {
+      debugPrint('📊 Getting feedback statistics...');
+
+      final snapshot = await FirebaseService._firestore
+          .collection(_collection)
+          .get();
+      final feedbacks = snapshot.docs
+          .map((doc) => FirebaseFeedback.fromFirestore(doc))
+          .toList();
+
+      final Map<String, int> typeBreakdown = <String, int>{};
+      final Map<int, int> ratingBreakdown = <int, int>{};
+
+      final stats = <String, dynamic>{
+        'total': feedbacks.length,
+        'resolved': feedbacks.where((f) => f.isResolved).length,
+        'unresolved': feedbacks.where((f) => !f.isResolved).length,
+        'averageRating': feedbacks.isEmpty
+            ? 0.0
+            : feedbacks.map((f) => f.rating).reduce((a, b) => a + b) /
+                  feedbacks.length,
+        'typeBreakdown': typeBreakdown,
+        'ratingBreakdown': ratingBreakdown,
+      };
+
+      // Calculate feedback type breakdown
+      for (final feedback in feedbacks) {
+        final type = feedback.feedbackType;
+        typeBreakdown[type] = (typeBreakdown[type] ?? 0) + 1;
+      }
+
+      // Calculate rating breakdown
+      for (final feedback in feedbacks) {
+        final rating = feedback.rating;
+        ratingBreakdown[rating] = (ratingBreakdown[rating] ?? 0) + 1;
+      }
+
+      debugPrint(
+        '✅ Feedback stats calculated: ${stats['total']} total feedbacks',
+      );
+      return stats;
+    });
+  }
+
+  // Get device info helper
+  static String getDeviceInfo() {
+    // In a real app, you'd use device_info_plus package
+    return 'Flutter App - ${DateTime.now().toString().split(' ')[0]}';
+  }
+
+  // Get app version helper
+  static String getAppVersion() {
+    // In a real app, you'd use package_info_plus package
+    return '1.0.0';
   }
 }
