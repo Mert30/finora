@@ -359,19 +359,19 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
         children: [
           Expanded(
             child: _buildSummaryCard(
-              'Toplam İşlem',
-              totalTransactions.toString(),
-              Icons.receipt_long_outlined,
-              const Color(0xFF6366F1),
+              title: 'Toplam İşlem',
+              value: totalTransactions.toString(),
+              icon: Icons.receipt_long_outlined,
+              color: const Color(0xFF6366F1),
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: _buildSummaryCard(
-              _showIncomeCategories ? 'Toplam Gelir' : 'Toplam Gider',
-              '₺${totalAmount.toStringAsFixed(2)}',
-              _showIncomeCategories ? Icons.trending_up : Icons.trending_down,
-              _showIncomeCategories ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+              title: _showIncomeCategories ? 'Toplam Gelir' : 'Toplam Gider',
+              value: '₺${totalAmount.toStringAsFixed(2)}',
+              icon: _showIncomeCategories ? Icons.trending_up : Icons.trending_down,
+              color: _showIncomeCategories ? const Color(0xFF10B981) : const Color(0xFFEF4444),
             ),
           ),
         ],
@@ -690,7 +690,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     );
   }
 
-  void _showEditCategoryDialog(CategoryModel category) {
+  void _showEditCategoryDialog(FirebaseCategoryModel category) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -700,79 +700,30 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: const Color(0xFF8B5CF6),
+        backgroundColor: const Color(0xFF6366F1),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }
 
-  void _showDeleteCategoryDialog(CategoryModel category) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Text(
-          'Kategori Sil',
-          style: GoogleFonts.inter(
-            color: const Color(0xFF1F2937),
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+  void _showDeleteCategoryDialog(FirebaseCategoryModel category) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
         content: Text(
-          '${category.name} kategorisini silmek istediğinizden emin misiniz?\n\nBu kategoriyle ilgili ${category.transactionCount} işlem etkilenecektir.',
+          '${category.name} silme özelliği yakında! 🗑️',
           style: GoogleFonts.inter(
-            color: const Color(0xFF6B7280),
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'İptal',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF6B7280),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '${category.name} kategorisi silindi!',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  backgroundColor: const Color(0xFFEF4444),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  margin: const EdgeInsets.all(16),
-                ),
-              );
-            },
-            child: Text(
-              'Sil',
-              style: GoogleFonts.inter(
-                color: const Color(0xFFEF4444),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
+        backgroundColor: const Color(0xFFEF4444),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }
