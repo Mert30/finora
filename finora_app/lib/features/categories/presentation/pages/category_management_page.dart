@@ -441,7 +441,12 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
   }
 
   Widget _buildCategoriesList() {
+    debugPrint('🎨 Building categories list. Loading: $_isLoading');
+    debugPrint('📊 Income categories: ${_incomeCategories.length}, Expense categories: ${_expenseCategories.length}');
+    debugPrint('🔄 Show income: $_showIncomeCategories');
+    
     if (_isLoading) {
+      debugPrint('⏳ Showing loading indicator');
       return const SliverFillRemaining(
         child: Center(
           child: CircularProgressIndicator(
@@ -452,8 +457,11 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     }
     
     final categories = _currentCategories;
+    debugPrint('📋 Current categories count: ${categories.length}');
+    debugPrint('📋 Categories type: ${categories.runtimeType}');
     
     if (categories.isEmpty) {
+      debugPrint('📭 Showing empty state');
       return SliverFillRemaining(
         child: Center(
           child: Column(
@@ -487,6 +495,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
       );
     }
     
+    debugPrint('📋 Showing ${categories.length} categories');
     return SliverPadding(
       padding: const EdgeInsets.all(24.0),
       sliver: SliverList(
