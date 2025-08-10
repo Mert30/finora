@@ -1350,7 +1350,7 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
-                    onPressed: _processTransfer,
+                    onPressed: _isLoading ? null : _processTransfer,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF10B981),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1358,14 +1358,23 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text(
-                      'Onayla ve Gönder',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            'Onayla ve Gönder',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -1420,6 +1429,11 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
         return;
       }
 
+      if (_selectedTransferType == 'IBAN' && (_recipientNameController.text.trim().isEmpty || _ibanController.text.trim().isEmpty)) {
+        _showErrorMessage('Lütfen alıcı adı ve IBAN bilgilerini girin');
+        return;
+      }
+
       if (_amountController.text.trim().isEmpty) {
         _showErrorMessage('Lütfen transfer tutarını girin');
         return;
@@ -1453,7 +1467,7 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
         iconName: 'transfer',
         colorHex: '#EF4444', // Red for expense
         description: _descriptionController.text.trim().isEmpty 
-            ? 'Para transferi - ${_selectedRecipient?.name ?? 'Alıcı'}'
+            ? 'Para transferi - ${_selectedTransferType == 'Telefon' ? _selectedRecipient?.name ?? 'Kullanıcı' : _recipientNameController.text.trim().isEmpty ? 'Alıcı' : _recipientNameController.text.trim()}'
             : _descriptionController.text.trim(),
         categoryId: null,
         cardId: _selectedFromCard!.id,
@@ -1472,6 +1486,8 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
 
       // If recipient is a registered user, create income transaction for them
       if (_selectedRecipient != null) {
+        debugPrint('💰 Creating recipient transaction for: ${_selectedRecipient!.name} (ID: ${_selectedRecipient!.userId})');
+        
         final recipientTransaction = FirebaseTransaction(
           id: '', // Will be set by Firestore
           userId: _selectedRecipient!.userId,
@@ -1482,15 +1498,29 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
           isIncome: true, // Income for recipient
           iconName: 'transfer',
           colorHex: '#10B981', // Green for income
-          description: 'Para transferi alındı - ${FirebaseAuth.instance.currentUser?.displayName ?? 'Gönderen'}',
+          description: 'Para transferi alındı - ${FirebaseAuth.instance.currentUser?.displayName ?? 'Kullanıcı'}',
           categoryId: null,
           cardId: null, // No specific card for incoming transfer
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
 
+        debugPrint('📝 Recipient transaction data: ${recipientTransaction.toString()}');
+        
         final recipientTransactionId = await TransactionService.createTransaction(recipientTransaction);
-        debugPrint('✅ Recipient transaction created: $recipientTransactionId');
+        debugPrint('✅ Recipient transaction created with ID: $recipientTransactionId');
+        
+        if (recipientTransactionId != null) {
+          debugPrint('🎉 Recipient transaction successfully saved!');
+        } else {
+          debugPrint('❌ Failed to save recipient transaction');
+        }
+      } else if (_selectedTransferType == 'IBAN') {
+        debugPrint('💰 IBAN transfer to: ${_recipientNameController.text.trim()} - ${_ibanController.text.trim()}');
+        // For IBAN transfers, we could log to a separate external transfers collection if needed
+        // For now, we just log the sender transaction
+      } else {
+        debugPrint('⚠️ No recipient selected for user transfer');
       }
 
       setState(() {
@@ -1501,18 +1531,40 @@ class _MoneyTransferPageState extends State<MoneyTransferPage>
       Navigator.pop(context); // Close confirmation modal
       Navigator.pop(context); // Go back to previous screen
       
-      // Show success message
+      // Show detailed success message
+      final recipientName = _selectedTransferType == 'Telefon' 
+          ? _selectedRecipient?.name ?? 'Kullanıcı'
+          : _recipientNameController.text.trim();
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 8),
-              Text('₺${transferAmount.toStringAsFixed(2)} başarıyla transfer edildi!'),
+              Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Transfer Başarılı!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('₺${transferAmount.toStringAsFixed(2)} → $recipientName'),
+              if (_selectedTransferType == 'IBAN')
+                Text('IBAN: ${_ibanController.text.trim()}', 
+                     style: TextStyle(fontSize: 12, color: Colors.white70)),
             ],
           ),
           backgroundColor: const Color(0xFF10B981),
-          duration: const Duration(seconds: 4),
+          duration: const Duration(seconds: 5),
+          behavior: SnackBarBehavior.floating,
         ),
       );
 
