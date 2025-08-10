@@ -485,7 +485,8 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
     bool isFullWidth = false,
   }) {
     return Container(
-      padding: EdgeInsets.all(isFullWidth ? 20 : 16),
+      height: 100, // Sabit yükseklik - hepsi aynı olacak
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
@@ -493,29 +494,34 @@ class _CategoryManagementPageState extends State<CategoryManagementPage>
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Icon(
             icon,
             color: color,
-            size: isFullWidth ? 24 : 18,
+            size: 20,
           ),
-          SizedBox(height: isFullWidth ? 12 : 8),
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              color: const Color(0xFF6B7280),
-              fontSize: isFullWidth ? 14 : 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: isFullWidth ? 8 : 4),
-          Text(
-            value,
-            style: GoogleFonts.inter(
-              color: color,
-              fontSize: isFullWidth ? 24 : 18,
-              fontWeight: FontWeight.w700,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF6B7280),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: GoogleFonts.inter(
+                  color: color,
+                  fontSize: isFullWidth ? 20 : 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ],
       ),
