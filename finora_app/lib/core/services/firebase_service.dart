@@ -929,26 +929,29 @@ class FeedbackService extends FirebaseService {
       final snapshot = await _firestore.collection(_collection).get();
       final feedbacks = snapshot.docs.map((doc) => FirebaseFeedback.fromFirestore(doc)).toList();
       
-      final stats = {
+      final Map<String, int> typeBreakdown = <String, int>{};
+      final Map<int, int> ratingBreakdown = <int, int>{};
+      
+      final stats = <String, dynamic>{
         'total': feedbacks.length,
         'resolved': feedbacks.where((f) => f.isResolved).length,
         'unresolved': feedbacks.where((f) => !f.isResolved).length,
         'averageRating': feedbacks.isEmpty ? 0.0 : 
             feedbacks.map((f) => f.rating).reduce((a, b) => a + b) / feedbacks.length,
-        'typeBreakdown': <String, int>{},
-        'ratingBreakdown': <int, int>{},
+        'typeBreakdown': typeBreakdown,
+        'ratingBreakdown': ratingBreakdown,
       };
       
       // Calculate feedback type breakdown
       for (final feedback in feedbacks) {
         final type = feedback.feedbackType;
-        stats['typeBreakdown'][type] = (stats['typeBreakdown'][type] ?? 0) + 1;
+        typeBreakdown[type] = (typeBreakdown[type] ?? 0) + 1;
       }
       
       // Calculate rating breakdown
       for (final feedback in feedbacks) {
         final rating = feedback.rating;
-        stats['ratingBreakdown'][rating] = (stats['ratingBreakdown'][rating] ?? 0) + 1;
+        ratingBreakdown[rating] = (ratingBreakdown[rating] ?? 0) + 1;
       }
       
       debugPrint('✅ Feedback stats calculated: ${stats['total']} total feedbacks');
